@@ -18,6 +18,8 @@ export const selectionSig = signal<Selection>(EMPTY);
 /** `attached` expands every pick to the part plus everything posed off it. */
 export const selectModeSig = signal<'part' | 'attached'>('part');
 export const hiddenSig = signal<ReadonlySet<PartId>>(new Set());
+/** The part under the pointer, for the hover outline and socket rings. */
+export const hoverSig = signal<PartId | null>(null);
 
 export function pointKey(host: PartId, uuid: Uuid): PointKey {
   return `${host}:${uuid}`;
@@ -83,6 +85,7 @@ export function sanitizeSelection(doc: Doc): void {
         : null;
     selectionSig.value = { parts: p, points: q, active };
   }
+  if (hoverSig.value !== null && !doc.parts.has(hoverSig.value)) hoverSig.value = null;
   const hidden = hiddenSig.value;
   if ([...hidden].some((id) => !doc.parts.has(id))) {
     hiddenSig.value = new Set([...hidden].filter((id) => doc.parts.has(id)));
@@ -97,4 +100,5 @@ export function resetSelectionForTests(): void {
   selectionSig.value = EMPTY;
   selectModeSig.value = 'part';
   hiddenSig.value = new Set();
+  hoverSig.value = null;
 }

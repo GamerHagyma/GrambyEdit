@@ -21,6 +21,8 @@ export const FLAG_HOVERED = 2;
 export const FLAG_APPROX = 4;
 export const FLAG_HIDDEN = 8;
 export const FLAG_PAINTED = 16;
+export const FLAG_ACTIVE = 32;
+const HIGHLIGHT = FLAG_SELECTED | FLAG_HOVERED | FLAG_ACTIVE;
 
 const ZERO = new Matrix4().makeScale(0, 0, 0);
 const START_CAPACITY = 16;
@@ -76,20 +78,17 @@ export class PartsLayer {
   readonly group = new Group();
   private readonly layers = new Map<string, Layer>();
   private readonly owner = new Map<PartId, Layer>();
+  /** Per part: the sync-owned bits (approx, hidden, painted) and the highlight bits. */
+  private readonly base = new Map<PartId, number>();
+  private highlights = new Map<PartId, number>();
   private readonly desaturate = { value: 1 };
   readonly material = createPartMaterial(this.desaturate);
   private readonly color = new Color();
 
   constructor(readonly assets: Assets) {}
 
-  /** Writes every part's matrix, color and flags. Parts gone from the doc free their slots. */
-  sync(
-    doc: Doc,
-    poses: Poses,
-    hidden: ReadonlySet<PartId>,
-    selected: ReadonlySet<PartId>,
-    desaturateApprox: boolean,
-  ): void {
+  /** Writes every part's matrix, color and base flags. Parts gone from the doc free their slots. */
+  sync(doc: Doc, poses: Poses, hidden: ReadonlySet<PartId>, desaturateApprox: boolean): void {
     this.desaturate.value = desaturateApprox ? 1 : 0;
     for (const [id, layer] of this.owner) {
       if (doc.parts.get(id)?.type !== layer.type) this.release(id, layer);
@@ -102,15 +101,16 @@ export class PartsLayer {
       const isHidden = hidden.has(id);
       layer.mesh.setMatrixAt(slot, isHidden || !world ? ZERO : world);
       const rgb = part.props.RGB;
-      let f = isRgb(rgb) ? FLAG_PAINTED : 0;
+      let f = 0;
       if (isRgb(rgb)) {
+        f |= FLAG_PAINTED;
         this.color.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, SRGBColorSpace);
         layer.mesh.setColorAt(slot, this.color);
       }
-      if (selected.has(id)) f |= FLAG_SELECTED;
       if ((poses.flags.get(id) ?? 0) & POSE_APPROX) f |= FLAG_APPROX;
       if (isHidden) f |= FLAG_HIDDEN;
-      layer.flags.setX(slot, f);
+      this.base.set(id, f);
+      layer.flags.setX(slot, f | (this.highlights.get(id) ?? 0));
     }
     for (const layer of this.layers.values()) {
       layer.mesh.count = layer.slots.highWater;
@@ -118,6 +118,36 @@ export class PartsLayer {
       layer.mesh.instanceColor!.needsUpdate = true;
       layer.flags.needsUpdate = true;
     }
+  }
+
+  /** Sets the selection, hover and active bits, touching only parts whose bits change. */
+  highlight(selected: ReadonlySet<PartId>, hovered: PartId | null, active: PartId | null): void {
+    const next = new Map<PartId, number>();
+    for (const id of selected) next.set(id, FLAG_SELECTED | (id === active ? FLAG_ACTIVE : 0));
+    if (hovered !== null) next.set(hovered, (next.get(hovered) ?? 0) | FLAG_HOVERED);
+    for (const id of new Set([...this.highlights.keys(), ...next.keys()])) {
+      const bits = next.get(id) ?? 0;
+      if ((this.highlights.get(id) ?? 0) === bits) continue;
+      const layer = this.owner.get(id);
+      const slot = layer?.slots.slotOf(id);
+      if (!layer || slot === undefined) continue;
+      layer.flags.setX(slot, (this.base.get(id) ?? 0) | bits);
+      layer.flags.needsUpdate = true;
+    }
+    this.highlights = next;
+  }
+
+  /** True when any part carries a highlight bit (the outline pass can be skipped otherwise). */
+  hasHighlight(): boolean {
+    for (const bits of this.highlights.values()) if (bits & HIGHLIGHT) return true;
+    return false;
+  }
+
+  /** The part in a mesh slot, for ID-pass decoding. */
+  partAt(mesh: InstancedMesh, slot: number): PartId | undefined {
+    for (const layer of this.layers.values())
+      if (layer.mesh === mesh) return layer.slots.idAt(slot);
+    return undefined;
   }
 
   /** Instances drawn for `type`, or for every type. */
@@ -167,6 +197,8 @@ export class PartsLayer {
     layer.mesh.setMatrixAt(slot, ZERO);
     layer.slots.free(id);
     this.owner.delete(id);
+    this.base.delete(id);
+    this.highlights.delete(id);
   }
 
   private createLayer(type: string, capacity: number): Layer {

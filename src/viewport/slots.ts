@@ -6,6 +6,7 @@ import type { PartId } from '../core/types';
  */
 export class SlotAllocator {
   private readonly slots = new Map<PartId, number>();
+  private readonly ids = new Map<number, PartId>();
   private readonly free_: number[] = [];
   private cap: number;
   private next = 0;
@@ -20,6 +21,7 @@ export class SlotAllocator {
     const slot = this.free_.pop() ?? this.next++;
     while (slot >= this.cap) this.cap *= 2;
     this.slots.set(id, slot);
+    this.ids.set(slot, id);
     return slot;
   }
 
@@ -27,11 +29,17 @@ export class SlotAllocator {
     const slot = this.slots.get(id);
     if (slot === undefined) return;
     this.slots.delete(id);
+    this.ids.delete(slot);
     this.free_.push(slot);
   }
 
   slotOf(id: PartId): number | undefined {
     return this.slots.get(id);
+  }
+
+  /** The part in a slot, if any. */
+  idAt(slot: number): PartId | undefined {
+    return this.ids.get(slot);
   }
 
   get capacity(): number {

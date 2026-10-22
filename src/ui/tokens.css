@@ -382,3 +382,11 @@ button:disabled {
 .nav-axis:hover circle {
   stroke-width: 3.5;
 }
+
+/* Box select */
+.select-box {
+  position: absolute;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  pointer-events: none;
+}

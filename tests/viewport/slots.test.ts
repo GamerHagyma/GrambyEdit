@@ -16,3 +16,10 @@ test('allocating an id twice returns its slot; the high-water mark covers every 
   s.free(5);
   expect([s.size, s.highWater]).toEqual([1, 2]);
 });
+test('idAt maps slots back to parts', () => {
+  const s = new SlotAllocator(2);
+  s.alloc(10);
+  s.alloc(11);
+  s.free(10);
+  expect([s.idAt(0), s.idAt(1)]).toEqual([undefined, 11]);
+});

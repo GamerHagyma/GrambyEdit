@@ -1,11 +1,11 @@
 // The 3D viewport (spec §11): mounts a WebGL2 canvas into the shell and keeps it in sync with the store.
 import { effect } from '@preact/signals';
-import { Box3, Sphere, Vector2, Vector3, type Scene, type WebGLRenderer } from 'three';
+import { Box3, Sphere, Vector2, Vector3 } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { parseShareText } from '../core/share';
 import type { PartId } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, selectionSig } from '../state/selection';
+import { hiddenSig, hoverSig, selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { assetsSig, catalogSig, docSig, loadDoc, viewBus } from '../state/store';
 import { BlenderControls, type NavHost } from './cameras/blender';
@@ -17,23 +17,14 @@ import { createNavGizmo } from './nav-gizmo';
 import { PartsLayer } from './parts-layer';
 import { createRenderer, hasWebGL2 } from './renderer';
 import { createScene } from './scene';
+import { getViewport, setViewport, type ViewportContext } from './context';
+import { Outline } from './outline';
+import { pickPart } from './raycast';
+import { SocketsLayer } from './sockets-layer';
+import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
+import { createSelectTool } from '../tools/select';
 
-export interface ViewportContext {
-  readonly rig: CameraRig;
-  readonly renderer: WebGLRenderer;
-  readonly scene: Scene;
-  readonly canvas: HTMLCanvasElement;
-  layer: PartsLayer | null;
-  request(): void;
-  ndc(e: { clientX: number; clientY: number }): Vector2;
-}
-
-let current: ViewportContext | null = null;
-
-/** The mounted viewport, for picking and tools; null when none is mounted. */
-export function getViewport(): ViewportContext | null {
-  return current;
-}
+export { getViewport };
 
 const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
@@ -59,6 +50,8 @@ function overlay(
   return box;
 }
 
+const selectTool = createSelectTool();
+
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
 export function mountViewport(el: HTMLElement): () => void {
   if (!hasWebGL2()) {
@@ -68,6 +61,7 @@ export function mountViewport(el: HTMLElement): () => void {
     );
     return () => box.remove();
   }
+  registerTool(selectTool);
   let stop = () => {};
   const run = () => {
     stop();
@@ -87,8 +81,21 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const grid = createGrid();
   scene.add(grid.mesh);
   const rig = new CameraRig();
+  const sockets = new SocketsLayer();
+  scene.add(sockets.group);
+  const outline = new Outline();
   let frame = 0;
   let lostBox: HTMLElement | null = null;
+
+  /** Sockets of the hovered part and the selection, rebuilt per frame for constant screen size. */
+  const updateSockets = () => {
+    const cat = catalogSig.value;
+    if (!cat) return;
+    const hover = hoverSig.value;
+    const shown = [...selectionSig.value.parts].filter((id) => !hiddenSig.value.has(id));
+    if (hover !== null && !shown.includes(hover)) shown.unshift(hover);
+    sockets.update(docSig.value, posesSig.value, cat, shown, rig, settingsSig.value.maxSockets);
+  };
 
   const render = () => {
     frame = 0;
@@ -96,7 +103,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     grid.update(rig.target, rig.distance);
     follow(rig.camera);
     gizmo.update(rig.camera);
+    updateSockets();
     renderer.render(scene, rig.camera);
+    if (ctx.layer) outline.render(renderer, ctx.layer, rig.camera);
   };
   const request = () => {
     if (!frame && !lostBox) frame = requestAnimationFrame(render);
@@ -113,8 +122,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     );
   };
 
-  const ctx: ViewportContext = { rig, renderer, scene, canvas, layer: null, request, ndc };
-  current = ctx;
+  const ctx: ViewportContext = { rig, renderer, scene, canvas, layer: null, sockets, request, ndc };
+  setViewport(ctx);
 
   const resize = () => {
     const r = el.getBoundingClientRect();
@@ -159,7 +168,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     settings: () => settingsSig.value,
     request,
     ndc,
-    pivotAt: () => null,
+    pivotAt: (at) => pickPart(at)?.point ?? null,
     frameSelection: () => {
       const sel = selectionSig.value.parts;
       frameParts(sel.size > 0 ? sel : null);
@@ -170,15 +179,43 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const studio = new StudioControls(host);
   const controls = () => (settingsSig.value.cameraScheme === 'studio' ? studio : blender);
 
+  const toTool = (e: PointerEvent, kind: ToolPointer['kind'], button: number): ToolPointer => ({
+    kind,
+    button,
+    x: e.clientX,
+    y: e.clientY,
+    ndc: ndc(e),
+    shift: e.shiftKey,
+    ctrl: e.ctrlKey || e.metaKey,
+    alt: e.altKey,
+  });
   const onPointerDown = (e: PointerEvent) => {
     canvas.focus({ preventScroll: true });
-    controls().onPointerDown(e);
+    if (controls().onPointerDown(e) || e.button !== 0) return;
+    canvas.setPointerCapture(e.pointerId);
+    toolPointer(toTool(e, 'down', 0));
+    const move = (ev: PointerEvent) => toolPointer(toTool(ev, 'move', 0));
+    const up = (ev: PointerEvent) => {
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerup', up);
+      canvas.removeEventListener('pointercancel', up);
+      toolPointer(toTool(ev, 'up', 0));
+    };
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', up);
+  };
+  const onHover = (e: PointerEvent) => {
+    if (e.buttons === 0) toolPointer(toTool(e, 'move', -1));
+  };
+  const onLeave = () => {
+    if (hoverSig.value !== null) hoverSig.value = null;
   };
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
   const onKeyDown = (e: KeyboardEvent) => {
     if (isTyping(e.target) || document.querySelector('.dialog-backdrop')) return;
-    if (controls().onKeyDown(e)) e.preventDefault();
+    if (controls().onKeyDown(e) || toolKey(e)) e.preventDefault();
   };
   const onKeyUp = (e: KeyboardEvent) => studio.onKeyUp(e);
   const onBlur = () => studio.releaseAll();
@@ -189,6 +226,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     lostBox = overlay(el, 'The 3D view stopped.', { label: 'Reload view', run: reload });
   };
   canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onHover);
+  canvas.addEventListener('pointerleave', onLeave);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('contextmenu', onContextMenu);
   canvas.addEventListener('webglcontextlost', onLost);
@@ -212,7 +251,6 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const assets = assetsSig.value;
     const doc = docSig.value;
     const poses = posesSig.value;
-    const selected = selectionSig.value.parts;
     const hidden = hiddenSig.value;
     const s = settingsSig.value;
     grid.setTheme(s.theme);
@@ -224,7 +262,14 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       ctx.layer = new PartsLayer(assets);
       scene.add(ctx.layer.group);
     }
-    ctx.layer?.sync(doc, poses, hidden, selected, s.desaturateApprox);
+    ctx.layer?.sync(doc, poses, hidden, s.desaturateApprox);
+    request();
+  });
+  const stopHighlight = effect(() => {
+    const { parts, active } = selectionSig.value;
+    const hover = hoverSig.value;
+    if (!assetsSig.value) return;
+    ctx.layer?.highlight(parts, hover, typeof active === 'number' ? active : null);
     request();
   });
 
@@ -267,13 +312,18 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       distance: +rig.distance.toFixed(3),
       ortho: rig.isOrtho,
     }),
-    pick: () => null,
+    pick(x, y) {
+      const hit = pickPart(ndc({ clientX: x, clientY: y }));
+      return hit && { part: hit.part, subPart: hit.subPart };
+    },
   });
 
   return () => {
     cancelAnimationFrame(frame);
     observer.disconnect();
     canvas.removeEventListener('pointerdown', onPointerDown);
+    canvas.removeEventListener('pointermove', onHover);
+    canvas.removeEventListener('pointerleave', onLeave);
     canvas.removeEventListener('wheel', onWheel);
     canvas.removeEventListener('contextmenu', onContextMenu);
     canvas.removeEventListener('webglcontextlost', onLost);
@@ -282,16 +332,19 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     window.removeEventListener('blur', onBlur);
     offView();
     stopSync();
+    stopHighlight();
     offDebug();
     studio.dispose();
     blender.dispose();
     gizmo.dispose();
     ctx.layer?.dispose();
+    sockets.dispose();
+    outline.dispose();
     grid.mesh.geometry.dispose();
     (grid.mesh.material as { dispose(): void }).dispose();
     renderer.dispose();
     canvas.remove();
     lostBox?.remove();
-    if (current === ctx) current = null;
+    if (getViewport() === ctx) setViewport(null);
   };
 }
