@@ -1,5 +1,6 @@
 // The document store: the doc, its undo history and the catalog (spec §4). Every edit goes through commit().
 import { batch, computed, signal, type ReadonlySignal } from '@preact/signals';
+import type { Assets } from '../assets/geometry';
 import type { Catalog } from '../core/catalog-types';
 import { transact, type Draft, type Patch } from '../core/ops/transact';
 import {
@@ -13,6 +14,8 @@ import { clearSelection, resetSelectionForTests, sanitizeSelection } from './sel
 
 export const docSig = signal<Doc>(EMPTY_DOC);
 export const historySig = signal<History>(emptyHistory());
+/** The loaded mesh pack and catalog; null until `loadAssets` resolves. */
+export const assetsSig = signal<Assets | null>(null);
 export const baseCatalogSig = signal<Catalog | null>(null);
 /** Socket Workbench captures, applied live on top of the shipped catalog. */
 export const socketOverridesSig = signal<SocketGeometryFile>(emptySocketGeometry());
@@ -89,6 +92,7 @@ export function resetStoreForTests(): void {
   batch(() => {
     docSig.value = EMPTY_DOC;
     historySig.value = emptyHistory();
+    assetsSig.value = null;
     baseCatalogSig.value = null;
     socketOverridesSig.value = emptySocketGeometry();
     resetSelectionForTests();

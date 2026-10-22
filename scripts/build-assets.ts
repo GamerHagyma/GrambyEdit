@@ -94,7 +94,7 @@ function readConventions(path: string): Conventions {
 export async function buildAssets(opts: {
   root: string;
   outDir: string | null;
-}): Promise<{ catalog: Catalog; manifest: Manifest; bin: Uint8Array }> {
+}): Promise<{ catalog: Catalog; manifest: Manifest; bin: Uint8Array<ArrayBuffer> }> {
   const at = (p: string) => join(opts.root, p);
   const readText = (p: string) => readFileSync(at(p), 'utf8');
   const readJson = <T>(p: string): T => JSON.parse(readText(p)) as T;

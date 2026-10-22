@@ -30,7 +30,7 @@ export function groupsOf(mesh: ObjMesh): readonly ObjGroup[] {
 export function packMeshes(inputs: readonly PackInput[]): {
   sections: Manifest['sections'];
   meshes: MeshEntry[];
-  bin: Uint8Array;
+  bin: Uint8Array<ArrayBuffer>;
 } {
   const pos: number[] = [];
   const nrm: number[] = [];
