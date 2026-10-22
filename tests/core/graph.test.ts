@@ -7,7 +7,7 @@ import {
   wouldCreatePoseCycle,
   roots,
 } from '../../src/core/graph';
-import { docOf, part, sock } from '../helpers/doc';
+import { docOf, part, sock, mount, pt } from '../helpers/doc';
 test('poseDescendants follows first connections only', () => {
   const d = docOf(
     part(1, 'Connector'),
@@ -75,4 +75,13 @@ test('a loop island with a joint into the posed build is anchored, not a pseudo-
   expect([...poseAnchors(d)]).toEqual([[2, 1]]);
   expect(p.order).toEqual([1, 2, 3]);
   expect([...poseDescendants(d, 1)].sort()).toEqual([2, 3]);
+});
+
+test('joint-connected includes ephemeral mounts, both ways', () => {
+  const d = docOf(
+    part(1, 'Base', [], {}, [pt('{a}')]),
+    part(2, 'Part', [mount('1', 1, '{a}')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+  );
+  expect([...component(d, 3, () => true)].sort()).toEqual([1, 2, 3]);
 });

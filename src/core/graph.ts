@@ -1,5 +1,5 @@
 // Graph queries over a Doc (spec §8). Reverse maps and pose order are memoised per Doc; Docs are immutable.
-import type { Conn, Doc, Part, PartId } from './types';
+import type { Doc, Part, PartId } from './types';
 
 export interface ConnRef {
   readonly child: PartId;
@@ -89,21 +89,17 @@ export function poseDescendants(doc: Doc, id: PartId): Set<PartId> {
   return found;
 }
 
-/** Parts joined to `id` by a socket joint, in either direction. Mounts on points are not joints. */
+/**
+ * Parts physically attached to `id`, in either direction: socket joints and ephemeral mounts (a mount
+ * welds the part to its host in game). Used by "select joint-connected" (Ctrl+L) and bucket paint.
+ */
 export function jointNeighbours(doc: Doc, id: PartId): Set<PartId> {
   const found = new Set<PartId>();
-  for (const conn of doc.parts.get(id)?.conns ?? []) {
-    if (conn.target.kind === 'socket' && doc.parts.has(conn.target.part))
-      found.add(conn.target.part);
+  for (const { target } of doc.parts.get(id)?.conns ?? []) {
+    if (target.kind !== 'raw' && doc.parts.has(target.part)) found.add(target.part);
   }
-  for (const ref of graphIndex(doc).targetsOf.get(id) ?? []) {
-    if (connAt(doc, ref).target.kind === 'socket') found.add(ref.child);
-  }
+  for (const ref of graphIndex(doc).targetsOf.get(id) ?? []) found.add(ref.child);
   return found;
-}
-
-function connAt(doc: Doc, ref: ConnRef): Conn {
-  return doc.parts.get(ref.child)!.conns[ref.index];
 }
 
 /** Flood fill over joints from `start`, spreading only into parts that match `pred`. `start` is always included. */
