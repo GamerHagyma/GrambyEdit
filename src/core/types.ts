@@ -40,7 +40,7 @@ export interface Point {
 export interface Part {
   readonly id: PartId;
   readonly type: string;
-  /** `conns[0]` decides the pose. */
+  /** The first `socket` or `point` conn decides the pose; raw conns are skipped. */
   readonly conns: readonly Conn[];
   /** Every prop except `EphemeralAttachments`, key order kept. */
   readonly props: Readonly<Record<string, Json>>;

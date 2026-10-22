@@ -274,7 +274,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 | # | rule |
 |---|---|
 | F1 | Entry order is preserved; new parts are appended; deletions compact the order and every index is recomputed on export |
-| F2 | Connection order within an entry is preserved (`conns[0]` sets the pose) |
+| F2 | Connection order within an entry is preserved. The first `socket`/`point` conn sets the pose; raw conns are skipped (7 corpus parts have a self-joint first, then real joints) |
 | F3 | Socket ids are read as str or int and stored as strings (ints become their decimal string; strings stay verbatim); exported as strings; parent index exported as int |
 | F4 | `props` `[]` and `{}` both mean empty and export as `[]` |
 | F5 | Unknown prop keys and values, nested objects included, survive verbatim |
