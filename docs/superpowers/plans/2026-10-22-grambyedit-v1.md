@@ -994,6 +994,7 @@ Unknown types accept any socket id.
 - `I-RELAY-UNMOUNTED` covers `Wire` and `Splitter_1`–`Splitter_4` without a point-target conn.
 - `I-ROLE` covers socket joints whose two roles are both input or both output.
 - `W-PART-LIMIT` says `beyond tested` past `partWarn`.
+- **Self-joints** (ruling 2026-10-22, from corpus evidence): a `raw` conn whose triple is `[a, b, ownIndex]` with integer-or-string ids is a self-joint. It raises `I-SELF-JOINT` (info, one issue per part: `${type} (#${index}) has ${n} joint(s) to its own sockets: kept as-is.`), never `E-REF`. `isSocketUsed` counts both `a` and `b` as used. Every other `raw` conn raises `E-REF`. The corpus test also asserts that no corpus build gets an `E-REF` from a self-joint.
 
 - [ ] **Step 1: Write the failing tests.**
 

@@ -294,7 +294,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 
 **Pieces:** `piece(type, socket)` comes from the catalog. A socket without a piece entry is its own piece. Partner faces are the other sockets of the same piece.
 
-**A socket is "used"** on part X if it is the `self` of one of X's conns, or another part has a conn targeting `{X, socket}`.
+**A socket is "used"** on part X if it is the `self` of one of X's conns, or another part has a conn targeting `{X, socket}`. A self-joint (a raw conn `[a, b, own index]`, see I-SELF-JOINT) uses both `a` and `b`.
 
 **A part is "mounted via socket a"** if a conn of X has `self = a` and a `point` target.
 
@@ -315,7 +315,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 
 | code | severity | condition |
 |---|---|---|
-| E-REF | error | `raw` conn; or target missing; or self-reference |
+| E-REF | error | `raw` conn whose parent index is not an in-range integer, or whose ids are malformed; or target missing |
 | E-UUID | error | `point` target not declared by the host |
 | E-MATE | error | a socket number in two joints on one part (either side) |
 | E-TEAR | error | an ephemeral mount plus any joint on the same piece |
@@ -329,6 +329,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 | I-NO-ANCHOR | info | > 200 parts and no `Anchor` with `Activated: true` (spec §8.3) |
 | I-RELAY-UNMOUNTED | info | `Wire`/`Splitter_n` without an ephemeral mount (spec §8.1 — it dangles) |
 | I-ROLE | info | a joint between two outputs or two inputs (after the §5.4 fix) |
+| I-SELF-JOINT | info | a joint from a part to one of its own sockets (`raw`, parent index = own index). Made in game: 79 such joints in 18 of the 185 corpus builds (mostly `Splitter_2.5>Splitter_2.4` and `Switch.3>Switch.2`). Kept verbatim, not posed, and not an error |
 
 Export with errors opens a blocking dialog that lists them, with "Export anyway". Each issue has a click-to-select action, and quick fixes where they are safe: remove unused points, remove a duplicate joint.
 

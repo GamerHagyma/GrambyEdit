@@ -74,7 +74,8 @@ export type IssueCode =
   | 'I-POINT-UNUSED'
   | 'I-NO-ANCHOR'
   | 'I-RELAY-UNMOUNTED'
-  | 'I-ROLE';
+  | 'I-ROLE'
+  | 'I-SELF-JOINT';
 
 export interface Issue {
   readonly code: IssueCode;
