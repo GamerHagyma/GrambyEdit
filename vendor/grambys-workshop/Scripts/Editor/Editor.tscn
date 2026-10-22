@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Scripts/FreeCam/FreeCam.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Scripts/Editor/Editor.cs" type="Script" id=2]
+[ext_resource path="res://Scripts/GrambyObjects/Part/Part.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Scripts/UI/UI.tscn" type="PackedScene" id=4]
+[ext_resource path="res://panorama_image.png" type="Texture" id=6]
+
+[sub_resource type="PanoramaSky" id=1]
+panorama = ExtResource( 6 )
+
+[sub_resource type="Environment" id=2]
+background_mode = 2
+background_sky = SubResource( 1 )
+background_color = Color( 0.635294, 0.635294, 0.635294, 1 )
+ambient_light_color = Color( 1, 1, 1, 1 )
+dof_blur_far_distance = 5.0
+dof_blur_far_amount = 0.05
+dof_blur_far_quality = 2
+
+[node name="Editor" type="Node"]
+script = ExtResource( 2 )
+
+[node name="FreeCam" parent="." instance=ExtResource( 1 )]
+Sensitivity = 0.25
+
+[node name="Part" parent="." instance=ExtResource( 3 )]
+
+[node name="Part" parent="Part/5" index="3" instance=ExtResource( 3 )]
+
+[node name="UI" parent="." instance=ExtResource( 4 )]
+mouse_filter = 2
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 2 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 0.719612, 0.511763, 0.469316, -0.683529, 0.403071, 0.608541, 0.122261, -0.758704, 0.63986, 0, 5.52658, 0 )
+
+[node name="DirectionalLight2" type="DirectionalLight" parent="."]
+transform = Transform( -0.292826, 0.824696, -0.483869, 0.466484, -0.318523, -0.825189, -0.834653, -0.467354, -0.291436, 0, 5.52658, 0 )
+
+[editable path="Part"]

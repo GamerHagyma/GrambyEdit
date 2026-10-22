@@ -1,0 +1,1109 @@
+# RtG Build Format
+
+> **Hecho por:** @JuanCrakYT
+> **Documento:** Especificación Técnica de Formato de Guardado (Ingeniería Inversa)  
+> **Juego Objetivo:** Road To Gramby's (Roblox)  
+> **Versión de la Especificación:** v1.02
+> **Estado:** Documento Experimental / No Oficial  
+
+# Catálogo de IDs de Puntos de Conexión
+> **Hecho por:** @JuanCrakYT
+Este documento cataloga el significado del **PuntoPadre** de las conexiones de cada objeto.
+
+Formato de una conexión:
+```json
+["TipoLocal", "PuntoPadre", ÍndicePadre]
+```
+Ejemplo:
+```json
+["1", "24", 15]
+```
+donde:
+
+- TipoLocal = Número utilizado por RtG para identificar el tipo de objeto local de la conexión.
+- PuntoPadre = ID del punto de conexión del objeto padre.
+- ÍndicePadre = Índice del objeto al que está conectado.
+> **Nota:** Se ha observado que cada tipo de objeto utiliza un `TipoLocal` determinado, a excepción de algunos que **NO tienen `TipoLocal`**.
+```md
+Chassis
+Ramp
+Tooth
+etc...
+``` 
+> **Aviso:** Se desconoce el significado interno exacto de estos números y cómo los utiliza el juego.
+---
+
+## Objetivo
+
+Asignar un nombre y una posición a cada ID de conexión de cada objeto.
+
+Esto permitirá:
+
+- Crear builds automáticamente.
+- Conectar piezas sin Roblox Studio.
+- Generar vehículos completos.
+- Crear un editor visual.
+- Detectar conexiones inválidas.
+
+---
+
+## Convenciones
+> **Hecho por:** @JuanCrakYT
+Cada objeto tendrá su propia sección.
+
+Cada punto deberá documentarse con:
+
+| ID  | Nombre | Descripción |
+| --- | ------ | ----------- |
+
+Si el nombre oficial no existe, utilizar uno descriptivo.
+
+Ejemplo:
+
+| ID  | Nombre            | Descripción               |
+| --- | ----------------- | ------------------------- |
+| 1   | Front Left Wheel  | Rueda delantera izquierda |
+| 2   | Front Right Wheel | Rueda delantera derecha   |
+
+### Convenciones 1.1
+
+#### ID
+Número utilizado por RtG para identificar un punto de conexión.
+
+#### TipoLocal
+
+Número utilizado por RtG para identificar el tipo de objeto local asociado a una conexión.
+
+Cada tipo de objeto observado tiene un `TipoLocal` determinado.
+
+El significado interno de estos números y el mecanismo exacto mediante el cual el juego los utiliza no han sido determinados.
+
+#### Nombre
+Nombre descriptivo del punto de conexión.
+
+Ejemplos:
+
+- Wheel_FL
+- Wheel_FR
+- Roof
+- Hood
+- Engine
+- Seat_Driver
+
+#### Lado
+
+Utilizar únicamente los siguientes valores:
+
+- Front
+- Back
+- Left
+- Right
+- Front Left
+- Front Right
+- Back Left
+- Back Right
+- Side Left
+- Side Right
+- Top
+- Top Left
+- Top Right
+- Bottom
+- Bottom Left
+- Bottom Right
+- Center
+- Inside
+- Outside
+- Unknown
+
+#### Descripción
+
+Explica brevemente qué objeto suele conectarse ahí.
+
+Ejemplo:
+
+"Conecta la rueda delantera izquierda."
+
+---
+
+## Metodología
+> **Hecho por:** @JuanCrakYT
+Para identificar un ID:
+
+1. Pintar el objeto con un color único.
+2. Exportar la build.
+3. Asociar el color con el ID observado.
+4. Repetir para todos los IDs del objeto.
+5. Confirmar el resultado reconstruyendo la build.
+6. Validar el ID conectando el objeto a diferentes padres compatibles para confirmar que el punto pertenece al objeto y no al padre.
+
+Cuando existan objetos simétricos (ruedas, luces, asientos, etc.), utilizar colores distintos para identificar izquierda, derecha, delantero y trasero.
+
+---
+
+## Lista de todos los objetos:
+> **Hecho por:** @JuanCrakYT
+1. AltitudeSensor
+2. Anchor
+3. Arm
+4. Balloon
+5. BallSocket
+6. Base
+7. BeachBall
+8. BeachChair
+9. Bearing
+10. Board
+11. BouncyBall
+12. BowlingBall
+13. BrakeLight
+14. Briefcase
+15. Bumper
+16. Button
+17. Camera
+18. Cannon
+19. CannonBall
+20. Canister
+21. Carrot
+22. Chassis
+23. Cinderblock
+24. Clipboard
+25. Cone
+26. Connector
+27. ConnectorBall
+28. Delayer
+29. Detacher
+30. DoorA
+31. DoorB
+32. DoorC
+33. DoorD
+34. EntitySensor
+35. FishBowl
+36. FuelTank
+37. GasCap
+38. Gate-AND
+39. Gate-NOT
+40. Gate-OR
+41. GlassBase
+42. GoldPotatoEngine
+43. Googie
+44. Gramby
+45. Grenade
+46. Guitar
+47. Gyro
+48. HalfConnectorBall
+49. Hood
+50. HulaDoll
+51. InputSensor
+52. Joint
+53. Joust
+54. Jug
+55. Keyboard
+56. Leafblower
+57. Leg
+58. Light
+59. Lock
+60. Looper
+61. LongStick
+62. Mag
+63. MatchingGyro
+64. MountedGun
+65. Note
+66. Part
+67. Pie
+68. Pipes
+69. Piston
+70. Plunger
+71. Poop
+72. PotatoEngine
+73. PressurePlate
+74. Propeller
+75. Radio
+76. Ramp
+77. Recorder
+78. RemoteButton
+79. RPG
+80. RiotShield
+81. RockingChair
+82. Rocket
+83. Roof
+84. Rope
+85. RubberBand
+86. Seat
+87. Servo
+88. Servo_Physics
+89. ShortStick
+90. ShoppingCart
+91. Shotgun
+92. Sledge
+93. SprayPaint
+94. Sprite
+95. Spoiler
+96. SpringJuice
+97. Splitter_1
+98.  Splitter_2
+99.  Splitter_3
+100. Splitter_4
+101. StaringGyro
+102. SteeringGyro
+103. SteeringWheel
+104. Stick
+105. Switch
+106. Thruster
+107. Tire
+108. Toilet
+109. ToolGun
+110. Tooth
+111. TripWire
+112. Trunk
+113. Uzi
+114. VelocitySensor
+115. Wheel
+116. Wire
+117. WoodenChair
+118. wad
+119. Head
+120. Body
+121. Fricklet
+122. SuperPowerClock
+123. YibYib
+---
+
+## Objetos con puntos de conexión propios
+> Aquí encontraras el "PuntoPadre" de cada objeto
+> **Hecho por:** @JuanCrakYT
+
+### 1. Chassis
+
+Cantidad de IDs encontrados: 26
+
+| ID  | Nombre            | Lado         | Descripción                                   |
+| --- | ----------------- | ------------ | --------------------------------------------- |
+| 1   | Wheel_FL          | Front Left   | Anclaje de la rueda delantera izquierda.      |
+| 2   | PassengerSteering | Front Right  | Punto para un volante en el asiento copiloto. |
+| 3   | Hood              | Front        | Anclaje del capó.                             |
+| 4   | Wheel_FR          | Front Right  | Anclaje de la rueda delantera derecha.        |
+| 5   | Wheel_BL          | Back Left    | Anclaje de la rueda trasera izquierda.        |
+| 6   | Wheel_BR          | Back Right   | Anclaje de la rueda trasera derecha.          |
+| 7   | Roof              | Top          | Anclaje del techo.                            |
+| 8   | Headlight_R       | Front Right  | Anclaje de la luz delantera derecha.          |
+| 9   | SideAux_B         | Side Right   | Punto auxiliar ubicado en un lateral.         |
+| 10  | SteeringWheel     | Front Center | Anclaje del volante.                          |
+| 11  | BrakeLight_R      | Back Right   | Anclaje de la luz trasera derecha.            |
+| 12  | Trunk             | Back Center  | Anclaje del maletero.                         |
+| 13  | DriverSeat        | Front Left   | Asiento del conductor.                        |
+| 14  | PassengerSeat     | Front Right  | Asiento del copiloto.                         |
+| 15  | BrakeLight_L      | Back Left    | Anclaje de la luz trasera izquierda.          |
+| 16  | SideAux_A         | Side Left    | Punto auxiliar ubicado en un lateral.         |
+| 17  | Headlight_L       | Front Left   | Anclaje de la luz delantera izquierda.        |
+| 18  | RearSeat_L        | Back Left    | Asiento trasero izquierdo.                    |
+| 19  | TrunkAux_A        | Back Left    | Punto auxiliar ubicado en el maletero.        |
+| 20  | GasCap            | Back Left    | Anclaje de la tapa del combustible.           |
+| 21  | TrunkAux_B        | Back Right   | Punto auxiliar ubicado en el maletero.        |
+| 22  | RearBumper        | Back         | Anclaje del parachoques trasero.              |
+| 23  | FrontBumper       | Front        | Anclaje del parachoques delantero.            |
+| 24  | Engine            | Front Center | Anclaje del motor.                            |
+| 25  | RearSeat_R        | Back Right   | Asiento trasero derecho.                      |
+| 26  | Gyro              | Center       | Anclaje del giroscopio (Gyro).                |
+
+### 2. Wheel
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre       | Lado   | Descripción                                  |
+| --- | ------------ | ------ | -------------------------------------------- |
+| 1   | ChassisMount | Center | Punto de conexión de la rueda con el chasis. |
+
+---
+
+### 3. Tire
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado   | Descripción                                                 |
+| --- | ---------- | ------ | ----------------------------------------------------------- |
+| 1   | WheelMount | Center | Punto de conexión de la llanta con una rueda u otro objeto. |
+
+---
+
+### 4. Bumper
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre       | Lado | Descripción                                      |
+| --- | ------------ | ---- | ------------------------------------------------ |
+| 1   | ChassisMount | Top  | Punto de conexión del parachoques con el chasis. |
+
+---
+
+### 5. Hood
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre       | Lado  | Descripción                               |
+| --- | ------------ | ----- | ----------------------------------------- |
+| 1   | ChassisMount | Front | Punto de conexión del capó con el chasis. |
+
+---
+
+### 6. Trunk
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre       | Lado  | Descripción                                   |
+| --- | ------------ | ----- | --------------------------------------------- |
+| 1   | ChassisMount | Front | Punto de conexión del maletero con el chasis. |
+
+### 7. Cannon
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado | Descripción                                  |
+| --- | ---------- | ---- | -------------------------------------------- |
+| 1   | MountPoint | Top  | Punto de conexión del cañón con otro objeto. |
+
+---
+
+### 8. Propeller
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                     |
+| --- | ---------- | ------- | ----------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión de la hélice con otro objeto. |
+
+---
+
+### 9. Bearing
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre       | Lado   | Descripción                                                                  |
+| --- | ------------ | ------ | ---------------------------------------------------------------------------- |
+| 1   | RotationAxis | Center | Punto de conexión utilizado para colocar un spinner en un sistema de ruedas. |
+
+---
+
+### 10. Wing
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                |
+| --- | ---------- | ------- | ------------------------------------------ |
+| 1   | MountPoint | Unknown | Punto de conexión del ala con otro objeto. |
+
+### 11. ShortStick
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado | Descripción                                       |
+| --- | ---------- | ---- | ------------------------------------------------- |
+| 1   | MountPoint | Top  | Punto de conexión del palo corto con otro objeto. |
+
+---
+
+### 12. Stick
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado | Descripción                                 |
+| --- | ---------- | ---- | ------------------------------------------- |
+| 1   | MountPoint | Top  | Punto de conexión del palo con otro objeto. |
+
+---
+
+### 13. LongStick
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado | Descripción                                       |
+| --- | ---------- | ---- | ------------------------------------------------- |
+| 1   | MountPoint | Top  | Punto de conexión del palo largo con otro objeto. |
+
+---
+
+### ???
+
+Cantidad de IDs encontrados: ???
+
+---
+
+### 15. Spoiler
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                    |
+| --- | ---------- | ------- | ---------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión del spoiler con otro objeto. |
+
+---
+
+### 16. Leg
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                     |
+| --- | ---------- | ------- | ----------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión de la pierna con otro objeto. |
+
+---
+
+### 17. Button
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                  |
+| --- | ------ | ------- | -------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del botón con otro objeto. |
+
+---
+
+### 18. InputSensor
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                              |
+| --- | ------ | ------- | -------------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del sensor de entrada con otro objeto. |
+
+---
+
+### 19. AltitudeSensor
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                             |
+| --- | ------ | ------- | ------------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del sensor de altura con otro objeto. |
+
+---
+
+### 20. VelocitySensor
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                                |
+| --- | ------ | ------- | ---------------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del sensor de velocidad con otro objeto. |
+
+---
+
+### 21. Switch
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                        |
+| --- | ------ | ------- | -------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del interruptor con otro objeto. |
+
+---
+
+### 22. TripWire
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                         |
+| --- | ---------- | ------- | --------------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión del cable trampa con otro objeto. |
+
+---
+
+### 23. RemoteButton
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                         |
+| --- | ------ | ------- | --------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión del botón remoto con otro objeto. |
+
+---
+
+### 24. PressurePlate
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado    | Descripción                                               |
+| --- | ------ | ------- | --------------------------------------------------------- |
+| 1   | Output | Unknown | Punto de conexión de la placa de presión con otro objeto. |
+
+---
+
+### 25. Detacher
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                      |
+| --- | ---------- | ------- | ------------------------------------------------ |
+| 1   | MountPoint | Unknown | Punto de conexión del separador con otro objeto. |
+
+---
+
+### 26. RPG
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                |
+| --- | ---------- | ------- | ------------------------------------------ |
+| 1   | MountPoint | Unknown | Punto de conexión del RPG con otro objeto. |
+
+### 27. StaringGyro
+
+Cantidad de IDs encontrados: 2
+
+| ID  | Nombre | Lado  | Descripción                                  |
+| --- | ------ | ----- | -------------------------------------------- |
+| 2   | Front  | Front | Punto de conexión delantero del StaringGyro. |
+| 3   | Back   | Back  | Punto de conexión trasero del StaringGyro.   |
+
+### 28. Piston
+
+Cantidad de IDs encontrados: 3
+
+| ID  | Nombre    | Lado  | Descripción                                           |
+| --- | --------- | ----- | ----------------------------------------------------- |
+| 1   | PushEnd   | Front | Punto donde el pistón realiza el empuje o movimiento. |
+| 3   | Side_Red  | Back  | Punto de conexión del lado rojo del pistón.           |
+| 4   | Side_Blue | Front | Punto de conexión del lado azul del pistón.           |
+
+> Nota:
+
+>> El color verde parece ser el extremo móvil (`PushEnd`), no una entrada.
+>> Los puntos 3 y 4 son los extremos fijos/entradas del pistón y tienen orientación opuesta.
+
+### 29. Servo
+
+Cantidad de IDs encontrados: 3
+
+| ID  | Nombre       | Lado   | Descripción                                            |
+| --- | ------------ | ------ | ------------------------------------------------------ |
+| 2   | RotationAxis | Center | Punto del eje de giro del servo.                       |
+| 3   | Side_Red     | Left   | Punto lateral del servo identificado por el lado rojo. |
+| 4   | Side_Blue    | Right  | Punto lateral del servo identificado por el lado azul. |
+
+> Notas:
+
+>> El ID 2 parece ser el punto funcional principal, ya que está asociado al eje que gira.
+>> Los IDs 3 y 4 parecen ser puntos de montaje opuestos, similares a los del `Piston`.
+
+### 30. Servo_Physics
+
+Cantidad de IDs encontrados: 3
+
+| ID  | Nombre       | Lado   | Descripción                                                   |
+| --- | ------------ | ------ | ------------------------------------------------------------- |
+| 2   | RotationAxis | Center | Punto del eje de movimiento del servo físico.                 |
+| 3   | Side_Red     | Left   | Punto lateral del servo físico identificado por el lado rojo. |
+| 4   | Side_Blue    | Right  | Punto lateral del servo físico identificado por el lado azul. |
+
+> Notas:
+
+>> Tiene la misma distribución que `Servo`.
+>>> La diferencia es que `Servo_Physics` utiliza simulación física (`Backwards`, `Forwards`, `Rest`) mientras que `Servo` parece ser el servo estándar.
+>>El ID 2 corresponde al elemento que gira/mueve.
+>>>Los IDs 3 y 4 son los puntos de montaje laterales.
+
+### 31. Anchor
+
+Cantidad de IDs encontrados: 4
+
+| ID  | Nombre      | Lado         | Descripción                                                 |
+| --- | ----------- | ------------ | ----------------------------------------------------------- |
+| 2   | TopLeft     | Top Left     | Punto de conexión ubicado arriba a la izquierda del Anchor. |
+| 3   | TopRight    | Top Right    | Punto de conexión ubicado arriba a la derecha del Anchor.   |
+| 4   | BottomLeft  | Bottom Left  | Punto de conexión ubicado abajo a la izquierda del Anchor.  |
+| 5   | BottomRight | Bottom Right | Punto de conexión ubicado abajo a la derecha del Anchor.    |
+
+> Notas:
+
+>> El `Anchor` utiliza una distribución de 4 puntos formando una matriz de esquinas.
+>>> No tiene un punto central.
+
+### 32. BallSocket
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                                    |
+| --- | ---------- | ------- | -------------------------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión de la articulación esférica con otro objeto. |
+
+> Notas:
+
+>> `BallSocket` solo tiene un punto propio confirmado.
+>> El punto parece funcionar como el punto principal donde se conecta la articulación, similar a `Joint`, pero con movimiento esférico.
+
+### 33. MatchingGyro
+
+Cantidad de IDs encontrados: 5
+
+| ID  | Nombre      | Lado   | Descripción                                                                  |
+| --- | ----------- | ------ | ---------------------------------------------------------------------------- |
+| 1   | HandleMount | Center | Punto de conexión donde se coloca el mango o eje principal del MatchingGyro. |
+| 4   | Right       | Right  | Punto de conexión ubicado en el lado derecho del MatchingGyro.               |
+| 5   | Top         | Top    | Punto de conexión ubicado en la parte superior del MatchingGyro.             |
+| 6   | Left        | Left   | Punto de conexión ubicado en el lado izquierdo del MatchingGyro.             |
+| 7   | Back        | Back   | Punto de conexión ubicado en la parte trasera del MatchingGyro.              |
+| 8   | Front       | Front  | Punto de conexión ubicado en la parte delantera del MatchingGyro.            |
+
+
+> Notas:
+
+>> Los nombres técnicos utilizados son: `HandleMount`, `Right`, `Top`, `Back` y `Front`.
+>> El ID 1 corresponde al mango donde se monta el MatchingGyro.
+
+### 34. Uzi
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre   | Lado    | Descripción                                 |
+| --- | -------- | ------- | ------------------------------------------- |
+| 1   | MagInput | Unknown | Punto donde se conecta el cargador (`Mag`). |
+
+> Notas:
+
+>> La `Uzi` utiliza un único punto de conexión para el cargador.
+>> El objeto `Mag` se conecta al ID 1 de la `Uzi`.
+>> No se han identificado otros puntos de conexión propios.
+
+### 35. Briefcase
+
+Cantidad de IDs encontrados: 4
+
+| ID  | Nombre | Lado   | Descripción                                                 |
+| --- | ------ | ------ | ----------------------------------------------------------- |
+| 1   | Front  | Front  | Punto de conexión ubicado en la parte frontal del maletín.  |
+| 2   | Center | Center | Punto de conexión ubicado en el centro del maletín.         |
+| 3   | Left   | Left   | Punto de conexión ubicado en el lado izquierdo del maletín. |
+| 4   | Right  | Right  | Punto de conexión ubicado en el lado derecho del maletín.   |
+
+> Notas:
+
+>> `Briefcase` posee cuatro puntos de conexión distribuidos alrededor del objeto.
+>> El ID 2 corresponde al punto central, mientras que los demás representan las caras frontal, izquierda y derecha.
+
+### 36. FuelTank
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre     | Lado    | Descripción                                             |
+| --- | ---------- | ------- | ------------------------------------------------------- |
+| 1   | MountPoint | Unknown | Punto de conexión del tanque de fluido con otro objeto. |
+
+> Notas:
+
+>> `FuelTank` posee un único punto de conexión propio.
+>> Se utiliza para montar el tanque sobre otro objeto.
+
+### 37. EntitySensor
+
+Cantidad de IDs encontrados: 6
+
+| ID  | Nombre      | Lado        | Descripción                                                         |
+| --- | ----------- | ----------- | ------------------------------------------------------------------- |
+| 1   | BackLeft    | Back Left   | Punto de conexión ubicado en la parte trasera izquierda del sensor. |
+| 2   | BackRight   | Back Right  | Punto de conexión ubicado en la parte trasera derecha del sensor.   |
+| 3   | BackCenter  | Back        | Punto de conexión ubicado en la parte trasera central del sensor.   |
+| 4   | FrontCenter | Front       | Punto de conexión ubicado en la parte frontal central del sensor.   |
+| 5   | FrontRight  | Front Right | Punto de conexión ubicado en la parte frontal derecha del sensor.   |
+| 6   | FrontLeft   | Front Left  | Punto de conexión ubicado en la parte frontal izquierda del sensor. |
+
+> Notas:
+
+>> `EntitySensor` posee seis puntos de conexión distribuidos en dos filas (frontal y trasera).
+>> La disposición es simétrica: tres puntos al frente y tres en la parte trasera.
+
+### 38. Looper
+
+Cantidad de IDs encontrados: 4
+
+| ID  | Nombre | Lado  | Descripción                                                |
+| --- | ------ | ----- | ---------------------------------------------------------- |
+| 2   | Top    | Top   | Punto de conexión ubicado en la parte superior del Looper. |
+| 3   | Right  | Right | Punto de conexión ubicado en el lado derecho del Looper.   |
+| 4   | Left   | Left  | Punto de conexión ubicado en el lado izquierdo (ruedita).  |
+| 5   | Front  | Front | Punto de conexión ubicado en la parte frontal del Looper.  |
+
+> Notas:
+
+>> El `Looper` posee cuatro puntos de conexión distribuidos alrededor del bloque.
+>> El lado izquierdo corresponde al lado donde se encuentra la rueda/perilla de ajuste.
+>> No hay un punto de conexión en la parte trasera ni en la parte inferior.
+
+### 39. Gate-AND
+
+Cantidad de IDs encontrados: 3
+
+| ID  | Nombre | Lado  | Descripción                                 |
+| --- | ------ | ----- | ------------------------------------------- |
+| 1   | Output | Front | Punto de salida de la compuerta lógica AND. |
+| 2   | InputA | Left  | Primera entrada de la compuerta lógica AND. |
+| 3   | InputB | Right | Segunda entrada de la compuerta lógica AND. |
+
+> Notas:
+
+>> `Gate-AND` posee dos entradas (`InputA` e `InputB`) y una salida (`Output`).
+>> El punto de salida se encuentra en la parte frontal del bloque.
+
+### 40. Gate-OR
+
+Cantidad de IDs encontrados: 3
+
+| ID  | Nombre | Lado  | Descripción                                |
+| --- | ------ | ----- | ------------------------------------------ |
+| 1   | Output | Front | Punto de salida de la compuerta lógica OR. |
+| 2   | InputA | Left  | Primera entrada de la compuerta lógica OR. |
+| 3   | InputB | Right | Segunda entrada de la compuerta lógica OR. |
+
+> Notas:
+
+>> `Gate-OR` posee la misma distribución de puntos de conexión que `Gate-AND`.
+>> La única diferencia corresponde a la operación lógica implementada por el bloque.
+
+### 41. Gate-NOT
+
+Cantidad de IDs encontrados: 2
+
+| ID  | Nombre | Lado  | Descripción                                  |
+| --- | ------ | ----- | -------------------------------------------- |
+| 1   | Output | Right | Punto de salida de la compuerta lógica NOT.  |
+| 2   | Input  | Left  | Punto de entrada de la compuerta lógica NOT. |
+
+### 42. Wire
+
+Cantidad de IDs encontrados: 2
+
+| ID  | Nombre | Lado  | Descripción                                     |
+| --- | ------ | ----- | ----------------------------------------------- |
+| 2   | Left   | Left  | Punto de conexión ubicado en el lado izquierdo. |
+| 4   | Right  | Right | Punto de conexión ubicado en el lado derecho.   |
+
+> Notas:
+
+>> `Wire` posee dos puntos de conexión, uno en cada extremo del bloque.
+>> El ID 2 corresponde al extremo izquierdo y el ID 4 al extremo derecho.
+
+### 43. Body
+
+Cantidad de IDs encontrados: 5
+
+| ID  | Nombre    | Lado         | Descripción                               |
+| --- | --------- | ------------ | ----------------------------------------- |
+| 1   | Arm_Right | Right        | Punto de conexión del brazo derecho.      |
+| 2   | Arm_Left  | Left         | Punto de conexión del brazo izquierdo.    |
+| 3   | Head      | Top          | Punto de conexión de la cabeza.           |
+| 4   | Leg_Right | Bottom Right | Punto de conexión de la pierna derecha.   |
+| 5   | Leg_Left  | Bottom Left  | Punto de conexión de la pierna izquierda. |
+
+> Notas:
+
+>> `Body` posee cinco puntos de conexión correspondientes a las extremidades y la cabeza.
+>> Los IDs 1 y 2 corresponden a los brazos derecho e izquierdo respectivamente.
+>> El ID 3 corresponde a la cabeza.
+>> Los IDs 4 y 5 corresponden a las piernas derecha e izquierda respectivamente.
+>> `Body` NO se puede cargar mediante el menu de Spawn, puede ser internamente con:
+```json
+[["Body", [], []]]
+```
+>>> o formato Base64:
+`W1siQm9keSIsIFtdLCBbXV1d`
+
+### 44. YibYib
+
+Cantidad de IDs encontrados: 1
+
+| ID  | Nombre | Lado | Descripción                                       |
+| --- | ------ | ---- | ------------------------------------------------- |
+| 2   | Hands  | Top  | Punto de conexión donde el YibYib agarra objetos. |
+
+### 45. Base
+
+Cantidad de IDs encontrados: 5
+
+| ID  | Nombre | Lado   | Descripción                                     |
+| --- | ------ | ------ | ----------------------------------------------- |
+| 4   | Front  | Front  | Punto de conexión ubicado en la parte frontal.  |
+| 5   | Top    | Top    | Punto de conexión ubicado en la parte superior. |
+| 6   | Bottom | Bottom | Punto de conexión ubicado en la parte inferior. |
+| 2   | Right  | Right  | Punto de conexión ubicado en el lado derecho.   |
+| 1   | Left   | Left   | Punto de conexión ubicado en el lado izquierdo. |
+
+> Notas:
+
+>> `Base` posee cinco puntos de conexión, distribuidos en sus cuatro lados y la parte frontal.
+>> El ID 4 corresponde al punto frontal y está asociado con el color rojo.
+>> El ID 5 corresponde al punto superior y está asociado con el color amarillo.
+>> El ID 6 corresponde al punto inferior y está asociado con el color verde.
+>> El ID 2 corresponde al punto derecho y está asociado con el color azul.
+>> El ID 1 corresponde al punto izquierdo y no presenta color asociado.
+
+---
+
+## Objetos sin puntos de conexión propios
+> **Hecho por:** @JuanCrakYT
+Los siguientes objetos no poseen IDs de puntos de conexión propios.
+Estos objetos utilizan puntos de conexión definidos por otros objetos.
+
+1. Seat
+2. PotatoEngine
+3. GoldPotatoEngine
+4. Radio
+5. BrakeLight
+6. Light
+7. SteeringWheel
+8. Gyro
+9. GasCap
+10. FishBowl
+11. SpringJuice
+12. Balloon
+13. Pie
+14. Joint
+15. Thruster
+16. RockingChair
+17. Rope
+18. RubberBand
+19. Sledge
+20. SteeringGyro
+21. Siren
+22. Note
+23. Sprite
+24. HulaDoll
+25. Toilet
+26. Tooth
+27. Jug
+28. Lock
+29. Poop
+30. wad
+    > El objeto `wad` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No posee IDs de puntos de conexión propios conocidos.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - Su aparición en el formato puede depender de estados internos del juego.
+31. Recorder
+32. Canister
+33. CannonBall
+34. Gramby
+35. DoorA
+36. DoorB
+37. DoorC
+38. DoorD
+39. TV
+    > El objeto `TV` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No posee IDs de puntos de conexión propios conocidos.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - Su aparición en el formato puede depender de estados internos del juego.
+40.   Camera
+41.   Carrot
+42.   Guitar
+    > El objeto `Guitar` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No posee IDs de puntos de conexión propios conocidos.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - Su aparición en el formato puede depender de estados internos del juego. 
+43.   MountedGun
+44.   Plunger
+45.   Joust
+46.   SprayPaint
+47.   Trowl
+48.   Trumpet
+49.   Banjo
+50.   Drums
+51.   Grenade
+52.   Mag
+53.   Leafblower
+54.   RiotShield
+55.   ToolGun
+    > El objeto `RiotShield` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - No posee IDs de puntos de conexión propios conocidos.
+    - Su aparición en el formato puede depender de estados internos del juego.
+56.    Keyboard
+    > El objeto `Keyboard` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - No posee IDs de puntos de conexión propios conocidos.
+    - Su aparición en el formato puede depender de estados internos del juego.
+57.    Head
+    > El objeto `Head` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build. 
+    - No aparece en el panel normal de spawn.
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+58.    PolaroidCamera
+    > El objeto `PolaroidCamera` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build.
+    - No aparece en el panel normal de spawn.
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+59.    PolaroidPhoto
+    > El objeto `PolaroidPhoto` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build.
+    - No aparece en el panel normal de spawn.
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+    - La fuente de la `PolaroidPhoto` se llama "Indie flower".
+    - Más información en [PolaroidPhoto.md](./PolaroidPhoto-spanish.md)
+60.    Fricklet
+    > El objeto `Fricklet` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build.
+    - No aparece en el panel normal de spawn.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+61.    SuperPowerClock
+    > El objeto `SuperPowerClock` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No aparece en el panel normal de spawn.
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+62.    Successor
+    > El objeto `Successor` presenta un comportamiento diferente.
+    - Puede cargarse mediante una build.
+    - No aparece en el panel normal de spawn.
+    - Debe cargarse internamente mediante el formato de build.
+    - No posee IDs de puntos de conexión propios.
+63. Trumpet
+    > El objeto `Trumpet` presenta un comportamiento diferente.
+    - Puede cargarse correctamente en una build.
+    - No puede guardarse mediante el sistema normal de guardado.
+    - No posee IDs de puntos de conexión propios conocidos.
+    - No puede colocarse en puntos de conexión definidos por otros objetos
+    - Su aparición en el formato puede depender de estados internos del juego.
+
+# Tabla Final
+> **Hecho por:** @JuanCrakYT
+|  ID   | Nombre interno    | Nombre en la wiki   | Nombre en el juego   | TipoLocal | Tooltip                                                                 | Descripción                                                                   |
+| :---: | ----------------- | ------------------- | -------------------- | :-------: | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+|   1   | AltitudeSensor    | Altitude Sensor     | Altitude Sensor      |     2     |                                                                         | Sensor de altitud.                                                            |
+|   2   | Anchor            | Anchor              | Anchor               |     1     |                                                                         | Ancla.                                                                        |
+|   3   | Arm               | Arm                 | Arm                  |     1     |                                                                         | Brazo mecánico.                                                               |
+|   4   | Balloon           | Balloons            | Balloons             |     1     |                                                                         | Globo.                                                                        |
+|   5   | BallSocket        | Ball Socket         | Ball Socket          |     1     |                                                                         | Articulación esférica.                                                        |
+|   6   | Base              | Base Platform       | Base Platform        |     3     |                                                                         | Base estructural principal.                                                   |
+|   7   | BeachBall         | Beach Ball          | Beach Ball           |     6     | It's fun. It's fun. It's fun.                                           | Pelota de playa.                                                              |
+|   8   | BeachChair        | Beach Chair         | Beach Chair          |     1     |                                                                         | Silla de playa.                                                               |
+|   9   | Bearing           | Bearing             | Bearing              |     1     |                                                                         | Rodamiento.                                                                   |
+|  10   | Board             | Board               | Board                |    15     |                                                                         | Tabla de madera.                                                              |
+|  11   | Body              | Body                | Body                 |     —     | let the these hit the FLOOOOOOOOOOOOOOOR                                | Cuerpo de Fricklet.                                                           |
+|  12   | BouncyBall        | Bouncy Ball         | Bouncy Ball          |     6     |                                                                         | Pelota rebotadora.                                                            |
+|  13   | BowlingBall       | Bowling Ball        | Bowling Ball         |     6     |                                                                         | Bola de bolos.                                                                |
+|  14   | BrakeLight        | Brake Light         | Brake Light          |     1     |                                                                         | Luz de freno.                                                                 |
+|  15   | Briefcase         | Briefcase           | Briefcase            |     —     | Contains briefings. or poop                                             | Maletín. Sin datos de conexión.                                               |
+|  16   | Bumper            | Bumper              | Bumper               |     1     |                                                                         | Parachoques.                                                                  |
+|  17   | Button            | Button              | Button               |    1,3    |                                                                         | Botón físico. Puede usar LocalType 1 o 3.                                     |
+|  18   | Camera            | Camera              | Camera               |     1     |                                                                         | Cámara.                                                                       |
+|  19   | Canister          | Canister            | Canister             |     1     | A small container for holding liquids                                   | Contenedor.                                                                   |
+|  20   | Cannon            | Cannon              | Cannon               |     1     |                                                                         | Cañón.                                                                        |
+|  21   | CannonBall        | Cannon Ball         | Cannon Ball          |     1     |                                                                         | Munición de cañón.                                                            |
+|  22   | Carrot            | Carrot              | Carrot               |     1     |                                                                         | Zanahoria.                                                                    |
+|  23   | Chassis           | Chassis             | Chassis              |     —     | The root of all cars                                                    | Chasis. Solo utiliza EphemeralAttachments.                                    |
+|  24   | Cinderblock       | Cinderblock         | Cinderblock          |     1     |                                                                         | Bloque de concreto.                                                           |
+|  25   | Clipboard         | Clipboard           | Clipboard            |     1     |                                                                         | Portapapeles interactivo.                                                     |
+|  26   | Cone              | Cone                | Cone                 |     3     |                                                                         | Cono.                                                                         |
+|  27   | Connector         | Connector           | Connector            |     5     |                                                                         | Conector esférico.                                                            |
+|  28   | ConnectorBall     | Connector Ball      | Connector Ball       |     6     |                                                                         | Conector esférico.                                                            |
+|  29   | Delayer           | Delayer             | Delayer              |     2     |                                                                         | Retardo lógico.                                                               |
+|  30   | Detacher          | Detacher            | Detacher             |     1     |                                                                         | Desconector.                                                                  |
+|  31   | DoorA             | Door A              | Door A               |     1     |                                                                         | Variante A de puerta.                                                         |
+|  32   | DoorB             | Door B              | Door B               |     1     |                                                                         | Variante B de puerta.                                                         |
+|  33   | DoorC             | Door C              | Door C               |     1     |                                                                         | Variante C de puerta.                                                         |
+|  34   | DoorD             | Door D              | Door D               |     1     |                                                                         | Variante D de puerta.                                                         |
+|  35   | EntitySensor      | Entity Sensor       | Entity Sensor        |     7     |                                                                         | Sensor de entidades cercanas.                                                 |
+|  36   | FishBowl          | Fish Bowl           | FishBowl             |     1     | It's friendly. Most of the time.                                        | Pecera.                                                                       |
+|  37   | Fricklet          | Fricklet            | Fricklet             |     —     |                                                                         | Fricklet.                                                                     |
+|  38   | FuelTank          | Fuel Tank           | Fuel Tank            |     2     |                                                                         | Tanque de combustible.                                                        |
+|  39   | Gate-AND          | And Gate            | And Gate             |     4     |                                                                         | Compuerta lógica AND.                                                         |
+|  40   | Gate-NOT          | Not Gate            | Not Gate             |     4     |                                                                         | Compuerta lógica NOT.                                                         |
+|  41   | Gate-OR           | Or Gate             | Or Gate              |     4     |                                                                         | Compuerta lógica OR.                                                          |
+|  42   | GlassBase         | Glass Base          | Glass Base           |     3     |                                                                         | Base de vidrio.                                                               |
+|  43   | GoldPotatoEngine  | Gold Potato Engine  | Golden Potato Engine |     1     | Vroom vromm                                                             | Motor de alta potencia. Variante mejorada del Potato Engine.                  |
+|  44   | Googie            | Googie              | Googie               |     1     | Him.                                                                    | Objeto decorativo.                                                            |
+|  45   | Gramby            | Gramby              | Gramby               |     1     |                                                                         | Personaje/NPC.                                                                |
+|  46   | Grenade           | Grenade             | Grenade              |     1     |                                                                         | Granada.                                                                      |
+|  47   | Gun               | A Gun               | A Gun                |     2     | It's a gun. Reload it by attaching a magazine                           | Pistola.                                                                      |
+|  48   | Gyro              | Gyro                | Gyro                 |     1     |                                                                         | Giroscopio.                                                                   |
+|  49   | HalfConnectorBall | Half Connector Ball | Half Connector Ball  |     6     |                                                                         | Medio conector esférico.                                                      |
+|  50   | Head              | Head                | Head                 |     1     |                                                                         | Cabeza de Fricklet.                                                           |
+|  51   | Hood              | Hood                | Hood                 |     1     |                                                                         | Capó.                                                                         |
+|  52   | HulaDoll          | Hula Doll           | Hula Doll            |     1     |                                                                         | Muñeca decorativa.                                                            |
+|  53   | InputSensor       | Input Sensor        | Input Sensor         |     2     | Emits a signal when a player in an attached seat presses the input      | Sensor de entrada.                                                            |
+|  54   | Joint             | Joint               | Joint                |    1,2    |                                                                         | Unión mecánica entre piezas. Puede usar LocalType 1 o 2.                      |
+|  55   | Joust             | Joust               | Joust                |     1     |                                                                         | Lanza/Joust.                                                                  |
+|  56   | Jug               | Jug                 | Jug                  |     —     |                                                                         | Jarra.                                                                        |
+|  57   | Keyboard          | Keyboard            | Keyboard             |     —     |                                                                         | Teclado. Solo utiliza EphemeralAttachments.                                   |
+|  58   | Leafblower        | Leafblower          | Leafblower           |     1     |                                                                         | Sopladora.                                                                    |
+|  59   | Leg               | Leg                 | Leg                  |     1     |                                                                         | Pierna mecánica.                                                              |
+|  60   | Light             | Light               | Light                |     1     |                                                                         | Luz.                                                                          |
+|  61   | Lock              | Lock                | Lock                 |     1     |                                                                         | Bloque de bloqueo.                                                            |
+|  62   | LongStick         | Long Stick          | Stick (long)         |     2     |                                                                         | Palo largo.                                                                   |
+|  63   | Looper            | Looper              | Looper               |     1     |                                                                         | Repetidor temporal.                                                           |
+|  64   | Mag               | Magazine            | Magazine             |     1     |                                                                         | Cargador de munición.                                                         |
+|  65   | MatchingGyro      | Matching Gyro       | Matching Gyro        |    2,3    |                                                                         | Giroscopio de coincidencia. Puede usar LocalType 2 o 3.                       |
+|  66   | MountedGun        | Mounted Gun         | Mounted Gun          |     1     |                                                                         | Ametralladora montada.                                                        |
+|  67   | Note              | Note                | Note                 |     1     |                                                                         | Nota de texto.                                                                |
+|  68   | Part              | Part                | Part                 |     1     |                                                                         | Bloque estructural básico.                                                    |
+|  69   | Pie               | Homemade Pie        | Homemade Pie         |     1     |                                                                         | Pastel.                                                                       |
+|  70   | Pipes             | Pipes               | Pipes                |     1     |                                                                         | Tuberías.                                                                     |
+|  71   | Piston            | Piston              | Piston               |     2     |                                                                         | Pistón configurable.                                                          |
+|  72   | Plunger           | Plunger             | Plunger              |     1     |                                                                         | Destapador.                                                                   |
+|  73   | PolaroidCamera    | Polaroid Camera     | Polaroid Camera      |     1     |                                                                         | Cámara Polaroid.                                                              |
+|  74   | PolaroidPhoto     | Polaroid Photo      | Polaroid Photo       |     1     |                                                                         | Fotografía Polaroid.                                                          |
+|  75   | Poop              | Poop                | Poop                 |     1     |                                                                         | Objeto decorativo.                                                            |
+|  76   | PotatoEngine      | Potato Engine       | Potato Engine        |     1     |                                                                         | Motor básico del juego.                                                       |
+|  77   | Propeller         | Propeller           | Propeller            |     2     |                                                                         | Hélice.                                                                       |
+|  78   | Radio             | Radio               | Radio                |     1     |                                                                         | Radio configurable.                                                           |
+|  79   | Ramp              | Ramp                | Ramp                 |     —     | For all your sick tricks.                                               | Rampa. Utiliza únicamente EphemeralAttachments.                               |
+|  80   | Recorder          | Recorder            | Recorder             |     1     |                                                                         | Grabadora.                                                                    |
+|  81   | RemoteButton      | Remote Button       | Remote Button        |    1,3    |                                                                         | Botón remoto. Puede usar LocalType 1 o 3.                                     |
+|  82   | RiotShield        | Riot Shield         | Riot Shield          |     —     |                                                                         | Escudo antidisturbios.                                                        |
+|  83   | Rocket            | Rocket              | Rocket               |     1     |                                                                         | Cohete propulsor.                                                             |
+|  84   | RockingChair      | Rocking Chair       | Rocking Chair        |     1     |                                                                         | Silla mecedora.                                                               |
+|  85   | Roof              | Roof                | Roof                 |     1     |                                                                         | Techo.                                                                        |
+|  86   | Rope              | Rope                | Rope                 |    1,2    |                                                                         | Cable o cuerda que une dos referencias. Puede usar LocalType 1 o 2.           |
+|  87   | RPG               | RPG                 | RPG                  |     1     |                                                                         | Lanzacohetes.                                                                 |
+|  88   | RubberBand        | Rubber Band         | Rubber Band          |    1,2    |                                                                         | Banda elástica. Puede usar LocalType 1 o 2.                                   |
+|  89   | Seat              | Seat                | Seat                 |     1     |                                                                         | Asiento.                                                                      |
+|  90   | Servo             | Servo               | Servo                |     1     | Rotates at a constant velocity when powered, not physically simulated   | Servo rotacional configurable.                                                |
+|  91   | Servo_Physics     | Simulated Servo     | Simulated Servo      |     1     | Rotates at a constant velocity when powered, physically simulated       | Servo físico con simulación.                                                  |
+|  92   | ShoppingCart      | Shopping Cart       | Shopping Cart        |     —     |                                                                         | Carrito de compras.                                                           |
+|  93   | ShortStick        | Short Stick         | Stick (short)        |     2     |                                                                         | Palo corto.                                                                   |
+|  94   | Shotgun           | Shotgun             | Shotgun              |     2     |                                                                         | Escopeta.                                                                     |
+|  95   | Sledge            | Sledge              | Sledge               |     1     |                                                                         | Mazo.                                                                         |
+|  96   | Splitter_1        | Splitter            | Splitter             |    3,5    | Emits a signal to its outputs when activated. Activate from the bottom. | Divisor de señal (1 salida principal). Usa LocalType 3 y 5.                   |
+|  97   | Splitter_2        | Splitter            | Splitter             |   3,5,9   | Emits a signal to its outputs when activated. Activate from the bottom. | Divisor de dos salidas. Usa LocalType 3, 5 y 9.                               |
+|  98   | Splitter_3        | Splitter            | Splitter             |  3,5,7,9  | Emits a signal to its outputs when activated. Activate from the bottom. | Divisor de tres salidas. Usa LocalType 3, 5, 7 y 9.                           |
+|  99   | Splitter_4        | Splitter            | Splitter             | 1,3,5,7,9 | Emits a signal to its outputs when activated. Activate from the bottom. | Divisor de cuatro salidas. Usa LocalType 1, 3, 5, 7 y 9.                      |
+|  100  | Spoiler           | Spoiler             | Spoiler              |     2     |                                                                         | Alerón.                                                                       |
+|  101  | SprayPaint        | Spray Paint         | Spray Paint          |     1     |                                                                         | Pintura en aerosol.                                                           |
+|  102  | SpringJuice       | Spring Juice        | Spring Juice         |     1     |                                                                         | Consumible.                                                                   |
+|  103  | Sprite            | Sprite              | Sprite               |     1     |                                                                         | Imagen plana.                                                                 |
+|  104  | StaringGyro       | Staring Gyro        | Staring Gyro         |     1     |                                                                         | Giroscopio que sigue un objetivo.                                             |
+|  105  | SteeringGyro      | Steering Gyro       | Steering Gyro        |     1     |                                                                         | Giroscopio de dirección.                                                      |
+|  106  | SteeringWheel     | Steering Wheel      | Steering Wheel       |     1     |                                                                         | Volante.                                                                      |
+|  107  | Stick             | Stick               | Stick                |     2     |                                                                         | Palo.                                                                         |
+|  108  | Successor         | A Worthy Successor  | A Worthy Successor   |     2     |                                                                         | A Worthy Successor.                                                           |
+|  109  | SuperPowerClock   | Super Power Clock   | Super Power Clock    |     —     | Change the time, and then activate it to lock the time!                 | Super Power Clock.                                                            |
+|  110  | Switch            | Switch              | Switch               |    1,3    | Activates its output until switched off                                 | Interruptor. Puede usar LocalType 1 o 3.                                      |
+|  111  | Thruster          | Thruster            | Thruster             |     1     |                                                                         | Propulsor.                                                                    |
+|  112  | Tire              | Tire                | Tire                 |     1     |                                                                         | Llanta.                                                                       |
+|  113  | Toilet            | Toilet              | Toilet               |     1     |                                                                         | Objeto decorativo/interactivo.                                                |
+|  114  | ToolGun           | Tool Gun            | Tool Gun             |     —     | Any creator's dream! Has several modes to aid in building.              | Herramienta especial. No posee conexiones propias.                            |
+|  115  | Tooth             | Tooth               | Tooth                |     —     |                                                                         | Diente. Solo utiliza EphemeralAttachments.                                    |
+|  116  | TripWire          | Tripwire            | Tripwire             |    1,3    | Emits a signal when an object is in front of it                         | Sensor mediante cable que detecta interrupciones. Puede usar LocalType 1 o 3. |
+|  117  | Trowel            | Trowel              | Trowel               |     —     | Sounds like towel. U can play music on it                               | Paleta.                                                                       |
+|  118  | Trunk             | Trunk               | Trunk                |     1     |                                                                         | Baúl.                                                                         |
+|  119  | Uzi               | Uzi                 | Uzi                  |     2     |                                                                         | Arma automática.                                                              |
+|  120  | VelocitySensor    | Velocity Sensor     | Velocity Sensor      |     2     |                                                                         | Sensor de velocidad.                                                          |
+|  121  | wad               | wad                 | wad                  |     —     |                                                                         | Objeto auxiliar con EphemeralAttachments.                                     |
+|  122  | Wing              | Wing                | Wing                 |     1     |                                                                         | Ala aerodinámica.                                                             |
+|  123  | Wire              | Wire                | Wire                 |    1,3    |                                                                         | Cable eléctrico. Puede usar LocalType 1 o 3.                                  |
+|  124  | WoodenChair       | Wooden Chair        | Wooden Chair         |     2     |                                                                         | Silla de madera.                                                              |
+|  125  | YibYib            | YibYib              | YibYib               |     2     | Cute lil guy                                                            | YibYib.                                                                       |
+|  126  | Trumpet           |                     | Trumpet              |     —     | Aaaaaa-A-a-a-a-a-A-A-a-A-a-a-a                                          | Trompeta.                                                                     |
+|  127  | GasCap            |                     | Gas Cap              |     1     | Cover up that explosive fuel port!                                      | Tapa del puerto de gasolina de un carro.                                      |
+|  128  | Javelin           | Javelin             | Javelin              |     1     | —                                                                       | Jabalina.                                                                     |
+|  129  | PressurePlate     | Pressure Plate      | Pressure Plate       |    1,2    |                                                                         | Placa de presión. Puede usar LocalType 1 o 2.                                 |

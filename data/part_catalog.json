@@ -1,0 +1,8178 @@
+{
+ "_meta": {
+  "generated_by": "tools/build_catalog.py",
+  "corpus_codes": 203,
+  "corpus_parsed": 185,
+  "corpus_entries": 34511,
+  "corpus_joints": 37115,
+  "parts": 132,
+  "units": "studs (1 obj unit = 1 Roblox stud)",
+  "socket_roles": "in-game verified (RTG_BLUEPRINT_FORMAT.md s4)",
+  "socket_ids": "community tokens.json + corpus"
+ },
+ "parts": {
+  "AltitudeSensor": {
+   "name": "AltitudeSensor",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 9,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus",
+       "model.LocalPoints"
+      ],
+      "corpus_count": 8,
+      "role": "output",
+      "name": "Output"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Reverse": {
+     "corpus_count": 3
+    },
+    "Activated": {
+     "corpus_count": 3
+    },
+    "ActivationHeight": {
+     "corpus_count": 9
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/AltitudeSensor/AltitudeSensor.obj",
+    "min": [
+     -0.300019,
+     -0.24,
+     -0.345212
+    ],
+    "max": [
+     0.299981,
+     0.24,
+     0.254789
+    ],
+    "size": [
+     0.6,
+     0.48,
+     0.6
+    ],
+    "vertices": 104,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {
+    "1": {
+     "position": [
+      0,
+      2,
+      0
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "source": "community model JSON LocalPoints",
+     "confidence": "community"
+    }
+   }
+  },
+  "Anchor": {
+   "name": "Anchor",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 70,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1,
+      "role": "socket",
+      "name": "TopLeft"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 3,
+      "role": "socket",
+      "name": "TopRight"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1,
+      "role": "socket",
+      "name": "BottomLeft"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1,
+      "role": "socket",
+      "name": "BottomRight"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 6
+    },
+    "RGB": {
+     "corpus_count": 1
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Anchor/Anchor.obj",
+    "min": [
+     -0.762426,
+     -0.123193,
+     -0.695054
+    ],
+    "max": [
+     0.762375,
+     0.123187,
+     0.542445
+    ],
+    "size": [
+     1.5248,
+     0.2464,
+     1.2375
+    ],
+    "vertices": 496,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Arm": {
+   "name": "Arm",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 5
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Arm/Arm.obj",
+    "min": [
+     -0.606443,
+     -0.17235,
+     -0.215391
+    ],
+    "max": [
+     0.991358,
+     0.10538,
+     0.286509
+    ],
+    "size": [
+     1.5978,
+     0.2777,
+     0.5019
+    ],
+    "vertices": 1312,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "BallSocket": {
+   "name": "BallSocket",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 14,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 14
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/BallSocket/BallSocket.obj",
+    "min": [
+     -0.249052,
+     -0.981145,
+     -0.25013
+    ],
+    "max": [
+     0.250948,
+     0.268855,
+     0.24987
+    ],
+    "size": [
+     0.5,
+     1.25,
+     0.5
+    ],
+    "vertices": 595,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Balloon": {
+   "name": "Balloon",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 2
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 2
+    },
+    "Quantity": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Balloon/Balloon.obj",
+    "min": [
+     -0.716766,
+     -3.963648,
+     -0.910301
+    ],
+    "max": [
+     0.676834,
+     1.108802,
+     0.687698
+    ],
+    "size": [
+     1.3936,
+     5.0724,
+     1.598
+    ],
+    "vertices": 1157,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Base": {
+   "name": "Base",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 704,
+      "role": "mount",
+      "name": "Arm"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 177,
+      "role": "left",
+      "name": "Left"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 193,
+      "role": "right",
+      "name": "Right"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 477,
+      "role": "front",
+      "name": "Front"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 184,
+      "role": "top",
+      "name": "Top"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 44,
+      "role": "bottom",
+      "name": "Bottom"
+     }
+    },
+    "parent_uuid": {
+     "{d3ed2d95-e9c1-4d3a-a3e4-9b1660887eaa}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "{ad329359-5f00-45ca-8abb-e05b5456409b}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "{e6ce42ac-ae92-4934-82f6-2c3760ad3599}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "{83dc86a4-3a11-4c20-8b4e-5ecf518b40d0}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 43
+    },
+    "OrientationX": {
+     "corpus_count": 19
+    },
+    "OrientationY": {
+     "corpus_count": 12
+    },
+    "RGB": {
+     "corpus_count": 294
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Base/Base.obj",
+    "min": [
+     -2.0,
+     -0.250001,
+     -2.0
+    ],
+    "max": [
+     2.0,
+     0.25,
+     2.0
+    ],
+    "size": [
+     4.0,
+     0.5,
+     4.0
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "BeachBall": {
+   "name": "BeachBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "6": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "12": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "15": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "17": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/BeachBall/BeachBall.obj",
+    "min": [
+     -1.099995,
+     -1.100005,
+     -1.094036
+    ],
+    "max": [
+     1.100005,
+     1.099995,
+     1.093864
+    ],
+    "size": [
+     2.2,
+     2.2,
+     2.1879
+    ],
+    "vertices": 734,
+    "scale": 1,
+    "tooltip": "It's fun. It's fun. It's fun."
+   },
+   "socket_geometry": {}
+  },
+  "BeachChair": {
+   "name": "BeachChair",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Bearing": {
+   "name": "Bearing",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 446,
+      "name": "RotationAxis"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 404
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Reverse": {
+     "corpus_count": 53
+    },
+    "OrientationX": {
+     "corpus_count": 7
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    },
+    "RGB": {
+     "corpus_count": 13
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Bearing/Bearing.obj",
+    "min": [
+     -0.076487,
+     -0.500002,
+     -0.50864
+    ],
+    "max": [
+     0.223515,
+     0.499998,
+     0.49136
+    ],
+    "size": [
+     0.3,
+     1.0,
+     1.0
+    ],
+    "vertices": 418,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Board": {
+   "name": "Board",
+   "category": null,
+   "sockets": {
+    "child": {
+     "15": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 72
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 3
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 5
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 17
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 7
+     },
+     "9": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "11": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "12": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "8": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "10": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 1
+    },
+    "OrientationX": {
+     "corpus_count": 27
+    },
+    "OrientationY": {
+     "corpus_count": 26
+    },
+    "OrientationZ": {
+     "corpus_count": 11
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Board/Board.obj",
+    "min": [
+     -3.61912,
+     -0.114725,
+     -0.462975
+    ],
+    "max": [
+     3.18115,
+     0.114725,
+     0.763027
+    ],
+    "size": [
+     6.8003,
+     0.2294,
+     1.226
+    ],
+    "vertices": 70,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "BouncyBall": {
+   "name": "BouncyBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "6": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "11": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "12": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "16": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "2": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/BouncyBall/BouncyBall.obj",
+    "min": [
+     -0.799999,
+     -0.888038,
+     -0.800007
+    ],
+    "max": [
+     0.800001,
+     0.731962,
+     0.799995
+    ],
+    "size": [
+     1.6,
+     1.62,
+     1.6
+    ],
+    "vertices": 343,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "BowlingBall": {
+   "name": "BowlingBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "6": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 23
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24
+     },
+     "11": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "12": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "15": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "16": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "17": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "8": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 24
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/BowlingBall/BowlingBall.obj",
+    "min": [
+     -0.599995,
+     -0.666566,
+     -0.599976
+    ],
+    "max": [
+     0.600006,
+     0.553434,
+     0.600025
+    ],
+    "size": [
+     1.2,
+     1.22,
+     1.2
+    ],
+    "vertices": 343,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "BrakeLight": {
+   "name": "BrakeLight",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 239,
+      "role": "input"
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 216
+    },
+    "RGB": {
+     "corpus_count": 5
+    },
+    "OrientationZ": {
+     "corpus_count": 4
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/BrakeLight/BrakeLight.obj",
+    "min": [
+     -0.624014,
+     -0.305001,
+     -0.177002
+    ],
+    "max": [
+     0.624016,
+     0.304999,
+     0.176998
+    ],
+    "size": [
+     1.248,
+     0.61,
+     0.354
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Bumper": {
+   "name": "Bumper",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 5874,
+      "role": "mount",
+      "name": "ChassisMount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 3679,
+      "role": "socket"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 84
+    },
+    "OrientationX": {
+     "corpus_count": 16
+    },
+    "OrientationZ": {
+     "corpus_count": 157
+    },
+    "OrientationY": {
+     "corpus_count": 41
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 16
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Bumper/Bumper.obj",
+    "min": [
+     -3.26623,
+     -0.26767,
+     -0.293373
+    ],
+    "max": [
+     3.26623,
+     0.267669,
+     0.257828
+    ],
+    "size": [
+     6.5325,
+     0.5353,
+     0.5512
+    ],
+    "vertices": 56,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Button": {
+   "name": "Button",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "role": "output",
+      "name": "Output"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 21,
+      "role": "input"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Button/Button.obj",
+    "min": [
+     -0.300425,
+     -0.158513,
+     -0.7654
+    ],
+    "max": [
+     0.299575,
+     0.141487,
+     0.8346
+    ],
+    "size": [
+     0.6,
+     0.3,
+     1.6
+    ],
+    "vertices": 1064,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Camera": {
+   "name": "Camera",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 29
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 13
+    },
+    "OrientationY": {
+     "corpus_count": 9
+    },
+    "OrientationX": {
+     "corpus_count": 4
+    },
+    "RGB": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Camera/Camera.obj",
+    "min": [
+     -0.234329,
+     -0.41179,
+     -0.521015
+    ],
+    "max": [
+     0.234371,
+     0.25431,
+     0.420784
+    ],
+    "size": [
+     0.4687,
+     0.6661,
+     0.9418
+    ],
+    "vertices": 600,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Canister": {
+   "name": "Canister",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 474
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "EphemeralAttachments": {
+     "corpus_count": 8
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Canister/Canister.obj",
+    "min": [
+     -0.203928,
+     -0.407794,
+     -0.668438
+    ],
+    "max": [
+     0.199672,
+     0.510906,
+     0.563664
+    ],
+    "size": [
+     0.4036,
+     0.9187,
+     1.2321
+    ],
+    "vertices": 324,
+    "scale": 1,
+    "tooltip": "A small container for holding liquids"
+   },
+   "socket_geometry": {}
+  },
+  "Cannon": {
+   "name": "Cannon",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 11,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 4
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 4
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Cannon/Cannon.obj",
+    "min": [
+     -2.935574,
+     -1.668393,
+     -1.321022
+    ],
+    "max": [
+     3.937176,
+     1.397787,
+     1.326275
+    ],
+    "size": [
+     6.8727,
+     3.0662,
+     2.6473
+    ],
+    "vertices": 301,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "CannonBall": {
+   "name": "CannonBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 16
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/CannonBall/CannonBall.obj",
+    "min": [
+     -0.618407,
+     -0.6184,
+     -0.53558
+    ],
+    "max": [
+     0.618403,
+     0.6184,
+     0.535519
+    ],
+    "size": [
+     1.2368,
+     1.2368,
+     1.0711
+    ],
+    "vertices": 44,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Carrot": {
+   "name": "Carrot",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Carrot/Carrot.obj",
+    "min": [
+     -0.120794,
+     -0.637207,
+     -0.122076
+    ],
+    "max": [
+     0.123096,
+     0.362793,
+     0.122524
+    ],
+    "size": [
+     0.2439,
+     1.0,
+     0.2446
+    ],
+    "vertices": 1872,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Cinderblock": {
+   "name": "Cinderblock",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 131
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 54
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 1
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Cinderblock/Cinderblock.obj",
+    "min": [
+     -1.209722,
+     -0.739231,
+     -0.50174
+    ],
+    "max": [
+     1.213308,
+     0.730469,
+     0.585362
+    ],
+    "size": [
+     2.423,
+     1.4697,
+     1.0871
+    ],
+    "vertices": 78,
+    "scale": 1,
+    "tooltip": "its heavy"
+   },
+   "socket_geometry": {}
+  },
+  "Clipboard": {
+   "name": "Clipboard",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Cone": {
+   "name": "Cone",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Connector": {
+   "name": "Connector",
+   "category": null,
+   "sockets": {
+    "child": {
+     "5": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 11428,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1723,
+      "role": "socket"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1965,
+      "role": "socket"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 2471,
+      "role": "socket"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 7187,
+      "role": "socket"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 5022,
+      "role": "socket"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 515
+    },
+    "OrientationX": {
+     "corpus_count": 410
+    },
+    "OrientationZ": {
+     "corpus_count": 156
+    },
+    "OrientationY": {
+     "corpus_count": 175
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Connector/Connector.obj",
+    "min": [
+     -0.199992,
+     -0.231904,
+     -0.200054
+    ],
+    "max": [
+     0.200008,
+     0.168096,
+     0.199944
+    ],
+    "size": [
+     0.4,
+     0.4,
+     0.4
+    ],
+    "vertices": 984,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "ConnectorBall": {
+   "name": "ConnectorBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "6": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 145
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 72
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 84
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 70
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 74
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 87
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 71
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 68
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 62
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 68
+     },
+     "11": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 33
+     },
+     "12": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 30
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 32
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 17
+     },
+     "16": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 16
+     },
+     "17": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 21
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 14
+     },
+     "15": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 23
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 9
+    },
+    "OrientationY": {
+     "corpus_count": 12
+    },
+    "OrientationZ": {
+     "corpus_count": 6
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/ConnectorBall/ConnectorBall.obj",
+    "min": [
+     -0.534544,
+     -0.473651,
+     -0.548319
+    ],
+    "max": [
+     0.465456,
+     0.526349,
+     0.451681
+    ],
+    "size": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "vertices": 527,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Delayer": {
+   "name": "Delayer",
+   "category": null,
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 198,
+      "role": "input"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 199,
+      "role": "output"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "DelayDeactivation": {
+     "corpus_count": 85
+    },
+    "Delay": {
+     "corpus_count": 199
+    },
+    "RGB": {
+     "corpus_count": 183
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Delayer/Delayer.obj",
+    "min": [
+     -0.300015,
+     -0.240001,
+     -0.345219
+    ],
+    "max": [
+     0.299985,
+     0.239999,
+     0.254782
+    ],
+    "size": [
+     0.6,
+     0.48,
+     0.6
+    ],
+    "vertices": 104,
+    "scale": 1,
+    "tooltip": "'"
+   },
+   "socket_geometry": {}
+  },
+  "Detacher": {
+   "name": "Detacher",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 124,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 115
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 1
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Detacher/Detacher.obj",
+    "min": [
+     -0.299995,
+     -0.162856,
+     -0.300009
+    ],
+    "max": [
+     0.300005,
+     0.407144,
+     0.299992
+    ],
+    "size": [
+     0.6,
+     0.57,
+     0.6
+    ],
+    "vertices": 112,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "DoorA": {
+   "name": "DoorA",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 13
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 13
+    },
+    "Activated": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/DoorA/DoorA.obj",
+    "min": [
+     -0.381624,
+     -2.697959,
+     -1.667766
+    ],
+    "max": [
+     0.520236,
+     2.061591,
+     1.377533
+    ],
+    "size": [
+     0.9019,
+     4.7595,
+     3.0453
+    ],
+    "vertices": 90,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "DoorB": {
+   "name": "DoorB",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 13
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 13
+    },
+    "Activated": {
+     "corpus_count": 2
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/DoorB/DoorB.obj",
+    "min": [
+     -0.518504,
+     -2.697959,
+     -1.667766
+    ],
+    "max": [
+     0.383396,
+     2.061591,
+     1.377533
+    ],
+    "size": [
+     0.9019,
+     4.7595,
+     3.0453
+    ],
+    "vertices": 90,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "DoorC": {
+   "name": "DoorC",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 9
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 9
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/DoorC/DoorC.obj",
+    "min": [
+     -0.366856,
+     -2.584347,
+     -1.395157
+    ],
+    "max": [
+     0.535046,
+     2.1752,
+     1.38274
+    ],
+    "size": [
+     0.9019,
+     4.7595,
+     2.7779
+    ],
+    "vertices": 96,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "DoorD": {
+   "name": "DoorD",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 9
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 9
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/DoorD/DoorD.obj",
+    "min": [
+     -0.528399,
+     -2.584349,
+     -1.395157
+    ],
+    "max": [
+     0.373503,
+     2.175201,
+     1.38274
+    ],
+    "size": [
+     0.9019,
+     4.7595,
+     2.7779
+    ],
+    "vertices": 96,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "EntitySensor": {
+   "name": "EntitySensor",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "7": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 15
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 16,
+      "name": "BackLeft"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 16,
+      "name": "BackRight"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 8,
+      "name": "BackCenter"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 12,
+      "name": "FrontCenter"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 13,
+      "name": "FrontRight"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 14,
+      "name": "FrontLeft"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "CanTargetAttached": {
+     "corpus_count": 16
+    },
+    "MaxDistance": {
+     "corpus_count": 16
+    },
+    "RGB": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 6
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/EntitySensor/EntitySensor.obj",
+    "min": [
+     -1.529969,
+     -0.586442,
+     -1.219002
+    ],
+    "max": [
+     1.470031,
+     0.111558,
+     1.780998
+    ],
+    "size": [
+     3.0,
+     0.698,
+     3.0
+    ],
+    "vertices": 600,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "FishBowl": {
+   "name": "FishBowl",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 30
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/FishBowl/FishBowl.obj",
+    "min": [
+     -0.513701,
+     -0.445832,
+     -0.450352
+    ],
+    "max": [
+     0.671899,
+     0.433488,
+     0.551449
+    ],
+    "size": [
+     1.1856,
+     0.8793,
+     1.0018
+    ],
+    "vertices": 1602,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "FuelTank": {
+   "name": "FuelTank",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1432,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 459,
+      "role": "socket",
+      "name": "MountPoint"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 6
+    },
+    "OrientationZ": {
+     "corpus_count": 1
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/FuelTank/FuelTank.obj",
+    "min": [
+     -0.749983,
+     -0.750002,
+     -0.749949
+    ],
+    "max": [
+     0.750017,
+     0.749998,
+     0.750051
+    ],
+    "size": [
+     1.5,
+     1.5,
+     1.5
+    ],
+    "vertices": 114,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "GasCap": {
+   "name": "GasCap",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 24
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 24
+    },
+    "Activated": {
+     "corpus_count": 4
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/GasCap/GasCap.obj",
+    "min": [
+     -0.050001,
+     -0.3223,
+     -0.3223
+    ],
+    "max": [
+     0.049999,
+     0.3223,
+     0.3223
+    ],
+    "size": [
+     0.1,
+     0.6446,
+     0.6446
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gate-AND": {
+   "name": "Gate-AND",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "4": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 197,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 199,
+      "role": "output",
+      "name": "Output"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 201,
+      "role": "input",
+      "name": "InputA"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 201,
+      "role": "input",
+      "name": "InputB"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 7
+    },
+    "OrientationY": {
+     "corpus_count": 8
+    },
+    "OrientationZ": {
+     "corpus_count": 11
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Gate-AND/Gate-AND.obj",
+    "min": [
+     -0.605471,
+     -0.237339,
+     -1.007692
+    ],
+    "max": [
+     1.094529,
+     0.089931,
+     1.006508
+    ],
+    "size": [
+     1.7,
+     0.3273,
+     2.0142
+    ],
+    "vertices": 1171,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gate-NOT": {
+   "name": "Gate-NOT",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "4": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 34,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "role": "output",
+      "name": "Output"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "role": "input",
+      "name": "Input"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationY": {
+     "corpus_count": 3
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Gate-NOT/Gate-NOT.obj",
+    "min": [
+     -0.394942,
+     -0.267257,
+     -0.627203
+    ],
+    "max": [
+     0.405058,
+     0.082743,
+     1.572796
+    ],
+    "size": [
+     0.8,
+     0.35,
+     2.2
+    ],
+    "vertices": 606,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gate-OR": {
+   "name": "Gate-OR",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "4": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 33,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 35,
+      "role": "output",
+      "name": "Output"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 35,
+      "role": "input",
+      "name": "InputA"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 35,
+      "role": "input",
+      "name": "InputB"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Gate-OR/Gate-OR.obj",
+    "min": [
+     -0.422194,
+     -0.265944,
+     -1.102139
+    ],
+    "max": [
+     1.077806,
+     0.084056,
+     1.09786
+    ],
+    "size": [
+     1.5,
+     0.35,
+     2.2
+    ],
+    "vertices": 1130,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "GlassBase": {
+   "name": "GlassBase",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 65
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 22
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 15
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 7
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 2
+    },
+    "RGB": {
+     "corpus_count": 1
+    },
+    "OrientationX": {
+     "corpus_count": 8
+    }
+   },
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "GoldPotatoEngine": {
+   "name": "GoldPotatoEngine",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 24
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/GoldPotatoEngine/GoldPotatoEngine.obj",
+    "min": [
+     -0.778011,
+     -0.378372,
+     -0.91666
+    ],
+    "max": [
+     0.688889,
+     0.440068,
+     1.028542
+    ],
+    "size": [
+     1.4669,
+     0.8184,
+     1.9452
+    ],
+    "vertices": 6527,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Googie": {
+   "name": "Googie",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {
+     "3": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "2": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "6": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Googie/Googie.obj",
+    "min": [
+     -0.520006,
+     -0.52,
+     -0.520023
+    ],
+    "max": [
+     0.519993,
+     0.52,
+     0.519974
+    ],
+    "size": [
+     1.04,
+     1.04,
+     1.04
+    ],
+    "vertices": 48,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gramby": {
+   "name": "Gramby",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 3
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Gramby/Gramby.obj",
+    "min": [
+     -0.895458,
+     -1.44965,
+     -0.488628
+    ],
+    "max": [
+     0.895932,
+     0.83565,
+     0.800671
+    ],
+    "size": [
+     1.7914,
+     2.2853,
+     1.2893
+    ],
+    "vertices": 9917,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Grenade": {
+   "name": "Grenade",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 256
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 6
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    },
+    "RGB": {
+     "corpus_count": 11
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Grenade/Grenade.obj",
+    "min": [
+     -0.298885,
+     -0.38518,
+     -0.230961
+    ],
+    "max": [
+     0.288013,
+     0.314701,
+     0.273739
+    ],
+    "size": [
+     0.5869,
+     0.6999,
+     0.5047
+    ],
+    "vertices": 189,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gun": {
+   "name": "Gun",
+   "category": null,
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 58
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 48
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 11
+    },
+    "OrientationY": {
+     "corpus_count": 6
+    },
+    "OrientationZ": {
+     "corpus_count": 10
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Gun/Gun.obj",
+    "min": [
+     -0.355925,
+     -0.331666,
+     -0.042694
+    ],
+    "max": [
+     0.360874,
+     0.160084,
+     0.042606
+    ],
+    "size": [
+     0.7168,
+     0.4918,
+     0.0853
+    ],
+    "vertices": 911,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Gyro": {
+   "name": "Gyro",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 185
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 140
+    },
+    "RGB": {
+     "corpus_count": 176
+    },
+    "OrientationZ": {
+     "corpus_count": 28
+    },
+    "OrientationX": {
+     "corpus_count": 7
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Gyro/Gyro.obj",
+    "min": [
+     -0.448337,
+     -0.115529,
+     -0.444931
+    ],
+    "max": [
+     0.441663,
+     0.115531,
+     0.445068
+    ],
+    "size": [
+     0.89,
+     0.2311,
+     0.89
+    ],
+    "vertices": 379,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "HalfConnectorBall": {
+   "name": "HalfConnectorBall",
+   "category": null,
+   "sockets": {
+    "child": {
+     "6": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 115
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 41
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 28
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 27
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 28
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 33
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 34
+     },
+     "11": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 22
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 27
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 42
+     },
+     "15": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 31
+     },
+     "16": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 49
+     },
+     "17": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 32
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 49
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 8
+    },
+    "RGB": {
+     "corpus_count": 4
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/HalfConnectorBall/HalfConnectorBall.obj",
+    "min": [
+     -0.538294,
+     -0.524251,
+     -0.310053
+    ],
+    "max": [
+     0.461706,
+     0.475749,
+     0.356647
+    ],
+    "size": [
+     1.0,
+     1.0,
+     0.6667
+    ],
+    "vertices": 406,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Hood": {
+   "name": "Hood",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 30,
+      "name": "ChassisMount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 10
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 30
+    },
+    "Activated": {
+     "corpus_count": 3
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Hood/Hood.obj",
+    "min": [
+     -2.77405,
+     -0.178187,
+     -1.012623
+    ],
+    "max": [
+     2.77405,
+     0.139093,
+     1.925278
+    ],
+    "size": [
+     5.5481,
+     0.3173,
+     2.9379
+    ],
+    "vertices": 48,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "HulaDoll": {
+   "name": "HulaDoll",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "InputSensor": {
+   "name": "InputSensor",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1009,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 664,
+      "role": "output",
+      "name": "Output"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "ActivationKey": {
+     "corpus_count": 1007
+    },
+    "OrientationX": {
+     "corpus_count": 9
+    },
+    "RGB": {
+     "corpus_count": 27
+    },
+    "OrientationY": {
+     "corpus_count": 8
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/InputSensor/InputSensor.obj",
+    "min": [
+     -0.300015,
+     -0.240001,
+     -0.345219
+    ],
+    "max": [
+     0.299985,
+     0.239999,
+     0.254782
+    ],
+    "size": [
+     0.6,
+     0.48,
+     0.6
+    ],
+    "vertices": 104,
+    "scale": 1,
+    "tooltip": "Emits a signal when a player in an attached seat presses the input"
+   },
+   "socket_geometry": {}
+  },
+  "Joint": {
+   "name": "Joint",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 13
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 15
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Joint/Joint.obj",
+    "min": [
+     -0.250003,
+     -0.5,
+     -0.249952
+    ],
+    "max": [
+     0.249997,
+     0.5,
+     0.250048
+    ],
+    "size": [
+     0.5,
+     1.0,
+     0.5
+    ],
+    "vertices": 342,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Joust": {
+   "name": "Joust",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 38
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Joust/Joust.obj",
+    "min": [
+     -1.777052,
+     -0.199999,
+     -0.194984
+    ],
+    "max": [
+     0.541238,
+     0.200001,
+     0.195015
+    ],
+    "size": [
+     2.3183,
+     0.4,
+     0.39
+    ],
+    "vertices": 156,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Leafblower": {
+   "name": "Leafblower",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 82
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 82
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Leafblower/Leafblower.obj",
+    "min": [
+     -1.507149,
+     -0.373003,
+     -0.174822
+    ],
+    "max": [
+     0.496081,
+     0.549996,
+     0.195179
+    ],
+    "size": [
+     2.0032,
+     0.923,
+     0.37
+    ],
+    "vertices": 1181,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Leg": {
+   "name": "Leg",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 16,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 6
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Leg/Leg.obj",
+    "min": [
+     -0.092251,
+     -0.313813,
+     -0.253046
+    ],
+    "max": [
+     0.096649,
+     0.473997,
+     0.121353
+    ],
+    "size": [
+     0.1889,
+     0.7878,
+     0.3744
+    ],
+    "vertices": 232,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Light": {
+   "name": "Light",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 119,
+      "role": "input"
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 104
+    },
+    "RGB": {
+     "corpus_count": 8
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Light/Light.obj",
+    "min": [
+     -0.486513,
+     -0.481313,
+     -0.21394
+    ],
+    "max": [
+     0.476136,
+     0.481317,
+     0.230457
+    ],
+    "size": [
+     0.9626,
+     0.9626,
+     0.4444
+    ],
+    "vertices": 136,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Lock": {
+   "name": "Lock",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 6
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Lock/Lock.obj",
+    "min": [
+     -0.091837,
+     -0.537521,
+     -0.2455
+    ],
+    "max": [
+     0.082428,
+     0.23278,
+     0.2545
+    ],
+    "size": [
+     0.1743,
+     0.7703,
+     0.5
+    ],
+    "vertices": 256,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "LongStick": {
+   "name": "LongStick",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 135,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 90,
+      "role": "socket",
+      "name": "MountPoint"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 21
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/LongStick/LongStick.obj",
+    "min": [
+     -0.09,
+     -0.090001,
+     -3.5
+    ],
+    "max": [
+     0.09,
+     0.089999,
+     3.5
+    ],
+    "size": [
+     0.18,
+     0.18,
+     7.0
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Looper": {
+   "name": "Looper",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 69,
+      "role": "input"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 19,
+      "role": "output",
+      "name": "Top"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1,
+      "role": "output",
+      "name": "Left"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs"
+      ],
+      "name": "Front"
+     },
+     "3": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2,
+      "role": "output",
+      "name": "Right"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Delay": {
+     "corpus_count": 69
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Looper/Looper.obj",
+    "min": [
+     -0.366683,
+     -0.300001,
+     -0.315058
+    ],
+    "max": [
+     0.433317,
+     0.299999,
+     0.284943
+    ],
+    "size": [
+     0.8,
+     0.6,
+     0.6
+    ],
+    "vertices": 312,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Mag": {
+   "name": "Mag",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 139
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Bullets": {
+     "corpus_count": 81
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Mag/Mag.obj",
+    "min": [
+     -0.057615,
+     -0.052484,
+     -0.031445
+    ],
+    "max": [
+     0.078692,
+     0.219136,
+     0.031456
+    ],
+    "size": [
+     0.1363,
+     0.2716,
+     0.0629
+    ],
+    "vertices": 68,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "MatchingGyro": {
+   "name": "MatchingGyro",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 11
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 8
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1,
+      "name": "HandleMount"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 3,
+      "name": "Right"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 9,
+      "name": "Top"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 3,
+      "name": "Left"
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 6,
+      "name": "Back"
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 8,
+      "name": "Front"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationY": {
+     "corpus_count": 4
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    },
+    "OrientationZ": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/MatchingGyro/MatchingGyro.obj",
+    "min": [
+     -1.03143,
+     -0.500006,
+     -2.03401
+    ],
+    "max": [
+     1.04859,
+     0.499994,
+     1.475988
+    ],
+    "size": [
+     2.08,
+     1.0,
+     3.51
+    ],
+    "vertices": 598,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "MountedGun": {
+   "name": "MountedGun",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 358
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 205
+    },
+    "OrientationY": {
+     "corpus_count": 81
+    },
+    "Shooting": {
+     "corpus_count": 358
+    },
+    "RGB": {
+     "corpus_count": 65
+    },
+    "OrientationX": {
+     "corpus_count": 58
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/MountedGun/MountedGun.obj",
+    "min": [
+     -1.81842,
+     -0.51122,
+     -0.553699
+    ],
+    "max": [
+     1.887081,
+     0.7826,
+     0.588701
+    ],
+    "size": [
+     3.7055,
+     1.2938,
+     1.1424
+    ],
+    "vertices": 1346,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Note": {
+   "name": "Note",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 7
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Text": {
+     "corpus_count": 7
+    }
+   },
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Part": {
+   "name": "Part",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 2373,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 400,
+      "role": "socket"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 434,
+      "role": "socket"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 330,
+      "role": "socket"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 473,
+      "role": "socket"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1280,
+      "role": "socket"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 1157
+    },
+    "OrientationX": {
+     "corpus_count": 7
+    },
+    "OrientationY": {
+     "corpus_count": 12
+    },
+    "OrientationZ": {
+     "corpus_count": 8
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Part/Part.obj",
+    "min": [
+     -0.5,
+     -0.500001,
+     -0.5
+    ],
+    "max": [
+     0.5,
+     0.500001,
+     0.5
+    ],
+    "size": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {
+    "1": {
+     "position": [
+      0.0,
+      -0.5,
+      0.0
+     ],
+     "basis": {
+      "x": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "y": [
+       0.0,
+       1.0,
+       0.0
+      ],
+      "z": [
+       0.0,
+       0.0,
+       1.0
+      ]
+     },
+     "rotation_deg": [
+      0.0,
+      -0.0,
+      0.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    },
+    "2": {
+     "position": [
+      0.5,
+      -0.000356,
+      0.0
+     ],
+     "basis": {
+      "x": [
+       0.0,
+       1.0,
+       0.0
+      ],
+      "y": [
+       0.0,
+       -0.0,
+       1.0
+      ],
+      "z": [
+       1.0,
+       0.0,
+       -0.0
+      ]
+     },
+     "rotation_deg": [
+      90.0,
+      -0.0,
+      90.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    },
+    "3": {
+     "position": [
+      -0.5,
+      -0.000356,
+      0.0
+     ],
+     "basis": {
+      "x": [
+       0.0,
+       -1.0,
+       -0.0
+      ],
+      "y": [
+       -0.0,
+       -0.0,
+       1.0
+      ],
+      "z": [
+       -1.0,
+       0.0,
+       -0.0
+      ]
+     },
+     "rotation_deg": [
+      90.0,
+      0.0,
+      -90.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    },
+    "4": {
+     "position": [
+      0.0,
+      -0.000356,
+      -0.5
+     ],
+     "basis": {
+      "x": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "y": [
+       0.0,
+       -0.0,
+       1.0
+      ],
+      "z": [
+       0.0,
+       -1.0,
+       -0.0
+      ]
+     },
+     "rotation_deg": [
+      90.0,
+      -0.0,
+      0.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    },
+    "5": {
+     "position": [
+      0.0,
+      -0.000356,
+      0.5
+     ],
+     "basis": {
+      "x": [
+       -1.0,
+       0.0,
+       -0.0
+      ],
+      "y": [
+       -0.0,
+       -0.0,
+       1.0
+      ],
+      "z": [
+       -0.0,
+       1.0,
+       0.0
+      ]
+     },
+     "rotation_deg": [
+      90.0,
+      0.0,
+      180.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    },
+    "6": {
+     "position": [
+      0.0,
+      0.499644,
+      0.0
+     ],
+     "basis": {
+      "x": [
+       1.0,
+       0.0,
+       0.0
+      ],
+      "y": [
+       0.0,
+       1.0,
+       0.0
+      ],
+      "z": [
+       0.0,
+       0.0,
+       1.0
+      ]
+     },
+     "rotation_deg": [
+      0.0,
+      -0.0,
+      0.0
+     ],
+     "source": "grambys-workshop Part.tscn",
+     "confidence": "editor-scene"
+    }
+   }
+  },
+  "Pie": {
+   "name": "Pie",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 16
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Pie/Pie.obj",
+    "min": [
+     -0.998093,
+     -0.430108,
+     -0.986292
+    ],
+    "max": [
+     1.001907,
+     0.569893,
+     0.987709
+    ],
+    "size": [
+     2.0,
+     1.0,
+     1.974
+    ],
+    "vertices": 226,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Pipes": {
+   "name": "Pipes",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 53
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 52
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 52
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 52
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 51
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "EphemeralAttachments": {
+     "corpus_count": 2
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Pipes/Pipes.obj",
+    "min": [
+     -1.802225,
+     -0.20685,
+     -0.218529
+    ],
+    "max": [
+     1.802174,
+     0.20765,
+     0.18037
+    ],
+    "size": [
+     3.6044,
+     0.4145,
+     0.3989
+    ],
+    "vertices": 184,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Piston": {
+   "name": "Piston",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 129
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 125,
+      "name": "PushEnd"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs"
+      ],
+      "name": "Side_Red"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs"
+      ],
+      "name": "Side_Blue"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationY": {
+     "corpus_count": 1
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Piston/Piston.obj",
+    "min": [
+     -0.299994,
+     -0.145416,
+     -0.30002
+    ],
+    "max": [
+     0.300007,
+     0.134584,
+     0.29998
+    ],
+    "size": [
+     0.6,
+     0.28,
+     0.6
+    ],
+    "vertices": 176,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Plunger": {
+   "name": "Plunger",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 5
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Plunger/Plunger.obj",
+    "min": [
+     -0.485708,
+     -0.699209,
+     -0.461992
+    ],
+    "max": [
+     0.485702,
+     1.311381,
+     0.461908
+    ],
+    "size": [
+     0.9714,
+     2.0106,
+     0.9239
+    ],
+    "vertices": 268,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Poop": {
+   "name": "Poop",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 2
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Poop/Poop.obj",
+    "min": [
+     -0.296864,
+     -0.268657,
+     -0.489233
+    ],
+    "max": [
+     0.303137,
+     0.331343,
+     0.510767
+    ],
+    "size": [
+     0.6,
+     0.6,
+     1.0
+    ],
+    "vertices": 227,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "PotatoEngine": {
+   "name": "PotatoEngine",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 7
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/PotatoEngine/PotatoEngine.obj",
+    "min": [
+     -0.779808,
+     -0.377046,
+     -0.917603
+    ],
+    "max": [
+     0.687092,
+     0.441394,
+     1.027599
+    ],
+    "size": [
+     1.4669,
+     0.8184,
+     1.9452
+    ],
+    "vertices": 6257,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "PressurePlate": {
+   "name": "PressurePlate",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ],
+      "name": "Output"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {
+     "3": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/PressurePlate/PressurePlate.obj",
+    "min": [
+     -0.670419,
+     -0.129139,
+     -1.001938
+    ],
+    "max": [
+     2.629612,
+     0.170861,
+     0.998062
+    ],
+    "size": [
+     3.3,
+     0.3,
+     2.0
+    ],
+    "vertices": 606,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Propeller": {
+   "name": "Propeller",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 36
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25,
+      "name": "MountPoint"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Propeller/Propeller.obj",
+    "min": [
+     -4.023787,
+     -0.154377,
+     -4.026533
+    ],
+    "max": [
+     3.976208,
+     0.287624,
+     3.973465
+    ],
+    "size": [
+     8.0,
+     0.442,
+     8.0
+    ],
+    "vertices": 303,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "RPG": {
+   "name": "RPG",
+   "category": "tools",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 34,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 26
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/RPG/RPG.obj",
+    "min": [
+     -1.399796,
+     -0.526156,
+     -0.344193
+    ],
+    "max": [
+     1.161874,
+     0.433934,
+     0.344311
+    ],
+    "size": [
+     2.5617,
+     0.9601,
+     0.6885
+    ],
+    "vertices": 894,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Radio": {
+   "name": "Radio",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 18
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Volume": {
+     "corpus_count": 18
+    },
+    "CustomTrack": {
+     "corpus_count": 18
+    },
+    "On": {
+     "corpus_count": 9
+    },
+    "Channel": {
+     "corpus_count": 18
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Radio/Radio.obj",
+    "min": [
+     -0.572542,
+     -0.176781,
+     -0.11544
+    ],
+    "max": [
+     0.560788,
+     0.276549,
+     0.614563
+    ],
+    "size": [
+     1.1333,
+     0.4533,
+     0.73
+    ],
+    "vertices": 508,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Recorder": {
+   "name": "Recorder",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 6
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 3
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Recorder/Recorder.obj",
+    "min": [
+     -0.234329,
+     -0.41179,
+     -0.521015
+    ],
+    "max": [
+     0.234371,
+     0.25431,
+     0.420784
+    ],
+    "size": [
+     0.4687,
+     0.6661,
+     0.9418
+    ],
+    "vertices": 600,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "RemoteButton": {
+   "name": "RemoteButton",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 288,
+      "role": "output",
+      "name": "Output"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 278,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 227,
+      "role": "input"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationY": {
+     "corpus_count": 1
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 4
+    },
+    "OrientationZ": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/RemoteButton/RemoteButton.obj",
+    "min": [
+     -0.299737,
+     -0.469607,
+     -0.383625
+    ],
+    "max": [
+     0.300262,
+     0.530374,
+     0.585175
+    ],
+    "size": [
+     0.6,
+     1.0,
+     0.9688
+    ],
+    "vertices": 1000,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Rocket": {
+   "name": "Rocket",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 164
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 4
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Rocket/Rocket.obj",
+    "min": [
+     -0.355794,
+     -0.313256,
+     -0.308777
+    ],
+    "max": [
+     0.916295,
+     0.309434,
+     0.313923
+    ],
+    "size": [
+     1.2721,
+     0.6227,
+     0.6227
+    ],
+    "vertices": 296,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "RockingChair": {
+   "name": "RockingChair",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/RockingChair/RockingChair.obj",
+    "min": [
+     -1.731869,
+     -0.843005,
+     -1.513851
+    ],
+    "max": [
+     1.628941,
+     1.972956,
+     1.539949
+    ],
+    "size": [
+     3.3608,
+     2.816,
+     3.0538
+    ],
+    "vertices": 740,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Roof": {
+   "name": "Roof",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 19
+     }
+    },
+    "parent": {
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 7
+     },
+     "6": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 8
+     },
+     "2": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 12
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 12
+     },
+     "4": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 11
+     },
+     "8": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 3
+     },
+     "3": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 11
+     },
+     "9": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     },
+     "10": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     }
+    },
+    "parent_uuid": {
+     "{0240af08-6e7d-42bc-8625-035ecc7a487e}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "{a32ba964-7b39-470b-9cf2-0d7495cea1b2}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 19
+    },
+    "OrientationY": {
+     "corpus_count": 3
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 3
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    },
+    "OrientationZ": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Roof/Roof.obj",
+    "min": [
+     -3.066217,
+     -3.051253,
+     -3.170818
+    ],
+    "max": [
+     3.066284,
+     1.839506,
+     3.076485
+    ],
+    "size": [
+     6.1325,
+     4.8908,
+     6.2473
+    ],
+    "vertices": 246,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Rope": {
+   "name": "Rope",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 4
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 4
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Rope/Rope.obj",
+    "min": [
+     -0.814999,
+     -0.100002,
+     -0.100002
+    ],
+    "max": [
+     0.815005,
+     0.099998,
+     0.099998
+    ],
+    "size": [
+     1.63,
+     0.2,
+     0.2
+    ],
+    "vertices": 228,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "RubberBand": {
+   "name": "RubberBand",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 19
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 19
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/RubberBand/RubberBand.obj",
+    "min": [
+     -1.949999,
+     -0.100002,
+     -0.100002
+    ],
+    "max": [
+     1.950001,
+     0.099998,
+     0.099998
+    ],
+    "size": [
+     3.9,
+     0.2,
+     0.2
+    ],
+    "vertices": 228,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Seat": {
+   "name": "Seat",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 206
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationY": {
+     "corpus_count": 40
+    },
+    "DisabledInput": {
+     "corpus_count": 45
+    },
+    "RGB": {
+     "corpus_count": 6
+    },
+    "OrientationX": {
+     "corpus_count": 5
+    },
+    "OrientationZ": {
+     "corpus_count": 7
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Seat/Seat.obj",
+    "min": [
+     -0.701233,
+     -1.260397,
+     -1.042793
+    ],
+    "max": [
+     0.725868,
+     1.194543,
+     0.51331
+    ],
+    "size": [
+     1.4271,
+     2.4549,
+     1.5561
+    ],
+    "vertices": 1406,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Servo": {
+   "name": "Servo",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 162
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 162,
+      "name": "RotationAxis"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 149,
+      "name": "Side_Red"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 137,
+      "name": "Side_Blue"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Rotation": {
+     "corpus_count": 162
+    },
+    "Backwards": {
+     "corpus_count": 133
+    },
+    "LimitEnabled": {
+     "corpus_count": 162
+    },
+    "Speed": {
+     "corpus_count": 162
+    },
+    "Forwards": {
+     "corpus_count": 123
+    },
+    "Rest": {
+     "corpus_count": 162
+    },
+    "LimitAngle": {
+     "corpus_count": 162
+    },
+    "RGB": {
+     "corpus_count": 4
+    },
+    "OrientationX": {
+     "corpus_count": 5
+    },
+    "OrientationY": {
+     "corpus_count": 3
+    },
+    "OrientationZ": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Servo/Servo.obj",
+    "min": [
+     -0.109562,
+     -0.500003,
+     -0.55426
+    ],
+    "max": [
+     0.190439,
+     0.499997,
+     0.545742
+    ],
+    "size": [
+     0.3,
+     1.0,
+     1.1
+    ],
+    "vertices": 884,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Servo_Physics": {
+   "name": "Servo_Physics",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 153
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 153,
+      "name": "RotationAxis"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 118,
+      "name": "Side_Red"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 128,
+      "name": "Side_Blue"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Rotation": {
+     "corpus_count": 153
+    },
+    "Backwards": {
+     "corpus_count": 153
+    },
+    "LimitEnabled": {
+     "corpus_count": 153
+    },
+    "Speed": {
+     "corpus_count": 153
+    },
+    "Forwards": {
+     "corpus_count": 153
+    },
+    "Rest": {
+     "corpus_count": 153
+    },
+    "LimitAngle": {
+     "corpus_count": 153
+    },
+    "RGB": {
+     "corpus_count": 7
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    },
+    "OrientationZ": {
+     "corpus_count": 10
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Servo_Physics/Servo_Physics.obj",
+    "min": [
+     -0.08408,
+     -0.499996,
+     -0.557735
+    ],
+    "max": [
+     0.215921,
+     0.500004,
+     0.542267
+    ],
+    "size": [
+     0.3,
+     1.0,
+     1.1
+    ],
+    "vertices": 466,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "ShortStick": {
+   "name": "ShortStick",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1543,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1274,
+      "role": "socket",
+      "name": "MountPoint"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 40
+    },
+    "OrientationZ": {
+     "corpus_count": 23
+    },
+    "OrientationY": {
+     "corpus_count": 20
+    },
+    "RGB": {
+     "corpus_count": 138
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/ShortStick/ShortStick.obj",
+    "min": [
+     -0.09,
+     -0.090001,
+     -0.500008
+    ],
+    "max": [
+     0.09,
+     0.089999,
+     0.499992
+    ],
+    "size": [
+     0.18,
+     0.18,
+     1.0
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Shotgun": {
+   "name": "Shotgun",
+   "category": null,
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 55
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 50
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 1
+    },
+    "OrientationY": {
+     "corpus_count": 3
+    },
+    "OrientationX": {
+     "corpus_count": 5
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Shotgun/Shotgun.obj",
+    "min": [
+     -1.504908,
+     -0.474756,
+     -0.087688
+    ],
+    "max": [
+     1.414752,
+     0.220179,
+     0.08881
+    ],
+    "size": [
+     2.9197,
+     0.6949,
+     0.1765
+    ],
+    "vertices": 852,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Sledge": {
+   "name": "Sledge",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 1314
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 58
+    },
+    "OrientationZ": {
+     "corpus_count": 18
+    },
+    "OrientationX": {
+     "corpus_count": 4
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Sledge/Sledge.obj",
+    "min": [
+     -0.564399,
+     -0.300002,
+     -0.299988
+    ],
+    "max": [
+     0.564399,
+     0.299998,
+     0.300015
+    ],
+    "size": [
+     1.1288,
+     0.6,
+     0.6
+    ],
+    "vertices": 56,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Splitter": {
+   "name": "Splitter",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {
+     "4": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Splitter/Splitter.obj",
+    "min": [
+     -1.30087,
+     -0.124336,
+     -1.302277
+    ],
+    "max": [
+     1.29913,
+     0.075665,
+     1.297724
+    ],
+    "size": [
+     2.6,
+     0.2,
+     2.6
+    ],
+    "vertices": 2064,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Splitter_1": {
+   "name": "Splitter_1",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 49,
+      "role": "input"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 49,
+      "role": "output"
+     }
+    },
+    "parent": {
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 9,
+      "role": "input"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 15,
+      "role": "output"
+     }
+    }
+   },
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B"
+   },
+   "props": {
+    "RGB": {
+     "corpus_count": 49
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Splitter_1/Splitter_1.obj",
+    "min": [
+     -0.300775,
+     -0.124154,
+     -0.453203
+    ],
+    "max": [
+     0.299235,
+     0.075846,
+     1.146797
+    ],
+    "size": [
+     0.6,
+     0.2,
+     1.6
+    ],
+    "vertices": 582,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Splitter_2": {
+   "name": "Splitter_2",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 272,
+      "role": "input"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 269,
+      "role": "output"
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 269,
+      "role": "output"
+     }
+    },
+    "parent": {
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 82,
+      "role": "input"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 186,
+      "role": "output"
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 165,
+      "role": "output"
+     }
+    }
+   },
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B",
+    "9": "C",
+    "10": "C"
+   },
+   "props": {
+    "RGB": {
+     "corpus_count": 274
+    },
+    "OrientationX": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Splitter_2/Splitter_2.obj",
+    "min": [
+     -0.841723,
+     -0.124272,
+     -0.843071
+    ],
+    "max": [
+     0.758286,
+     0.075728,
+     0.756929
+    ],
+    "size": [
+     1.6,
+     0.2,
+     1.6
+    ],
+    "vertices": 1076,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Splitter_3": {
+   "name": "Splitter_3",
+   "category": null,
+   "sockets": {
+    "child": {
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 100,
+      "role": "input"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 100,
+      "role": "output"
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 100,
+      "role": "output"
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 100,
+      "role": "output"
+     }
+    },
+    "parent": {
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 13,
+      "role": "input"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 84,
+      "role": "output"
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 91,
+      "role": "output"
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 85,
+      "role": "output"
+     }
+    }
+   },
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B",
+    "7": "C",
+    "8": "C",
+    "9": "D",
+    "10": "D"
+   },
+   "props": {
+    "RGB": {
+     "corpus_count": 100
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Splitter_3/Splitter_3.obj",
+    "min": [
+     -1.300857,
+     -0.124313,
+     -0.987589
+    ],
+    "max": [
+     1.299143,
+     0.075687,
+     0.612411
+    ],
+    "size": [
+     2.6,
+     0.2,
+     1.6
+    ],
+    "vertices": 1570,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Splitter_4": {
+   "name": "Splitter_4",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 257,
+      "role": "input"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 260,
+      "role": "input"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 257,
+      "role": "output"
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 258,
+      "role": "output"
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 257,
+      "role": "output"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 247,
+      "role": "input"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 65,
+      "role": "output"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 245,
+      "role": "output"
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 241,
+      "role": "output"
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 242,
+      "role": "output"
+     }
+    }
+   },
+   "pieces": {
+    "1": "A",
+    "2": "A",
+    "3": "B",
+    "4": "B",
+    "5": "C",
+    "6": "C",
+    "7": "D",
+    "8": "D",
+    "9": "E",
+    "10": "E"
+   },
+   "props": {
+    "RGB": {
+     "corpus_count": 261
+    },
+    "OrientationX": {
+     "corpus_count": 4
+    },
+    "OrientationZ": {
+     "corpus_count": 3
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Splitter_4/Splitter_4.obj",
+    "min": [
+     -1.30087,
+     -0.124336,
+     -1.302277
+    ],
+    "max": [
+     1.29913,
+     0.075665,
+     1.297724
+    ],
+    "size": [
+     2.6,
+     0.2,
+     2.6
+    ],
+    "vertices": 2064,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Spoiler": {
+   "name": "Spoiler",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 3
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "SprayPaint": {
+   "name": "SprayPaint",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 50
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 50
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/SprayPaint/SprayPaint.obj",
+    "min": [
+     -0.283628,
+     -0.957665,
+     -0.289577
+    ],
+    "max": [
+     0.283371,
+     0.367335,
+     0.27742
+    ],
+    "size": [
+     0.567,
+     1.325,
+     0.567
+    ],
+    "vertices": 372,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "SpringJuice": {
+   "name": "SpringJuice",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 36
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/SpringJuice/SpringJuice.obj",
+    "min": [
+     -0.435118,
+     -0.828938,
+     -0.56451
+    ],
+    "max": [
+     0.579923,
+     0.362602,
+     1.004692
+    ],
+    "size": [
+     1.015,
+     1.1915,
+     1.5692
+    ],
+    "vertices": 108,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Sprite": {
+   "name": "Sprite",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 5
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "ImageId": {
+     "corpus_count": 5
+    }
+   },
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "StaringGyro": {
+   "name": "StaringGyro",
+   "category": "physics",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 22
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 16,
+      "name": "Front"
+     },
+     "3": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 8,
+      "name": "Back"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "IgnoreAttached": {
+     "corpus_count": 29
+    },
+    "MaxDistance": {
+     "corpus_count": 29
+    },
+    "OrientationZ": {
+     "corpus_count": 4
+    },
+    "RGB": {
+     "corpus_count": 7
+    },
+    "Deactivated": {
+     "corpus_count": 7
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/StaringGyro/StaringGyro.obj",
+    "min": [
+     -0.375009,
+     -0.374995,
+     -0.367582
+    ],
+    "max": [
+     0.374991,
+     0.375005,
+     0.404919
+    ],
+    "size": [
+     0.75,
+     0.75,
+     0.7725
+    ],
+    "vertices": 882,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "SteeringGyro": {
+   "name": "SteeringGyro",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 83
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "Activated": {
+     "corpus_count": 78
+    },
+    "ItemTurn": {
+     "corpus_count": 44
+    },
+    "OrientationY": {
+     "corpus_count": 15
+    },
+    "OrientationX": {
+     "corpus_count": 5
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/SteeringGyro/SteeringGyro.obj",
+    "min": [
+     -0.448141,
+     -0.115529,
+     -0.568913
+    ],
+    "max": [
+     0.441856,
+     0.115529,
+     0.463589
+    ],
+    "size": [
+     0.89,
+     0.2311,
+     1.0325
+    ],
+    "vertices": 403,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "SteeringWheel": {
+   "name": "SteeringWheel",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 45
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/SteeringWheel/SteeringWheel.obj",
+    "min": [
+     -0.879619,
+     -0.867708,
+     -0.452099
+    ],
+    "max": [
+     0.884381,
+     0.896292,
+     0.084702
+    ],
+    "size": [
+     1.764,
+     1.764,
+     0.5368
+    ],
+    "vertices": 953,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Stick": {
+   "name": "Stick",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 245,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 151,
+      "role": "socket",
+      "name": "MountPoint"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 3
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 26
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Stick/Stick.obj",
+    "min": [
+     -0.09,
+     -0.090001,
+     -2.000008
+    ],
+    "max": [
+     0.09,
+     0.089999,
+     1.999992
+    ],
+    "size": [
+     0.18,
+     0.18,
+     4.0
+    ],
+    "vertices": 24,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Switch": {
+   "name": "Switch",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 195,
+      "role": "output",
+      "name": "Output"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 195,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus",
+       "model.LocalPoints"
+      ],
+      "corpus_count": 173,
+      "role": "input"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 3
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Switch/Switch.obj",
+    "min": [
+     -0.30175,
+     -0.128198,
+     -1.1091
+    ],
+    "max": [
+     0.29825,
+     0.214222,
+     0.4909
+    ],
+    "size": [
+     0.6,
+     0.3424,
+     1.6
+    ],
+    "vertices": 612,
+    "scale": 1,
+    "tooltip": "Activates its output until switched off"
+   },
+   "socket_geometry": {
+    "2": {
+     "position": [
+      -0.000911,
+      -0.051842,
+      0.002375
+     ],
+     "rotation_deg": [
+      0,
+      0,
+      0
+     ],
+     "source": "community model JSON LocalPoints",
+     "confidence": "community"
+    }
+   }
+  },
+  "Thruster": {
+   "name": "Thruster",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 646
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 10
+    },
+    "OrientationY": {
+     "corpus_count": 4
+    },
+    "OrientationZ": {
+     "corpus_count": 5
+    },
+    "RGB": {
+     "corpus_count": 18
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Thruster/Thruster.obj",
+    "min": [
+     -0.4343,
+     -0.434292,
+     -0.185783
+    ],
+    "max": [
+     0.43429,
+     0.434298,
+     0.635716
+    ],
+    "size": [
+     0.8686,
+     0.8686,
+     0.8215
+    ],
+    "vertices": 497,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Tire": {
+   "name": "Tire",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "name": "WheelMount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 6
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Tire/Tire.obj",
+    "min": [
+     -1.469522,
+     -0.49195,
+     -1.450893
+    ],
+    "max": [
+     1.430378,
+     0.473101,
+     1.449005
+    ],
+    "size": [
+     2.8999,
+     0.9651,
+     2.8999
+    ],
+    "vertices": 148,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Toilet": {
+   "name": "Toilet",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "TripWire": {
+   "name": "TripWire",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 22,
+      "role": "input",
+      "name": "MountPoint"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 35,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 33,
+      "role": "input"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Visible": {
+     "corpus_count": 5
+    },
+    "Length": {
+     "corpus_count": 36
+    },
+    "Activated": {
+     "corpus_count": 36
+    },
+    "RGB": {
+     "corpus_count": 3
+    },
+    "Reverse": {
+     "corpus_count": 5
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/TripWire/TripWire.obj",
+    "min": [
+     -0.300451,
+     -0.89784,
+     -0.800164
+    ],
+    "max": [
+     0.299549,
+     4.30216,
+     0.799837
+    ],
+    "size": [
+     0.6,
+     5.2,
+     1.6
+    ],
+    "vertices": 990,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Trunk": {
+   "name": "Trunk",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 21,
+      "name": "ChassisMount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 7
+     }
+    },
+    "parent_uuid": {
+     "{e603e848-5a22-4fbd-96f8-2319fc00e931}": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 21
+    },
+    "Activated": {
+     "corpus_count": 2
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Trunk/Trunk.obj",
+    "min": [
+     -2.774051,
+     -0.178187,
+     -1.441662
+    ],
+    "max": [
+     2.774049,
+     0.139093,
+     0.770939
+    ],
+    "size": [
+     5.5481,
+     0.3173,
+     2.2126
+    ],
+    "vertices": 48,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Uzi": {
+   "name": "Uzi",
+   "category": "tools",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 29
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 25,
+      "name": "MagInput"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "Shooting": {
+     "corpus_count": 29
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Uzi/Uzi.obj",
+    "min": [
+     -0.860661,
+     -0.379135,
+     -0.063671
+    ],
+    "max": [
+     0.722839,
+     0.221945,
+     0.064129
+    ],
+    "size": [
+     1.5835,
+     0.6011,
+     0.1278
+    ],
+    "vertices": 1172,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "VelocitySensor": {
+   "name": "VelocitySensor",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 106,
+      "role": "mount"
+     }
+    },
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 82,
+      "role": "output",
+      "name": "Output"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "ActivationSpeed": {
+     "corpus_count": 106
+    },
+    "Activated": {
+     "corpus_count": 105
+    },
+    "Reverse": {
+     "corpus_count": 4
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/VelocitySensor/VelocitySensor.obj",
+    "min": [
+     -0.300015,
+     -0.240001,
+     -0.345219
+    ],
+    "max": [
+     0.299985,
+     0.239999,
+     0.254782
+    ],
+    "size": [
+     0.6,
+     0.48,
+     0.6
+    ],
+    "vertices": 104,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Wheel": {
+   "name": "Wheel",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 237,
+      "name": "ChassisMount"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 26
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 1
+    },
+    "OrientationZ": {
+     "corpus_count": 1
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 1
+    },
+    "OrientationY": {
+     "corpus_count": 1
+    },
+    "RGB": {
+     "corpus_count": 15
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Wheel/Wheel.obj",
+    "min": [
+     -0.392414,
+     -1.000009,
+     -0.999969
+    ],
+    "max": [
+     0.592886,
+     0.999991,
+     1.000031
+    ],
+    "size": [
+     0.9853,
+     2.0,
+     2.0
+    ],
+    "vertices": 656,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Wing": {
+   "name": "Wing",
+   "category": "building",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 225,
+      "name": "MountPoint"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 102
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 51
+    },
+    "OrientationX": {
+     "corpus_count": 3
+    },
+    "OrientationY": {
+     "corpus_count": 6
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Wing/Wing.obj",
+    "min": [
+     -0.530779,
+     -0.13405,
+     -1.960384
+    ],
+    "max": [
+     0.524981,
+     0.125901,
+     1.939117
+    ],
+    "size": [
+     1.0558,
+     0.26,
+     3.8995
+    ],
+    "vertices": 45,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Wire": {
+   "name": "Wire",
+   "category": "wiring",
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 356,
+      "role": "input"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalType",
+       "corpus"
+      ],
+      "corpus_count": 357,
+      "role": "output"
+     }
+    },
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 118,
+      "role": "input",
+      "name": "Left"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 136,
+      "role": "output",
+      "name": "Right"
+     }
+    }
+   },
+   "pieces": {
+    "1": "A",
+    "2": "A",
+    "3": "B",
+    "4": "B"
+   },
+   "props": {
+    "RGB": {
+     "corpus_count": 1
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Wire/Wire.obj",
+    "min": [
+     -0.300914,
+     -0.100058,
+     -0.802372
+    ],
+    "max": [
+     0.299086,
+     0.049942,
+     0.797628
+    ],
+    "size": [
+     0.6,
+     0.15,
+     1.6
+    ],
+    "vertices": 988,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "WoodenChair": {
+   "name": "WoodenChair",
+   "category": null,
+   "sockets": {
+    "child": {
+     "2": {
+      "sources": [
+       "tokens.LocalType"
+      ]
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Briefcase": {
+   "name": "Briefcase",
+   "category": "tools",
+   "sockets": {
+    "child": {},
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 5,
+      "name": "Center"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 7,
+      "name": "Left"
+     },
+     "4": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 6,
+      "name": "Right"
+     },
+     "1": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 5,
+      "name": "Front"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "OrientationZ": {
+     "corpus_count": 3
+    },
+    "RGB": {
+     "corpus_count": 2
+    },
+    "OrientationX": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Briefcase/Briefcase.obj",
+    "min": [
+     -0.341427,
+     -1.008603,
+     -0.999706
+    ],
+    "max": [
+     0.458513,
+     0.606397,
+     1.000294
+    ],
+    "size": [
+     0.7999,
+     1.615,
+     2.0
+    ],
+    "vertices": 240,
+    "scale": 1,
+    "tooltip": "Contains briefings. or poop"
+   },
+   "socket_geometry": {}
+  },
+  "Chassis": {
+   "name": "Chassis",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 38,
+      "name": "Wheel_FL"
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 29,
+      "name": "PassengerSteering"
+     },
+     "3": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 30,
+      "name": "Hood"
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 37,
+      "name": "Wheel_FR"
+     },
+     "5": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 37,
+      "name": "Wheel_BL"
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 38,
+      "name": "Wheel_BR"
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 33,
+      "name": "Roof"
+     },
+     "8": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 31,
+      "name": "Headlight_R"
+     },
+     "10": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 32,
+      "name": "SteeringWheel"
+     },
+     "11": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 27,
+      "name": "BrakeLight_R"
+     },
+     "12": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 29,
+      "name": "Trunk"
+     },
+     "13": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 28,
+      "name": "DriverSeat"
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 23,
+      "name": "PassengerSeat"
+     },
+     "15": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 27,
+      "name": "BrakeLight_L"
+     },
+     "16": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 39,
+      "name": "SideAux_A"
+     },
+     "17": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 30,
+      "name": "Headlight_L"
+     },
+     "18": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 34,
+      "name": "RearSeat_L"
+     },
+     "19": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 16,
+      "name": "TrunkAux_A"
+     },
+     "20": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 24,
+      "name": "GasCap"
+     },
+     "21": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 39,
+      "name": "TrunkAux_B"
+     },
+     "22": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 36,
+      "name": "RearBumper"
+     },
+     "23": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 35,
+      "name": "FrontBumper"
+     },
+     "24": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 38,
+      "name": "Engine"
+     },
+     "26": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 23,
+      "name": "Gyro"
+     },
+     "27": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 12
+     },
+     "28": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 15
+     },
+     "29": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 15
+     },
+     "30": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 19
+     },
+     "31": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 29
+     },
+     "9": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 7,
+      "name": "SideAux_B"
+     },
+     "32": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 28
+     },
+     "25": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 23,
+      "name": "RearSeat_R"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {
+    "RGB": {
+     "corpus_count": 40
+    },
+    "OrientationX": {
+     "corpus_count": 4
+    },
+    "EphemeralAttachments": {
+     "corpus_count": 4
+    },
+    "OrientationY": {
+     "corpus_count": 4
+    },
+    "OrientationZ": {
+     "corpus_count": 3
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Chassis/Chassis.obj",
+    "min": [
+     -2.657146,
+     -1.163555,
+     -5.60471
+    ],
+    "max": [
+     3.475355,
+     1.082636,
+     5.928589
+    ],
+    "size": [
+     6.1325,
+     2.2462,
+     11.5333
+    ],
+    "vertices": 982,
+    "scale": 1,
+    "tooltip": "The root of all cars"
+   },
+   "socket_geometry": {}
+  },
+  "ShoppingCart": {
+   "name": "ShoppingCart",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {
+     "1": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "2": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "4": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "6": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "7": {
+      "sources": [
+       "tokens.LocalIDs"
+      ]
+     },
+     "9": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "14": {
+      "sources": [
+       "tokens.LocalIDs",
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "3": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "5": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "8": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "11": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "13": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     },
+     "10": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/ShoppingCart/ShoppingCart.obj",
+    "min": [
+     -1.398211,
+     -2.126764,
+     -2.144421
+    ],
+    "max": [
+     1.520889,
+     2.03085,
+     2.290279
+    ],
+    "size": [
+     2.9191,
+     4.1576,
+     4.4347
+    ],
+    "vertices": 2454,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "YibYib": {
+   "name": "YibYib",
+   "category": "uncategorized",
+   "sockets": {
+    "child": {},
+    "parent": {
+     "2": {
+      "sources": [
+       "tokens.LocalIDs"
+      ],
+      "name": "Hands"
+     }
+    }
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Head": {
+   "name": "Head",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 2
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {
+    "OrientationX": {
+     "corpus_count": 2
+    },
+    "OrientationY": {
+     "corpus_count": 2
+    },
+    "OrientationZ": {
+     "corpus_count": 2
+    }
+   },
+   "mesh": {
+    "obj": "meshes/rtg-format/Head/Head.obj",
+    "min": [
+     -1.036325,
+     -0.883598,
+     -0.52
+    ],
+    "max": [
+     1.036985,
+     0.767482,
+     0.859798
+    ],
+    "size": [
+     2.0733,
+     1.6511,
+     1.3798
+    ],
+    "vertices": 1064,
+    "scale": [
+     2.74,
+     1.08,
+     1.37
+    ],
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "PolaroidCamera": {
+   "name": "PolaroidCamera",
+   "category": null,
+   "sockets": {
+    "child": {
+     "1": {
+      "sources": [
+       "corpus"
+      ],
+      "corpus_count": 1
+     }
+    },
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": null,
+   "socket_geometry": {}
+  },
+  "Body": {
+   "name": "Body",
+   "category": "uncategorized",
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Body/Body.obj",
+    "min": [
+     -0.665629,
+     -0.726894,
+     -0.665688
+    ],
+    "max": [
+     0.665631,
+     0.828786,
+     0.665615
+    ],
+    "size": [
+     1.3313,
+     1.5557,
+     1.3313
+    ],
+    "vertices": 568,
+    "scale": 1,
+    "tooltip": "let the these hit the FLOOOOOOOOOOOOOOOR"
+   },
+   "socket_geometry": {}
+  },
+  "Banjo": {
+   "name": "Banjo",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Banjo/Banjo.obj",
+    "min": [
+     -0.52104,
+     -1.714129,
+     -0.221979
+    ],
+    "max": [
+     0.522759,
+     1.141451,
+     0.237921
+    ],
+    "size": [
+     1.0438,
+     2.8556,
+     0.4599
+    ],
+    "vertices": 820,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Drumkit": {
+   "name": "Drumkit",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Drumkit/Drumkit.obj",
+    "min": [
+     -0.857294,
+     -0.907233,
+     -0.594164
+    ],
+    "max": [
+     1.125356,
+     0.725697,
+     0.814837
+    ],
+    "size": [
+     1.9827,
+     1.6329,
+     1.409
+    ],
+    "vertices": 1784,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Fricklet": {
+   "name": "Fricklet",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Fricklet/Fricklet.obj",
+    "min": [
+     -1.990846,
+     -1.789963,
+     -0.66795
+    ],
+    "max": [
+     1.985152,
+     1.762472,
+     0.728046
+    ],
+    "size": [
+     3.976,
+     3.5524,
+     1.396
+    ],
+    "vertices": 4968,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Guitar": {
+   "name": "Guitar",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Guitar/Guitar.obj",
+    "min": [
+     -0.500957,
+     -1.833318,
+     -0.174156
+    ],
+    "max": [
+     0.477882,
+     2.083894,
+     0.151043
+    ],
+    "size": [
+     0.9788,
+     3.9172,
+     0.3252
+    ],
+    "vertices": 1684,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Jug": {
+   "name": "Jug",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Jug/Jug.obj",
+    "min": [
+     -0.693249,
+     -1.554737,
+     -0.676342
+    ],
+    "max": [
+     0.684966,
+     0.949293,
+     0.701859
+    ],
+    "size": [
+     1.3782,
+     2.504,
+     1.3782
+    ],
+    "vertices": 121,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Keyboard": {
+   "name": "Keyboard",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Keyboard/Keyboard.obj",
+    "min": [
+     -1.044227,
+     -0.218225,
+     -0.395063
+    ],
+    "max": [
+     1.131025,
+     0.161715,
+     0.706636
+    ],
+    "size": [
+     2.1753,
+     0.3799,
+     1.1017
+    ],
+    "vertices": 736,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Ramp": {
+   "name": "Ramp",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Ramp/Ramp.obj",
+    "min": [
+     -18.364439,
+     -1.749968,
+     -13.655861
+    ],
+    "max": [
+     18.364452,
+     3.499934,
+     6.82793
+    ],
+    "size": [
+     36.7289,
+     5.2499,
+     20.4838
+    ],
+    "vertices": 42,
+    "scale": 1,
+    "tooltip": "For all your sick tricks."
+   },
+   "socket_geometry": {}
+  },
+  "RiotShield": {
+   "name": "RiotShield",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/RiotShield/RiotShield.obj",
+    "min": [
+     -0.853073,
+     -1.318572,
+     -0.204407
+    ],
+    "max": [
+     0.852936,
+     1.317508,
+     0.193604
+    ],
+    "size": [
+     1.706,
+     2.6361,
+     0.398
+    ],
+    "vertices": 292,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "SuperPowerClock": {
+   "name": "SuperPowerClock",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/SuperPowerClock/SuperPowerClock.obj",
+    "min": [
+     -0.451092,
+     -1.480176,
+     -0.713085
+    ],
+    "max": [
+     0.373207,
+     0.375634,
+     0.726914
+    ],
+    "size": [
+     0.8243,
+     1.8558,
+     1.44
+    ],
+    "vertices": 2883,
+    "scale": 1,
+    "tooltip": "Change the time, and then activate it to lock the time!"
+   },
+   "socket_geometry": {}
+  },
+  "ToolGun": {
+   "name": "ToolGun",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/ToolGun/ToolGun.obj",
+    "min": [
+     -0.346466,
+     -0.334538,
+     -0.180016
+    ],
+    "max": [
+     0.370335,
+     0.397212,
+     0.179985
+    ],
+    "size": [
+     0.7168,
+     0.7318,
+     0.36
+    ],
+    "vertices": 963,
+    "scale": 1,
+    "tooltip": "Any creator's dream! Has several modes to aid in building."
+   },
+   "socket_geometry": {}
+  },
+  "Tooth": {
+   "name": "Tooth",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Tooth/Tooth.obj",
+    "min": [
+     -0.09482,
+     -0.178079,
+     -0.025028
+    ],
+    "max": [
+     0.09319,
+     0.116541,
+     0.024971
+    ],
+    "size": [
+     0.188,
+     0.2946,
+     0.05
+    ],
+    "vertices": 171,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Trowel": {
+   "name": "Trowel",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Trowel/Trowel.obj",
+    "min": [
+     -0.260212,
+     -0.50903,
+     -0.156841
+    ],
+    "max": [
+     0.254988,
+     1.01215,
+     0.194359
+    ],
+    "size": [
+     0.5152,
+     1.5212,
+     0.3512
+    ],
+    "vertices": 181,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "Trumpet": {
+   "name": "Trumpet",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/Trumpet/Trumpet.obj",
+    "min": [
+     -0.828835,
+     -0.293742,
+     -0.196707
+    ],
+    "max": [
+     0.741164,
+     0.257708,
+     0.375792
+    ],
+    "size": [
+     1.57,
+     0.5514,
+     0.5725
+    ],
+    "vertices": 924,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "TV": {
+   "name": "TV",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/TV/TV.obj",
+    "min": [
+     -2.031399,
+     -1.879707,
+     -1.764965
+    ],
+    "max": [
+     1.968601,
+     2.120293,
+     1.235035
+    ],
+    "size": [
+     4.0,
+     4.0,
+     3.0
+    ],
+    "vertices": 217,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  },
+  "wad": {
+   "name": "wad",
+   "category": null,
+   "sockets": {
+    "child": {},
+    "parent": {}
+   },
+   "pieces": null,
+   "props": {},
+   "mesh": {
+    "obj": "meshes/rtg-format/wad/wad.obj",
+    "min": [
+     -0.421808,
+     -0.113144,
+     -0.176338
+    ],
+    "max": [
+     0.387737,
+     0.129366,
+     0.176062
+    ],
+    "size": [
+     0.8095,
+     0.2425,
+     0.3524
+    ],
+    "vertices": 518,
+    "scale": 1,
+    "tooltip": null
+   },
+   "socket_geometry": {}
+  }
+ }
+}

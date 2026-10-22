@@ -1,0 +1,426 @@
+{
+ "codes_matched": 203,
+ "codes_parsed": 185,
+ "entries": 34511,
+ "joints": 37115,
+ "parts_in_corpus": 106,
+ "part_frequency": {
+  "Connector": 11484,
+  "Bumper": 5874,
+  "Part": 2404,
+  "ShortStick": 1546,
+  "FuelTank": 1432,
+  "Sledge": 1314,
+  "InputSensor": 1009,
+  "Base": 751,
+  "Thruster": 646,
+  "Canister": 474,
+  "Bearing": 448,
+  "Wire": 358,
+  "MountedGun": 358,
+  "RemoteButton": 291,
+  "Splitter_2": 274,
+  "Splitter_4": 261,
+  "Grenade": 256,
+  "Stick": 246,
+  "BrakeLight": 239,
+  "Wheel": 237,
+  "Wing": 225,
+  "Seat": 206,
+  "Gate-AND": 201,
+  "Delayer": 199,
+  "Switch": 198,
+  "Gyro": 185,
+  "Rocket": 164,
+  "Servo": 162,
+  "Servo_Physics": 153,
+  "ConnectorBall": 150,
+  "Mag": 139,
+  "Cinderblock": 138,
+  "LongStick": 135,
+  "Piston": 130,
+  "Detacher": 124,
+  "Light": 119,
+  "HalfConnectorBall": 118,
+  "VelocitySensor": 106,
+  "Splitter_3": 100,
+  "SteeringGyro": 83,
+  "Leafblower": 82,
+  "Anchor": 73,
+  "Board": 72,
+  "Looper": 69,
+  "GlassBase": 65,
+  "Gun": 58,
+  "Shotgun": 55,
+  "Pipes": 53,
+  "SprayPaint": 50,
+  "Splitter_1": 49,
+  "SteeringWheel": 45,
+  "Chassis": 40,
+  "Joust": 38,
+  "TripWire": 36,
+  "SpringJuice": 36,
+  "Gate-NOT": 36,
+  "Tire": 36,
+  "Propeller": 36,
+  "Button": 36,
+  "Gate-OR": 35,
+  "RPG": 34,
+  "FishBowl": 30,
+  "Hood": 30,
+  "Camera": 29,
+  "StaringGyro": 29,
+  "Uzi": 29,
+  "BowlingBall": 26,
+  "GoldPotatoEngine": 24,
+  "GasCap": 24,
+  "Trunk": 21,
+  "RubberBand": 19,
+  "Roof": 19,
+  "Radio": 18,
+  "Joint": 17,
+  "Leg": 16,
+  "CannonBall": 16,
+  "EntitySensor": 16,
+  "Pie": 16,
+  "BallSocket": 14,
+  "DoorA": 13,
+  "DoorB": 13,
+  "Cannon": 11,
+  "MatchingGyro": 11,
+  "AltitudeSensor": 9,
+  "DoorD": 9,
+  "DoorC": 9,
+  "PotatoEngine": 7,
+  "Briefcase": 7,
+  "Note": 7,
+  "Recorder": 6,
+  "Lock": 6,
+  "Arm": 5,
+  "Sprite": 5,
+  "Rope": 5,
+  "Plunger": 5,
+  "Gramby": 3,
+  "Spoiler": 3,
+  "Poop": 2,
+  "Head": 2,
+  "Balloon": 2,
+  "BouncyBall": 2,
+  "HulaDoll": 1,
+  "RockingChair": 1,
+  "PolaroidCamera": 1,
+  "Googie": 1,
+  "ShoppingCart": 1
+ },
+ "top_pairs": [
+  {
+   "child": "Connector.self5",
+   "parent": "Connector.sock4",
+   "count": 5619
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Bumper.sock2",
+   "count": 3481
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Connector.sock6",
+   "count": 1289
+  },
+  {
+   "child": "Part.self1",
+   "parent": "Part.sock6",
+   "count": 1073
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Connector.sock6",
+   "count": 1009
+  },
+  {
+   "child": "FuelTank.self2",
+   "parent": "Connector.sock6",
+   "count": 923
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Connector.sock3",
+   "count": 783
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "ShortStick.sock1",
+   "count": 764
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Connector.sock2",
+   "count": 609
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Connector.sock3",
+   "count": 477
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Connector.sock1",
+   "count": 468
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Connector.sock4",
+   "count": 370
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "ShortStick.sock1",
+   "count": 369
+  },
+  {
+   "child": "Base.self3",
+   "parent": "Base.sock4",
+   "count": 358
+  },
+  {
+   "child": "Sledge.self1",
+   "parent": "Connector.sock6",
+   "count": 356
+  },
+  {
+   "child": "Part.self1",
+   "parent": "Part.sock5",
+   "count": 268
+  },
+  {
+   "child": "FuelTank.self2",
+   "parent": "FuelTank.sock1",
+   "count": 264
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "Connector.sock4",
+   "count": 240
+  },
+  {
+   "child": "Sledge.self1",
+   "parent": "Connector.sock3",
+   "count": 237
+  },
+  {
+   "child": "Part.self1",
+   "parent": "Part.sock4",
+   "count": 237
+  },
+  {
+   "child": "Part.self1",
+   "parent": "Part.sock3",
+   "count": 236
+  },
+  {
+   "child": "Part.self1",
+   "parent": "Part.sock2",
+   "count": 227
+  },
+  {
+   "child": "Wheel.self1",
+   "parent": "Bearing.sock2",
+   "count": 224
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "Connector.sock6",
+   "count": 206
+  },
+  {
+   "child": "Sledge.self1",
+   "parent": "Connector.sock2",
+   "count": 184
+  },
+  {
+   "child": "Sledge.self1",
+   "parent": "Connector.sock1",
+   "count": 183
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "Connector.sock1",
+   "count": 180
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "Connector.sock2",
+   "count": 177
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Servo_Physics.sock2",
+   "count": 138
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Bumper.sock2",
+   "count": 125
+  },
+  {
+   "child": "Sledge.self1",
+   "parent": "Connector.sock4",
+   "count": 122
+  },
+  {
+   "child": "Canister.self1",
+   "parent": "Connector.sock1",
+   "count": 119
+  },
+  {
+   "child": "ShortStick.self2",
+   "parent": "Connector.sock3",
+   "count": 115
+  },
+  {
+   "child": "Canister.self1",
+   "parent": "Connector.sock2",
+   "count": 112
+  },
+  {
+   "child": "Grenade.self1",
+   "parent": "Delayer.sock1",
+   "count": 111
+  },
+  {
+   "child": "Canister.self1",
+   "parent": "Connector.sock3",
+   "count": 110
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Stick.sock1",
+   "count": 106
+  },
+  {
+   "child": "Canister.self1",
+   "parent": "Connector.sock6",
+   "count": 105
+  },
+  {
+   "child": "Bearing.self1",
+   "parent": "InputSensor.sock1",
+   "count": 100
+  },
+  {
+   "child": "InputSensor.self2",
+   "parent": "Connector.sock1",
+   "count": 99
+  },
+  {
+   "child": "InputSensor.self2",
+   "parent": "Connector.sock2",
+   "count": 99
+  },
+  {
+   "child": "InputSensor.self2",
+   "parent": "Servo.sock3",
+   "count": 97
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Connector.sock1",
+   "count": 96
+  },
+  {
+   "child": "InputSensor.self2",
+   "parent": "Servo.sock4",
+   "count": 94
+  },
+  {
+   "child": "Thruster.self1",
+   "parent": "InputSensor.sock1",
+   "count": 94
+  },
+  {
+   "child": "MountedGun.self1",
+   "parent": "InputSensor.sock1",
+   "count": 92
+  },
+  {
+   "child": "InputSensor.self2",
+   "parent": "Connector.sock6",
+   "count": 89
+  },
+  {
+   "child": "Splitter_4.self9",
+   "parent": "Connector.sock6",
+   "count": 87
+  },
+  {
+   "child": "FuelTank.self2",
+   "parent": "Connector.sock4",
+   "count": 86
+  },
+  {
+   "child": "Thruster.self1",
+   "parent": "Splitter_4.sock10",
+   "count": 86
+  },
+  {
+   "child": "Bumper.self1",
+   "parent": "Connector.sock2",
+   "count": 85
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Base.sock5",
+   "count": 84
+  },
+  {
+   "child": "Thruster.self1",
+   "parent": "Splitter_4.sock2",
+   "count": 84
+  },
+  {
+   "child": "Base.self3",
+   "parent": "Base.sock2",
+   "count": 83
+  },
+  {
+   "child": "Base.self3",
+   "parent": "Base.sock1",
+   "count": 82
+  },
+  {
+   "child": "Splitter_4.self5",
+   "parent": "Connector.sock6",
+   "count": 81
+  },
+  {
+   "child": "Thruster.self1",
+   "parent": "Splitter_4.sock8",
+   "count": 81
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Base.sock4",
+   "count": 79
+  },
+  {
+   "child": "Connector.self5",
+   "parent": "Part.sock6",
+   "count": 79
+  },
+  {
+   "child": "Splitter_4.self1",
+   "parent": "Connector.sock6",
+   "count": 78
+  }
+ ],
+ "no_local_type": [
+  "Chassis",
+  "Fricklet",
+  "wad"
+ ],
+ "no_local_ids": [
+  "wad",
+  "Fricklet"
+ ]
+}

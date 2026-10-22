@@ -1,0 +1,4035 @@
+{
+ "_meta": {
+  "parts": 132,
+  "note": "'role' is the in-game verified meaning and wins over the community 'name'; 'parent_uuid' holds ephemeral attachment references, not circle ids"
+ },
+ "sockets": {
+  "AltitudeSensor": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus",
+      "model.LocalPoints"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Anchor": {
+   "child": {
+    "1": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "socket",
+     "name": "TopLeft",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "socket",
+     "name": "TopRight",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "socket",
+     "name": "BottomLeft",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "socket",
+     "name": "BottomRight",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Arm": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "BallSocket": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Balloon": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Base": {
+   "child": {
+    "3": {
+     "role": "mount",
+     "name": "Arm",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "left",
+     "name": "Left",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": "right",
+     "name": "Right",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "front",
+     "name": "Front",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "top",
+     "name": "Top",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "bottom",
+     "name": "Bottom",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [
+    "{83dc86a4-3a11-4c20-8b4e-5ecf518b40d0}",
+    "{ad329359-5f00-45ca-8abb-e05b5456409b}",
+    "{d3ed2d95-e9c1-4d3a-a3e4-9b1660887eaa}",
+    "{e6ce42ac-ae92-4934-82f6-2c3760ad3599}"
+   ],
+   "pieces": null
+  },
+  "BeachBall": {
+   "child": {
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "15": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "17": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "BeachChair": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Bearing": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "RotationAxis",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Board": {
+   "child": {
+    "15": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "BouncyBall": {
+   "child": {
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "16": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "BowlingBall": {
+   "child": {
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "15": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "16": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "17": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "BrakeLight": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Bumper": {
+   "child": {
+    "1": {
+     "role": "mount",
+     "name": "ChassisMount",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Button": {
+   "child": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Camera": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Canister": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Cannon": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "CannonBall": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Carrot": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Cinderblock": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Clipboard": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Cone": {
+   "child": {
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Connector": {
+   "child": {
+    "5": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "ConnectorBall": {
+   "child": {
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "15": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "16": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "17": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Delayer": {
+   "child": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Detacher": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "DoorA": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "DoorB": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "DoorC": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "DoorD": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "EntitySensor": {
+   "child": {
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "BackLeft",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": "BackRight",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "BackCenter",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "FrontCenter",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": "FrontRight",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": "FrontLeft",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "FishBowl": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "FuelTank": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "socket",
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "GasCap": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gate-AND": {
+   "child": {
+    "4": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": "input",
+     "name": "InputA",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "input",
+     "name": "InputB",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gate-NOT": {
+   "child": {
+    "4": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": "input",
+     "name": "Input",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gate-OR": {
+   "child": {
+    "4": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": "input",
+     "name": "InputA",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "input",
+     "name": "InputB",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "GlassBase": {
+   "child": {
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "GoldPotatoEngine": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Googie": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gramby": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Grenade": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gun": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Gyro": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "HalfConnectorBall": {
+   "child": {
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "15": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "16": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "17": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Hood": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "ChassisMount",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "HulaDoll": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "InputSensor": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Joint": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Joust": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Leafblower": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Leg": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Light": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Lock": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "LongStick": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "socket",
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Looper": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "output",
+     "name": "Top",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "output",
+     "name": "Right",
+     "sources": [
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "output",
+     "name": "Left",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": "Front",
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Mag": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "MatchingGyro": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "HandleMount",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Right",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": "Top",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": "Left",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": "Back",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": "Front",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "MountedGun": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Note": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Part": {
+   "child": {
+    "1": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "socket",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Pie": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Pipes": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Piston": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "PushEnd",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Side_Red",
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Side_Blue",
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Plunger": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Poop": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "PotatoEngine": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "PressurePlate": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "Output",
+     "sources": [
+      "tokens.LocalType"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Propeller": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "RPG": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Radio": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Recorder": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "RemoteButton": {
+   "child": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Rocket": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "RockingChair": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Roof": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [
+    "{0240af08-6e7d-42bc-8625-035ecc7a487e}",
+    "{a32ba964-7b39-470b-9cf2-0d7495cea1b2}"
+   ],
+   "pieces": null
+  },
+  "Rope": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "RubberBand": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Seat": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Servo": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": "RotationAxis",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Side_Red",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Side_Blue",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Servo_Physics": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": "RotationAxis",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Side_Red",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Side_Blue",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "ShortStick": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "socket",
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Shotgun": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Sledge": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Splitter": {
+   "child": {
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Splitter_1": {
+   "child": {
+    "3": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "4": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B"
+   }
+  },
+  "Splitter_2": {
+   "child": {
+    "3": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "4": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B",
+    "9": "C",
+    "10": "C"
+   }
+  },
+  "Splitter_3": {
+   "child": {
+    "3": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "4": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": {
+    "3": "A",
+    "4": "A",
+    "5": "B",
+    "6": "B",
+    "7": "C",
+    "8": "C",
+    "9": "D",
+    "10": "D"
+   }
+  },
+  "Splitter_4": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": {
+    "1": "A",
+    "2": "A",
+    "3": "B",
+    "4": "B",
+    "5": "C",
+    "6": "C",
+    "7": "D",
+    "8": "D",
+    "9": "E",
+    "10": "E"
+   }
+  },
+  "Spoiler": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "SprayPaint": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "SpringJuice": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Sprite": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "StaringGyro": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": "Front",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Back",
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "SteeringGyro": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "SteeringWheel": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Stick": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "socket",
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Switch": {
+   "child": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus",
+      "model.LocalPoints"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Thruster": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Tire": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "WheelMount",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Toilet": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "TripWire": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Trunk": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "ChassisMount",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [
+    "{e603e848-5a22-4fbd-96f8-2319fc00e931}"
+   ],
+   "pieces": null
+  },
+  "Uzi": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "MagInput",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "VelocitySensor": {
+   "child": {
+    "2": {
+     "role": "mount",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "1": {
+     "role": "output",
+     "name": "Output",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Wheel": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "ChassisMount",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Wing": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": "MountPoint",
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Wire": {
+   "child": {
+    "1": {
+     "role": "input",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": "output",
+     "name": null,
+     "sources": [
+      "tokens.LocalType",
+      "corpus"
+     ]
+    }
+   },
+   "parent": {
+    "2": {
+     "role": "input",
+     "name": "Left",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": "output",
+     "name": "Right",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": {
+    "1": "A",
+    "2": "A",
+    "3": "B",
+    "4": "B"
+   }
+  },
+  "WoodenChair": {
+   "child": {
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalType"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Briefcase": {
+   "child": {},
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "Front",
+     "sources": [
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": "Center",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Left",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Right",
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Chassis": {
+   "child": {},
+   "parent": {
+    "1": {
+     "role": null,
+     "name": "Wheel_FL",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": "PassengerSteering",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": "Hood",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": "Wheel_FR",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": "Wheel_BL",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": "Wheel_BR",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": "Roof",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": "Headlight_R",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": "SideAux_B",
+     "sources": [
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": "SteeringWheel",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": "BrakeLight_R",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "12": {
+     "role": null,
+     "name": "Trunk",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": "DriverSeat",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": "PassengerSeat",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "15": {
+     "role": null,
+     "name": "BrakeLight_L",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "16": {
+     "role": null,
+     "name": "SideAux_A",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "17": {
+     "role": null,
+     "name": "Headlight_L",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "18": {
+     "role": null,
+     "name": "RearSeat_L",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "19": {
+     "role": null,
+     "name": "TrunkAux_A",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "20": {
+     "role": null,
+     "name": "GasCap",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "21": {
+     "role": null,
+     "name": "TrunkAux_B",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "22": {
+     "role": null,
+     "name": "RearBumper",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "23": {
+     "role": null,
+     "name": "FrontBumper",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "24": {
+     "role": null,
+     "name": "Engine",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "25": {
+     "role": null,
+     "name": "RearSeat_R",
+     "sources": [
+      "corpus"
+     ]
+    },
+    "26": {
+     "role": null,
+     "name": "Gyro",
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "27": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "28": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "29": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "30": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "31": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "32": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "ShoppingCart": {
+   "child": {},
+   "parent": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "2": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "3": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "4": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "5": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "6": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "7": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    },
+    "8": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "9": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    },
+    "10": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "11": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "13": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    },
+    "14": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "tokens.LocalIDs",
+      "corpus"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "YibYib": {
+   "child": {},
+   "parent": {
+    "2": {
+     "role": null,
+     "name": "Hands",
+     "sources": [
+      "tokens.LocalIDs"
+     ]
+    }
+   },
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Head": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "PolaroidCamera": {
+   "child": {
+    "1": {
+     "role": null,
+     "name": null,
+     "sources": [
+      "corpus"
+     ]
+    }
+   },
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Body": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Banjo": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Drumkit": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Fricklet": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Guitar": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Jug": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Keyboard": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Ramp": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "RiotShield": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "SuperPowerClock": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "ToolGun": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Tooth": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Trowel": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "Trumpet": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "TV": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  },
+  "wad": {
+   "child": {},
+   "parent": {},
+   "parent_uuid": [],
+   "pieces": null
+  }
+ }
+}

@@ -1,0 +1,583 @@
+{
+ "_meta": {
+  "keys": 36
+ },
+ "props": {
+  "DelayDeactivation": {
+   "json_types": {
+    "bool": 85
+   },
+   "parts": [
+    "Delayer"
+   ],
+   "total": 85
+  },
+  "Delay": {
+   "json_types": {
+    "float": 100,
+    "int": 168
+   },
+   "parts": [
+    "Delayer",
+    "Looper"
+   ],
+   "total": 268
+  },
+  "RGB": {
+   "json_types": {
+    "list": 3763
+   },
+   "parts": [
+    "Anchor",
+    "Arm",
+    "Base",
+    "Bearing",
+    "Board",
+    "BouncyBall",
+    "BrakeLight",
+    "Briefcase",
+    "Bumper",
+    "Button",
+    "Camera",
+    "Chassis",
+    "Cinderblock",
+    "Connector",
+    "ConnectorBall",
+    "Delayer",
+    "Detacher",
+    "DoorA",
+    "DoorB",
+    "DoorC",
+    "DoorD",
+    "EntitySensor",
+    "FuelTank",
+    "GasCap",
+    "GlassBase",
+    "Grenade",
+    "Gyro",
+    "HalfConnectorBall",
+    "Hood",
+    "InputSensor",
+    "Joint",
+    "Joust",
+    "Leg",
+    "Light",
+    "LongStick",
+    "MountedGun",
+    "Part",
+    "Plunger",
+    "RPG",
+    "RemoteButton",
+    "Rocket",
+    "Roof",
+    "Rope",
+    "Seat",
+    "Servo",
+    "Servo_Physics",
+    "ShortStick",
+    "Sledge",
+    "Splitter_1",
+    "Splitter_2",
+    "Splitter_3",
+    "Splitter_4",
+    "SprayPaint",
+    "StaringGyro",
+    "SteeringWheel",
+    "Stick",
+    "Switch",
+    "Thruster",
+    "Tire",
+    "TripWire",
+    "Trunk",
+    "Wheel",
+    "Wire"
+   ],
+   "total": 3763
+  },
+  "OrientationZ": {
+   "json_types": {
+    "int": 734,
+    "float": 90
+   },
+   "parts": [
+    "Base",
+    "Bearing",
+    "Board",
+    "BrakeLight",
+    "Briefcase",
+    "Bumper",
+    "Camera",
+    "Cannon",
+    "Chassis",
+    "Cinderblock",
+    "Connector",
+    "ConnectorBall",
+    "Detacher",
+    "FuelTank",
+    "Gate-AND",
+    "Gate-NOT",
+    "GlassBase",
+    "Grenade",
+    "Gun",
+    "Gyro",
+    "HalfConnectorBall",
+    "Head",
+    "InputSensor",
+    "Leafblower",
+    "MatchingGyro",
+    "MountedGun",
+    "Part",
+    "Pipes",
+    "Propeller",
+    "Recorder",
+    "RemoteButton",
+    "Roof",
+    "Seat",
+    "Servo",
+    "Servo_Physics",
+    "ShortStick",
+    "Shotgun",
+    "Sledge",
+    "Splitter_3",
+    "Splitter_4",
+    "StaringGyro",
+    "SteeringGyro",
+    "Stick",
+    "Thruster",
+    "Wheel",
+    "Wing"
+   ],
+   "total": 824
+  },
+  "OrientationY": {
+   "json_types": {
+    "int": 554,
+    "float": 30
+   },
+   "parts": [
+    "Anchor",
+    "Base",
+    "Board",
+    "BrakeLight",
+    "Bumper",
+    "Camera",
+    "Cannon",
+    "Chassis",
+    "Connector",
+    "ConnectorBall",
+    "Detacher",
+    "DoorB",
+    "EntitySensor",
+    "FuelTank",
+    "Gate-AND",
+    "Gate-NOT",
+    "Grenade",
+    "Gun",
+    "Gyro",
+    "HalfConnectorBall",
+    "Head",
+    "InputSensor",
+    "Leafblower",
+    "MatchingGyro",
+    "MountedGun",
+    "Part",
+    "Piston",
+    "Recorder",
+    "RemoteButton",
+    "Roof",
+    "Seat",
+    "Servo",
+    "Servo_Physics",
+    "ShortStick",
+    "Shotgun",
+    "Sledge",
+    "Splitter_4",
+    "SteeringGyro",
+    "Stick",
+    "Switch",
+    "Thruster",
+    "Wheel",
+    "Wing"
+   ],
+   "total": 584
+  },
+  "OrientationX": {
+   "json_types": {
+    "int": 340,
+    "float": 389
+   },
+   "parts": [
+    "Base",
+    "Bearing",
+    "Board",
+    "BrakeLight",
+    "Briefcase",
+    "Bumper",
+    "Camera",
+    "Cannon",
+    "Chassis",
+    "Connector",
+    "ConnectorBall",
+    "EntitySensor",
+    "FuelTank",
+    "Gate-AND",
+    "Gate-NOT",
+    "GlassBase",
+    "Grenade",
+    "Gun",
+    "Gyro",
+    "HalfConnectorBall",
+    "Head",
+    "Hood",
+    "InputSensor",
+    "Leafblower",
+    "MatchingGyro",
+    "MountedGun",
+    "Part",
+    "Piston",
+    "Recorder",
+    "RemoteButton",
+    "Rocket",
+    "Roof",
+    "Seat",
+    "Servo",
+    "Servo_Physics",
+    "ShortStick",
+    "Shotgun",
+    "Sledge",
+    "Splitter_1",
+    "Splitter_2",
+    "Splitter_4",
+    "SteeringGyro",
+    "Switch",
+    "Thruster",
+    "TripWire",
+    "Wheel",
+    "Wing"
+   ],
+   "total": 729
+  },
+  "Bullets": {
+   "json_types": {
+    "float": 77,
+    "int": 4
+   },
+   "parts": [
+    "Mag"
+   ],
+   "total": 81
+  },
+  "ActivationKey": {
+   "json_types": {
+    "str": 1007
+   },
+   "parts": [
+    "InputSensor"
+   ],
+   "total": 1007
+  },
+  "Rotation": {
+   "json_types": {
+    "int": 135,
+    "float": 180
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 315
+  },
+  "Backwards": {
+   "json_types": {
+    "bool": 286
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 286
+  },
+  "LimitEnabled": {
+   "json_types": {
+    "bool": 315
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 315
+  },
+  "Speed": {
+   "json_types": {
+    "float": 56,
+    "int": 259
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 315
+  },
+  "Forwards": {
+   "json_types": {
+    "bool": 276
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 276
+  },
+  "Rest": {
+   "json_types": {
+    "bool": 315
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 315
+  },
+  "LimitAngle": {
+   "json_types": {
+    "int": 222,
+    "float": 93
+   },
+   "parts": [
+    "Servo",
+    "Servo_Physics"
+   ],
+   "total": 315
+  },
+  "Visible": {
+   "json_types": {
+    "bool": 5
+   },
+   "parts": [
+    "TripWire"
+   ],
+   "total": 5
+  },
+  "Length": {
+   "json_types": {
+    "int": 28,
+    "float": 8
+   },
+   "parts": [
+    "TripWire"
+   ],
+   "total": 36
+  },
+  "Activated": {
+   "json_types": {
+    "bool": 785
+   },
+   "parts": [
+    "AltitudeSensor",
+    "Anchor",
+    "Balloon",
+    "BrakeLight",
+    "DoorA",
+    "DoorB",
+    "GasCap",
+    "Gyro",
+    "Hood",
+    "Leafblower",
+    "Light",
+    "SteeringGyro",
+    "TripWire",
+    "Trunk",
+    "VelocitySensor"
+   ],
+   "total": 785
+  },
+  "Shooting": {
+   "json_types": {
+    "bool": 387
+   },
+   "parts": [
+    "MountedGun",
+    "Uzi"
+   ],
+   "total": 387
+  },
+  "IgnoreAttached": {
+   "json_types": {
+    "bool": 29
+   },
+   "parts": [
+    "StaringGyro"
+   ],
+   "total": 29
+  },
+  "MaxDistance": {
+   "json_types": {
+    "int": 42,
+    "float": 3
+   },
+   "parts": [
+    "EntitySensor",
+    "StaringGyro"
+   ],
+   "total": 45
+  },
+  "ImageId": {
+   "json_types": {
+    "int": 5
+   },
+   "parts": [
+    "Sprite"
+   ],
+   "total": 5
+  },
+  "ActivationSpeed": {
+   "json_types": {
+    "int": 106
+   },
+   "parts": [
+    "VelocitySensor"
+   ],
+   "total": 106
+  },
+  "ItemTurn": {
+   "json_types": {
+    "int": 27,
+    "float": 17
+   },
+   "parts": [
+    "SteeringGyro"
+   ],
+   "total": 44
+  },
+  "Reverse": {
+   "json_types": {
+    "bool": 65
+   },
+   "parts": [
+    "AltitudeSensor",
+    "Bearing",
+    "TripWire",
+    "VelocitySensor"
+   ],
+   "total": 65
+  },
+  "Deactivated": {
+   "json_types": {
+    "bool": 7
+   },
+   "parts": [
+    "StaringGyro"
+   ],
+   "total": 7
+  },
+  "DisabledInput": {
+   "json_types": {
+    "bool": 45
+   },
+   "parts": [
+    "Seat"
+   ],
+   "total": 45
+  },
+  "EphemeralAttachments": {
+   "json_types": {
+    "list": 46,
+    "dict": 6
+   },
+   "parts": [
+    "Base",
+    "Bumper",
+    "Canister",
+    "Chassis",
+    "Delayer",
+    "DoorB",
+    "GasCap",
+    "Gramby",
+    "Gun",
+    "Hood",
+    "MountedGun",
+    "Pipes",
+    "Roof",
+    "Rope",
+    "RubberBand",
+    "Thruster",
+    "Trunk",
+    "Wheel"
+   ],
+   "total": 52
+  },
+  "Volume": {
+   "json_types": {
+    "int": 18
+   },
+   "parts": [
+    "Radio"
+   ],
+   "total": 18
+  },
+  "CustomTrack": {
+   "json_types": {
+    "str": 18
+   },
+   "parts": [
+    "Radio"
+   ],
+   "total": 18
+  },
+  "On": {
+   "json_types": {
+    "bool": 9
+   },
+   "parts": [
+    "Radio"
+   ],
+   "total": 9
+  },
+  "Channel": {
+   "json_types": {
+    "int": 17,
+    "float": 1
+   },
+   "parts": [
+    "Radio"
+   ],
+   "total": 18
+  },
+  "CanTargetAttached": {
+   "json_types": {
+    "bool": 16
+   },
+   "parts": [
+    "EntitySensor"
+   ],
+   "total": 16
+  },
+  "ActivationHeight": {
+   "json_types": {
+    "int": 9
+   },
+   "parts": [
+    "AltitudeSensor"
+   ],
+   "total": 9
+  },
+  "Quantity": {
+   "json_types": {
+    "int": 2
+   },
+   "parts": [
+    "Balloon"
+   ],
+   "total": 2
+  },
+  "Text": {
+   "json_types": {
+    "str": 7
+   },
+   "parts": [
+    "Note"
+   ],
+   "total": 7
+  }
+ }
+}

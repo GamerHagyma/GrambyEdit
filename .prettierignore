@@ -1,0 +1,10 @@
+data/
+docs/
+meshes/
+vendor/
+tools/
+captures/
+public/assets/
+dist/
+*.md
+package-lock.json
