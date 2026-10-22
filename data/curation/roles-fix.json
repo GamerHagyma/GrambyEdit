@@ -1,0 +1,26 @@
+{
+  "Switch": {
+    "2": "output"
+  },
+  "Button": {
+    "2": "output"
+  },
+  "RemoteButton": {
+    "2": "output"
+  },
+  "Splitter_4": {
+    "1": "output",
+    "2": "output",
+    "3": "input",
+    "4": "input"
+  },
+  "Wire": {
+    "1": "conductor",
+    "2": "conductor",
+    "3": "conductor",
+    "4": "conductor"
+  },
+  "Looper": {
+    "1": "output"
+  }
+}

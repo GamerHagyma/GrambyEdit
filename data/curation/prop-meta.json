@@ -1,0 +1,152 @@
+{
+  "DelayDeactivation": {
+    "widget": "bool",
+    "label": "Delay Deactivation"
+  },
+  "Delay": {
+    "widget": "number",
+    "label": "Delay",
+    "step": 0.1
+  },
+  "RGB": {
+    "widget": "rgb",
+    "label": "Color"
+  },
+  "OrientationZ": {
+    "widget": "orientation",
+    "label": "Orientation Z",
+    "step": 45
+  },
+  "OrientationY": {
+    "widget": "orientation",
+    "label": "Orientation Y",
+    "step": 45
+  },
+  "OrientationX": {
+    "widget": "orientation",
+    "label": "Orientation X",
+    "step": 45
+  },
+  "Bullets": {
+    "widget": "int",
+    "label": "Bullets"
+  },
+  "ActivationKey": {
+    "widget": "key",
+    "label": "Activation Key"
+  },
+  "Rotation": {
+    "widget": "number",
+    "label": "Rotation",
+    "step": 0.1
+  },
+  "Backwards": {
+    "widget": "bool",
+    "label": "Backwards"
+  },
+  "LimitEnabled": {
+    "widget": "bool",
+    "label": "Limit Enabled"
+  },
+  "Speed": {
+    "widget": "number",
+    "label": "Speed",
+    "step": 0.1
+  },
+  "Forwards": {
+    "widget": "bool",
+    "label": "Forwards"
+  },
+  "Rest": {
+    "widget": "bool",
+    "label": "Rest"
+  },
+  "LimitAngle": {
+    "widget": "number",
+    "label": "Limit Angle",
+    "step": 0.1
+  },
+  "Visible": {
+    "widget": "bool",
+    "label": "Visible"
+  },
+  "Length": {
+    "widget": "number",
+    "label": "Length",
+    "step": 0.1
+  },
+  "Activated": {
+    "widget": "bool",
+    "label": "Activated"
+  },
+  "Shooting": {
+    "widget": "bool",
+    "label": "Shooting"
+  },
+  "IgnoreAttached": {
+    "widget": "bool",
+    "label": "Ignore Attached"
+  },
+  "MaxDistance": {
+    "widget": "number",
+    "label": "Max Distance",
+    "step": 0.1
+  },
+  "ImageId": {
+    "widget": "int",
+    "label": "Image ID"
+  },
+  "ActivationSpeed": {
+    "widget": "int",
+    "label": "Activation Speed"
+  },
+  "ItemTurn": {
+    "widget": "number",
+    "label": "Item Turn",
+    "step": 0.1
+  },
+  "Reverse": {
+    "widget": "bool",
+    "label": "Reverse"
+  },
+  "Deactivated": {
+    "widget": "bool",
+    "label": "Deactivated"
+  },
+  "DisabledInput": {
+    "widget": "bool",
+    "label": "Disabled Input"
+  },
+  "Volume": {
+    "widget": "int",
+    "label": "Volume"
+  },
+  "CustomTrack": {
+    "widget": "string",
+    "label": "Custom Track"
+  },
+  "On": {
+    "widget": "bool",
+    "label": "On"
+  },
+  "Channel": {
+    "widget": "int",
+    "label": "Channel"
+  },
+  "CanTargetAttached": {
+    "widget": "bool",
+    "label": "Can Target Attached"
+  },
+  "ActivationHeight": {
+    "widget": "int",
+    "label": "Activation Height"
+  },
+  "Quantity": {
+    "widget": "int",
+    "label": "Quantity"
+  },
+  "Text": {
+    "widget": "text",
+    "label": "Text"
+  }
+}
