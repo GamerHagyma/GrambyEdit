@@ -1,0 +1,91 @@
+import { signal } from '@preact/signals';
+import { DEFAULT_LIMITS, type Limits, type RGB } from '../core/types';
+import { loadPref, savePref } from '../storage/prefs';
+
+export interface Settings {
+  cameraScheme: 'blender' | 'studio';
+  emulate3Button: boolean;
+  invertY: boolean;
+  orbitSensitivity: number;
+  flySpeed: number;
+  theme: 'dark' | 'light';
+  limits: Limits;
+  snapEnabled: boolean;
+  snapMove: number;
+  snapRotate: number;
+  autoColor: boolean;
+  activeColor: RGB;
+  maxSockets: number;
+  genPosDecimals: number;
+  genRotDecimals: number;
+  xray: boolean;
+  desaturateApprox: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = {
+  cameraScheme: 'blender',
+  emulate3Button: false,
+  invertY: false,
+  orbitSensitivity: 1,
+  flySpeed: 16,
+  theme: 'dark',
+  limits: DEFAULT_LIMITS,
+  snapEnabled: true,
+  snapMove: 0.25,
+  snapRotate: 15,
+  autoColor: false,
+  activeColor: [163, 162, 165],
+  maxSockets: 3000,
+  genPosDecimals: 4,
+  genRotDecimals: 5,
+  xray: false,
+  desaturateApprox: true,
+};
+
+const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = {
+  cameraScheme: ['blender', 'studio'],
+  theme: ['dark', 'light'],
+};
+
+const isRgb = (v: unknown): v is RGB =>
+  Array.isArray(v) && v.length === 3 && v.every((c) => Number.isInteger(c) && c >= 0 && c <= 255);
+
+/** Stored settings are untrusted: each key falls back to its default unless it has the right shape. */
+export function sanitizeSettings(stored: unknown): Settings {
+  const src = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
+    string,
+    unknown
+  >;
+  const out = { ...DEFAULT_SETTINGS } as Record<keyof Settings, unknown>;
+  for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
+    const v = src[key];
+    const def = DEFAULT_SETTINGS[key];
+    if (key === 'limits') {
+      const l = (typeof v === 'object' && v !== null ? v : {}) as Record<string, unknown>;
+      const pick = (k: keyof Limits) =>
+        typeof l[k] === 'number' && Number.isFinite(l[k]) && (l[k] as number) > 0
+          ? (l[k] as number)
+          : DEFAULT_LIMITS[k];
+      out.limits = {
+        codeChars: pick('codeChars'),
+        partSoftCap: pick('partSoftCap'),
+        partWarn: pick('partWarn'),
+      };
+    } else if (key === 'activeColor') {
+      if (isRgb(v)) out.activeColor = v;
+    } else if (ENUMS[key]) {
+      if (ENUMS[key]!.includes(v as string)) out[key] = v;
+    } else if (typeof v === typeof def && (typeof v !== 'number' || Number.isFinite(v))) {
+      out[key] = v;
+    }
+  }
+  return out as unknown as Settings;
+}
+
+export const settingsSig = signal<Settings>(sanitizeSettings(loadPref<unknown>('settings', {})));
+
+/** Applies and persists a partial update. */
+export function updateSettings(patch: Partial<Settings>): void {
+  settingsSig.value = sanitizeSettings({ ...settingsSig.value, ...patch });
+  savePref('settings', settingsSig.value);
+}
