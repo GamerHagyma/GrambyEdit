@@ -1,17 +1,20 @@
-import { batch } from '@preact/signals';
+import { batch, effect } from '@preact/signals';
 import type { JSX } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect } from 'preact/hooks';
 import { loadAssets } from '../assets/load';
-import { toast } from '../state/toasts';
+import { settingsSig } from '../state/settings';
 import { assetsSig, baseCatalogSig } from '../state/store';
-import { mountViewport } from '../viewport/index';
-import { CREDITS } from './credits';
+import { toast } from '../state/toasts';
+import { setStorageErrorReporter } from '../storage/prefs';
+import { Shell } from './layout/Shell';
 import './tokens.css';
 
 export function App(): JSX.Element {
-  const viewport = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const unmount = mountViewport(viewport.current!);
+    setStorageErrorReporter((message) => toast(message, 'error'));
+    const stopTheme = effect(() => {
+      document.documentElement.dataset.theme = settingsSig.value.theme;
+    });
     let alive = true;
     loadAssets()
       .then((assets) => {
@@ -26,20 +29,8 @@ export function App(): JSX.Element {
       });
     return () => {
       alive = false;
-      unmount();
+      stopTheme();
     };
   }, []);
-  return (
-    <div class="app">
-      <header class="top-bar">
-        <span class="brand">GrambyEdit</span>
-      </header>
-      <main class="main">
-        <div class="viewport" ref={viewport} />
-      </main>
-      <footer class="status-bar">
-        <small class="credit">{CREDITS}</small>
-      </footer>
-    </div>
-  );
+  return <Shell />;
 }
