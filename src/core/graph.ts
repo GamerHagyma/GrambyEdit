@@ -149,6 +149,18 @@ export function topoPose(doc: Doc): { order: PartId[]; pseudoRoots: PartId[] } {
   return { order: [...p.order], pseudoRoots: [...p.pseudoRoots] };
 }
 
+/**
+ * The effective pose forest, loops anchored as in `topoPose`: tree roots (real roots, then
+ * pseudo-roots) and each part's children, in pose order. The Outliner draws this tree.
+ */
+export function poseTree(doc: Doc): {
+  roots: PartId[];
+  children: ReadonlyMap<PartId, readonly PartId[]>;
+} {
+  const p = pose(doc);
+  return { roots: [...roots(doc), ...p.pseudoRoots], children: p.children };
+}
+
 /** Island parts posed through another conn (part → conn index), because their pose conn sits on a loop. */
 export function poseAnchors(doc: Doc): ReadonlyMap<PartId, number> {
   return pose(doc).anchors;

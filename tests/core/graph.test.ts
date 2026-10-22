@@ -1,5 +1,6 @@
 import {
   poseAnchors,
+  poseTree,
   poseDescendants,
   poseParent,
   topoPose,
@@ -84,4 +85,19 @@ test('joint-connected includes ephemeral mounts, both ways', () => {
     part(3, 'Part', [sock('1', 2, '6')]),
   );
   expect([...component(d, 3, () => true)].sort()).toEqual([1, 2, 3]);
+});
+
+test('poseTree lists roots, then pseudo-roots, with anchored islands under their anchor', () => {
+  const d = docOf(
+    part(1, 'Part'),
+    part(2, 'Part', [sock('3', 3, '2'), sock('1', 1, '6')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+    part(4, 'Part', [sock('1', 5, '6')]),
+    part(5, 'Part', [sock('1', 4, '6')]),
+  );
+  const t = poseTree(d);
+  expect(t.roots).toEqual([1, 4]);
+  expect(t.children.get(1)).toEqual([2]);
+  expect(t.children.get(2)).toEqual([3]);
+  expect(t.children.get(4)).toEqual([5]);
 });
