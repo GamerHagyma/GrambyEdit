@@ -432,7 +432,7 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 ### 10.4 Calibration
 1. **Automatic** (runs once your data lands): for the 60 most common corpus joint pairs (`Connector.self5 → Connector.sock4` ×5,619 …), mated parts should touch: bbox gap ≤ 0.05 studs, overlap along the mating axis ≤ 25% of the smaller part. Each candidate `M` in {180° about X, 180° about Z} is scored by how many pairs pass, and failing sockets are listed. That validates your capture as well as the convention. Bbox contact is a heuristic, so the suite is report-only until you approve its result; after that, the approved result becomes a regression baseline in CI.
 2. **In-game probe pack** (Dev menu → "Calibration probes"): six tiny codes. Each answers one question, with a screenshot checklist:
-   - P1 mating, `Part` on `Part` via socket 2;
+   - P1 mating: a `Gate-AND` on a `Part`'s top socket (a cube is symmetric and cannot show the mating roll; the gate's inputs can);
    - P2–P3 `OrientationX` and `OrientationY` = 90 on a socket joint;
    - P4 a `Gate-AND` on a `Base` point with a 90°-rotated `cframe`;
    - P5 a `Base` host with `OrientationY` = 90 hosting a point;
