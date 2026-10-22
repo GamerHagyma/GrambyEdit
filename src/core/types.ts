@@ -24,7 +24,12 @@ export type CFrame12 = readonly [
 export type ConnTarget =
   | { readonly kind: 'socket'; readonly part: PartId; readonly socket: SocketId }
   | { readonly kind: 'point'; readonly part: PartId; readonly uuid: Uuid }
-  | { readonly kind: 'raw'; readonly triple: readonly Json[] };
+  | {
+      readonly kind: 'raw';
+      readonly triple: readonly Json[];
+      /** A self-joint (`[a, b, own index]`, I-SELF-JOINT): export rewrites the index to the part's own. */
+      readonly self?: true;
+    };
 
 export interface Conn {
   readonly self: SocketId;

@@ -94,3 +94,12 @@ test('export indices follow the current order', () => {
     ['Part', [['1', '6', 1]], []],
   ]);
 });
+test('a self-joint keeps pointing at its own part after an earlier part is deleted', () => {
+  const d = imp([
+    ['Part', [], []],
+    ['Part', [[1, '6', 2]], []],
+  ]);
+  expect(d.parts.get(2)!.conns[0].target).toEqual({ kind: 'raw', triple: [1, '6', 2], self: true });
+  const without1 = { ...d, order: [2], parts: new Map([...d.parts].filter(([id]) => id !== 1)) };
+  expect(toEntries(without1)).toEqual([['Part', [[1, '6', 1]], []]]);
+});

@@ -280,7 +280,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 | F5 | Unknown prop keys and values, nested objects included, survive verbatim |
 | F6 | `EphemeralAttachments` as an object becomes `points`; `[]` becomes an empty map and exports as `[]`; an absent key exports as absent. Uuid keys are kept verbatim. On export the key is written after the other props |
 | F7 | Numbers keep their value; their text may change (`-5.6624412536621094e-05` is written `-0.000056624412536621094`). Byte-exact round-trip is impossible for any re-encoder (spec §1) |
-| F8 | A connection whose parent index is not an in-range integer becomes `raw` and is exported verbatim |
+| F8 | A connection whose parent index is not an in-range integer becomes `raw` and is exported verbatim. A self-joint (parent index = the entry's own index, I-SELF-JOINT) is also `raw` but marked `self`: its index is rewritten to the part's current position on export, so deleting an earlier part cannot redirect it |
 | F9 | Acceptance test: for all 185 corpus codes, `decode(export(import(code)))` deep-equals `decode(code)` after normalising F3/F4 |
 | F10 | Entries the model cannot represent abort the import with the entry index and reason: name not a string, connections not an array, a connection that is not a 3-element array, props neither an object nor `[]`. The game rejects these too (spec §11, phase 1). Representable faults (bad index, undeclared uuid, unknown socket) import and surface as issues, so you can repair them |
 

@@ -43,3 +43,13 @@ test('formatPercent', () => {
   expect(formatPercent(0, 8_000_000)).toBe('0.00');
   expect(formatPercent(5, 0)).toBe('0.00');
 });
+test('a self-joint counts the digits of its rewritten index', () => {
+  const raw = Array.from({ length: 10 }, (_, i) => ['Part', i === 9 ? [['1', '6', 10]] : [], []]);
+  const d = importCode(JSON.stringify(raw));
+  const after = {
+    ...d,
+    order: d.order.slice(1),
+    parts: new Map([...d.parts].filter(([id]) => id !== 1)),
+  };
+  expect(codeSize(after).base64Chars).toBe(encode(toEntries(after)).length);
+});

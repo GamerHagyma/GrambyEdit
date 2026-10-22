@@ -7,7 +7,6 @@ import type {
   Doc,
   Issue,
   IssueCode,
-  Json,
   Limits,
   PartId,
   Severity,
@@ -67,25 +66,18 @@ export function mountSockets(doc: Doc, part: PartId): SocketId[] {
   return [...new Set(owner.conns.filter((c) => c.target.kind === 'point').map((c) => c.self))];
 }
 
-/**
- * The two sockets of a self-joint: a raw conn `[a, b, own index]` with integer-or-string ids (I-SELF-JOINT).
- * Every other conn gives [].
- */
-function selfJointSockets(conn: Conn, own: number): readonly SocketId[] {
-  if (conn.target.kind !== 'raw') return [];
-  const [a, b, index] = conn.target.triple;
-  const isId = (v: Json): boolean => typeof v === 'string' || Number.isInteger(v);
-  return isId(a) && isId(b) && index === own ? [String(a), String(b)] : [];
+/** The two sockets of a self-joint (a raw conn the import marked `self`, I-SELF-JOINT); [] for any other conn. */
+function selfJointSockets(conn: Conn): readonly SocketId[] {
+  if (conn.target.kind !== 'raw' || !conn.target.self) return [];
+  const [a, b] = conn.target.triple;
+  return [String(a), String(b)];
 }
 
 /** §7: a socket of `part` is used when a conn has it as `self`, a joint targets it, or a self-joint names it. */
 export function isSocketUsed(doc: Doc, part: PartId, socket: SocketId): boolean {
   const owner = doc.parts.get(part);
   if (owner === undefined) return false;
-  const own = exportIndex(doc, part);
-  const onOwn = owner.conns.some(
-    (c) => c.self === socket || selfJointSockets(c, own).includes(socket),
-  );
+  const onOwn = owner.conns.some((c) => c.self === socket || selfJointSockets(c).includes(socket));
   return onOwn || (graphIndex(doc).socketUsers.get(`${part}:${socket}`)?.length ?? 0) > 0;
 }
 
@@ -254,9 +246,9 @@ function limitIssues(doc: Doc, limits: Limits, codeLength: number): Issue[] {
 }
 
 /** E-REF: a raw conn that is not a self-joint, or a socket or point conn whose part is missing. */
-function isBroken(doc: Doc, conn: Conn, own: number): boolean {
+function isBroken(doc: Doc, conn: Conn): boolean {
   return conn.target.kind === 'raw'
-    ? selfJointSockets(conn, own).length === 0
+    ? selfJointSockets(conn).length === 0
     : !doc.parts.has(conn.target.part);
 }
 
@@ -277,7 +269,7 @@ function partIssues(doc: Doc, cat: Catalog): Issue[] {
         ),
       );
     }
-    const broken = part.conns.filter((c) => isBroken(doc, c, own)).length;
+    const broken = part.conns.filter((c) => isBroken(doc, c)).length;
     if (broken > 0) {
       out.push(
         issue(
@@ -288,7 +280,7 @@ function partIssues(doc: Doc, cat: Catalog): Issue[] {
         ),
       );
     }
-    const selfJoints = part.conns.filter((c) => selfJointSockets(c, own).length > 0).length;
+    const selfJoints = part.conns.filter((c) => selfJointSockets(c).length > 0).length;
     if (selfJoints > 0) {
       out.push(
         issue(
@@ -399,14 +391,13 @@ function jointIssues(doc: Doc, cat: Catalog): Issue[] {
     else use.joints += 1;
   };
   for (const id of doc.order) {
-    const own = exportIndex(doc, id);
     for (const conn of doc.parts.get(id)!.conns) {
       const { target } = conn;
       if (target.kind === 'socket') {
         touch(id, conn.self);
         if (doc.parts.has(target.part)) touch(target.part, target.socket);
       } else if (target.kind === 'raw') {
-        for (const socket of new Set(selfJointSockets(conn, own))) touch(id, socket);
+        for (const socket of new Set(selfJointSockets(conn))) touch(id, socket);
       }
     }
   }

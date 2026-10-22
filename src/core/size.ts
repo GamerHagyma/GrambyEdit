@@ -11,7 +11,8 @@ const cache = new WeakMap<Part, number>();
 function cachedBytes(part: Part): number {
   let bytes = cache.get(part);
   if (bytes === undefined) {
-    const resolved = part.conns.filter((c) => c.target.kind !== 'raw').length;
+    // Socket, point and self-joint conns all write a parent index; it is cached as the digit `0`.
+    const resolved = part.conns.filter((c) => c.target.kind !== 'raw' || c.target.self).length;
     bytes = utf8Length(JSON.stringify(entryOf(part, () => 0))) - resolved;
     cache.set(part, bytes);
   }
@@ -22,11 +23,10 @@ function cachedBytes(part: Part): number {
 export function entryBytes(part: Part, position: ReadonlyMap<PartId, number>): number {
   let bytes = cachedBytes(part);
   for (const { target } of part.conns) {
-    if (target.kind === 'raw') continue;
-    const at = position.get(target.part);
-    if (at === undefined) {
-      throw new Error(`connection target ${target.part} is not in the export order`);
-    }
+    if (target.kind === 'raw' && !target.self) continue;
+    const id = target.kind === 'raw' ? part.id : target.part;
+    const at = position.get(id);
+    if (at === undefined) throw new Error(`connection target ${id} is not in the export order`);
     bytes += String(at + 1).length;
   }
   return bytes;

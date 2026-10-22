@@ -88,7 +88,7 @@ test('the real corpus raises no E-REF, self-joints included', async () => {
 }, 60_000);
 test('a self-joint is I-SELF-JOINT, never E-REF, and uses both of its sockets', () => {
   const d = docOf(
-    part(1, 'Splitter_2', [{ self: '5', target: { kind: 'raw', triple: [5, 4, 1] } }]),
+    part(1, 'Splitter_2', [{ self: '5', target: { kind: 'raw', triple: [5, 4, 1], self: true } }]),
   );
   const codes = validate(d, MINI, DEFAULT_LIMITS, 0).map((i) => i.code);
   expect(codes).toContain('I-SELF-JOINT');
@@ -110,7 +110,7 @@ test('issue messages name the type and its 1-based index', () => {
   const d = docOf(
     part(1, 'Light'),
     part(2, 'Mystery'),
-    part(3, 'Splitter_2', [{ self: '5', target: { kind: 'raw', triple: [5, 4, 3] } }]),
+    part(3, 'Splitter_2', [{ self: '5', target: { kind: 'raw', triple: [5, 4, 3], self: true } }]),
   );
   const issues = validate(d, MINI, DEFAULT_LIMITS, 0);
   expect(issues.find((i) => i.code === 'W-TYPE-UNKNOWN')?.message).toBe(
@@ -179,4 +179,17 @@ test('an anchored loop island raises no W-CYCLE', () => {
     part(3, 'Part', [sock('1', 2, '6')]),
   );
   expect(validate(d, MINI, DEFAULT_LIMITS, 0).map((i) => i.code)).not.toContain('W-CYCLE');
+});
+
+test('a self-joint stays I-SELF-JOINT after an earlier part is deleted', () => {
+  const d = importCode(
+    JSON.stringify([
+      ['Part', [], []],
+      ['Part', [['1', '6', 2]], []],
+    ]),
+  );
+  const after = { ...d, order: [2], parts: new Map([...d.parts].filter(([id]) => id !== 1)) };
+  const codes = validate(after, MINI, DEFAULT_LIMITS, 0).map((i) => i.code);
+  expect(codes).toContain('I-SELF-JOINT');
+  expect(codes).not.toContain('E-REF');
 });

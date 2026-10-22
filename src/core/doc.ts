@@ -34,6 +34,11 @@ function readConn(triple: Json[], owner: PartId, count: number): Conn {
   const [a, b, c] = triple;
   const self = socketId(a);
   const part = parentIndex(c, owner, count);
+  if (self !== null && c === owner && socketId(b) !== null && !String(b).startsWith('{')) {
+    // A joint between two of the part's own sockets, made in game (I-SELF-JOINT). Its index must
+    // follow the part when earlier parts are deleted, so it is marked rather than kept verbatim.
+    return { self, target: { kind: 'raw', triple: [...triple], self: true } };
+  }
   if (self === null || part === null) return rawConn(triple);
   if (typeof b === 'string' && b.startsWith('{')) {
     return { self, target: { kind: 'point', part, uuid: b } };
@@ -144,15 +149,15 @@ function propsOut(part: Part): Json {
   return out;
 }
 
-function connOut(conn: Conn, indexOf: (id: PartId) => number): Json[] {
+function connOut(conn: Conn, indexOf: (id: PartId) => number, owner: PartId): Json[] {
   const t = conn.target;
-  if (t.kind === 'raw') return [...t.triple];
+  if (t.kind === 'raw') return t.self ? [t.triple[0], t.triple[1], indexOf(owner)] : [...t.triple];
   return [conn.self, t.kind === 'point' ? t.uuid : t.socket, indexOf(t.part)];
 }
 
 /** One export entry, `[type, connections, props]`. `indexOf` gives the 1-based export index of a part. */
 export function entryOf(part: Part, indexOf: (id: PartId) => number): Json {
-  return [part.type, part.conns.map((c) => connOut(c, indexOf)), propsOut(part)];
+  return [part.type, part.conns.map((c) => connOut(c, indexOf, part.id)), propsOut(part)];
 }
 
 /** Export in `order`: the index in the code is position + 1 (F1). A target outside the order is a bug, so it throws. */
