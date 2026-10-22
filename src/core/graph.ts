@@ -1,0 +1,197 @@
+// Graph queries over a Doc (spec §8). Reverse maps and pose order are memoised per Doc; Docs are immutable.
+import type { Conn, Doc, Part, PartId } from './types';
+
+export interface ConnRef {
+  readonly child: PartId;
+  /** Position in the child's `conns`. */
+  readonly index: number;
+}
+
+export interface GraphIndex {
+  /** `${part}:${socket}` → the socket joints that target it. */
+  readonly socketUsers: ReadonlyMap<string, readonly ConnRef[]>;
+  /** `${host}:${uuid}` → the mounts that target it. */
+  readonly pointUsers: ReadonlyMap<string, readonly ConnRef[]>;
+  /** part → every socket or point conn that targets it. */
+  readonly targetsOf: ReadonlyMap<PartId, readonly ConnRef[]>;
+  /** part → the parts whose pose conn targets it, in export order. */
+  readonly poseChildren: ReadonlyMap<PartId, readonly PartId[]>;
+}
+
+const indexes = new WeakMap<Doc, GraphIndex>();
+
+/** The reverse maps of `doc`, built once per Doc in O(parts + conns). */
+export function graphIndex(doc: Doc): GraphIndex {
+  let index = indexes.get(doc);
+  if (index === undefined) {
+    index = buildIndex(doc);
+    indexes.set(doc, index);
+  }
+  return index;
+}
+
+function push<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const list = map.get(key);
+  if (list === undefined) map.set(key, [value]);
+  else list.push(value);
+}
+
+/** The part a part hangs from: its first socket or point conn. Raw conns never pose; null for a root. */
+function posePart(part: Part): PartId | null {
+  for (const { target } of part.conns) if (target.kind !== 'raw') return target.part;
+  return null;
+}
+
+function buildIndex(doc: Doc): GraphIndex {
+  const socketUsers = new Map<string, ConnRef[]>();
+  const pointUsers = new Map<string, ConnRef[]>();
+  const targetsOf = new Map<PartId, ConnRef[]>();
+  const poseChildren = new Map<PartId, PartId[]>();
+  for (const child of doc.order) {
+    const part = doc.parts.get(child)!;
+    for (const [index, conn] of part.conns.entries()) {
+      const { target } = conn;
+      if (target.kind === 'raw') continue;
+      const ref: ConnRef = { child, index };
+      push(targetsOf, target.part, ref);
+      if (target.kind === 'socket') push(socketUsers, `${target.part}:${target.socket}`, ref);
+      else push(pointUsers, `${target.part}:${target.uuid}`, ref);
+    }
+    const up = posePart(part);
+    if (up !== null) push(poseChildren, up, child);
+  }
+  return { socketUsers, pointUsers, targetsOf, poseChildren };
+}
+
+/** The part `id` hangs from, or null for a root (or an unknown id). A target that is missing still counts. */
+export function poseParent(doc: Doc, id: PartId): PartId | null {
+  const part = doc.parts.get(id);
+  return part === undefined ? null : posePart(part);
+}
+
+/** Every part below `id` in the pose tree, cycle-safe. Excludes `id`. */
+export function poseDescendants(doc: Doc, id: PartId): Set<PartId> {
+  const { poseChildren } = graphIndex(doc);
+  const found = new Set<PartId>();
+  const pending = [id];
+  while (pending.length > 0) {
+    for (const child of poseChildren.get(pending.pop()!) ?? []) {
+      if (!found.has(child)) {
+        found.add(child);
+        pending.push(child);
+      }
+    }
+  }
+  found.delete(id);
+  return found;
+}
+
+/** Parts joined to `id` by a socket joint, in either direction. Mounts on points are not joints. */
+export function jointNeighbours(doc: Doc, id: PartId): Set<PartId> {
+  const found = new Set<PartId>();
+  for (const conn of doc.parts.get(id)?.conns ?? []) {
+    if (conn.target.kind === 'socket' && doc.parts.has(conn.target.part))
+      found.add(conn.target.part);
+  }
+  for (const ref of graphIndex(doc).targetsOf.get(id) ?? []) {
+    if (connAt(doc, ref).target.kind === 'socket') found.add(ref.child);
+  }
+  return found;
+}
+
+function connAt(doc: Doc, ref: ConnRef): Conn {
+  return doc.parts.get(ref.child)!.conns[ref.index];
+}
+
+/** Flood fill over joints from `start`, spreading only into parts that match `pred`. `start` is always included. */
+export function component(doc: Doc, start: PartId, pred: (p: Part) => boolean): Set<PartId> {
+  const found = new Set<PartId>([start]);
+  const pending = [start];
+  while (pending.length > 0) {
+    for (const next of jointNeighbours(doc, pending.pop()!)) {
+      const part = doc.parts.get(next);
+      if (part !== undefined && !found.has(next) && pred(part)) {
+        found.add(next);
+        pending.push(next);
+      }
+    }
+  }
+  return found;
+}
+
+/** Parts with no socket or point conn: nothing poses them, so the editor layout places them. Export order. */
+export function roots(doc: Doc): PartId[] {
+  return doc.order.filter((id) => poseParent(doc, id) === null);
+}
+
+interface Pose {
+  order: PartId[];
+  pseudoRoots: PartId[];
+}
+
+const poses = new WeakMap<Doc, Pose>();
+
+/** Pose order (§8): parts after their pose parent. Copies are returned, so callers may mutate them. */
+export function topoPose(doc: Doc): { order: PartId[]; pseudoRoots: PartId[] } {
+  let pose = poses.get(doc);
+  if (pose === undefined) {
+    pose = computePose(doc);
+    poses.set(doc, pose);
+  }
+  return { order: [...pose.order], pseudoRoots: [...pose.pseudoRoots] };
+}
+
+/** Breadth-first from the roots, then one pseudo-root for each loop that no root reaches (§10.6). */
+function computePose(doc: Doc): Pose {
+  const { poseChildren } = graphIndex(doc);
+  const order: PartId[] = [];
+  const reached = new Set<PartId>();
+  // Appends the seeds not yet reached, then every part below them, breadth first.
+  const sweep = (seeds: readonly PartId[]): void => {
+    const start = order.length;
+    for (const id of seeds) {
+      if (!reached.has(id)) {
+        reached.add(id);
+        order.push(id);
+      }
+    }
+    for (let at = start; at < order.length; at++) {
+      for (const child of poseChildren.get(order[at]) ?? []) {
+        if (!reached.has(child)) {
+          reached.add(child);
+          order.push(child);
+        }
+      }
+    }
+  };
+  sweep(roots(doc));
+  const pseudoRoots: PartId[] = [];
+  for (const id of doc.order) {
+    if (reached.has(id)) continue;
+    const entry = cycleEntry(doc, id);
+    pseudoRoots.push(entry);
+    sweep([entry]);
+  }
+  return { order, pseudoRoots };
+}
+
+/**
+ * Walks pose parents up from an unreached part. The first part seen twice lies on the loop.
+ * A walk that ends at a missing part stops at the last existing part, so its tail is posed from there.
+ */
+function cycleEntry(doc: Doc, start: PartId): PartId {
+  const seen = new Set<PartId>();
+  let at = start;
+  while (!seen.has(at)) {
+    seen.add(at);
+    const up = poseParent(doc, at);
+    if (up === null || !doc.parts.has(up)) return at;
+    at = up;
+  }
+  return at;
+}
+
+/** Making `newParent` the pose parent of `child` closes a loop when `newParent` already hangs below `child`. */
+export function wouldCreatePoseCycle(doc: Doc, child: PartId, newParent: PartId): boolean {
+  return child === newParent || poseDescendants(doc, child).has(newParent);
+}
