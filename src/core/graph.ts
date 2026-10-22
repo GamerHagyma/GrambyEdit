@@ -69,13 +69,16 @@ export function poseParent(doc: Doc, id: PartId): PartId | null {
   return part === undefined ? null : posePart(part);
 }
 
-/** Every part below `id` in the pose tree, cycle-safe. Excludes `id`. */
+/**
+ * Every part below `id` in the effective pose tree (loops anchored, see `topoPose`): what moves with
+ * `id`. Excludes `id`.
+ */
 export function poseDescendants(doc: Doc, id: PartId): Set<PartId> {
-  const { poseChildren } = graphIndex(doc);
+  const { children } = pose(doc);
   const found = new Set<PartId>();
   const pending = [id];
   while (pending.length > 0) {
-    for (const child of poseChildren.get(pending.pop()!) ?? []) {
+    for (const child of children.get(pending.pop()!) ?? []) {
       if (!found.has(child)) {
         found.add(child);
         pending.push(child);
@@ -127,25 +130,45 @@ export function roots(doc: Doc): PartId[] {
 interface Pose {
   order: PartId[];
   pseudoRoots: PartId[];
+  /** Island parts posed through another conn (its index), because their pose conn sits on a loop. */
+  anchors: Map<PartId, number>;
+  /** Effective pose children: the forest the poses follow. */
+  children: Map<PartId, PartId[]>;
 }
 
 const poses = new WeakMap<Doc, Pose>();
 
-/** Pose order (§8): parts after their pose parent. Copies are returned, so callers may mutate them. */
-export function topoPose(doc: Doc): { order: PartId[]; pseudoRoots: PartId[] } {
-  let pose = poses.get(doc);
-  if (pose === undefined) {
-    pose = computePose(doc);
-    poses.set(doc, pose);
+function pose(doc: Doc): Pose {
+  let p = poses.get(doc);
+  if (p === undefined) {
+    p = computePose(doc);
+    poses.set(doc, p);
   }
-  return { order: [...pose.order], pseudoRoots: [...pose.pseudoRoots] };
+  return p;
 }
 
-/** Breadth-first from the roots, then one pseudo-root for each loop that no root reaches (§10.6). */
+/** Pose order (§8): every part after the part it is posed from. Copies, so callers may mutate them. */
+export function topoPose(doc: Doc): { order: PartId[]; pseudoRoots: PartId[] } {
+  const p = pose(doc);
+  return { order: [...p.order], pseudoRoots: [...p.pseudoRoots] };
+}
+
+/** Island parts posed through another conn (part → conn index), because their pose conn sits on a loop. */
+export function poseAnchors(doc: Doc): ReadonlyMap<PartId, number> {
+  return pose(doc).anchors;
+}
+
+/**
+ * Breadth-first from the roots. Parts no root reaches sit on a pose loop (30 of 185 corpus builds);
+ * each such island is anchored through the first conn of any member that targets an already posed
+ * part (51 of the corpus's 53 islands), and only an island with no such conn gets a pseudo-root.
+ */
 function computePose(doc: Doc): Pose {
   const { poseChildren } = graphIndex(doc);
   const order: PartId[] = [];
   const reached = new Set<PartId>();
+  const children = new Map<PartId, PartId[]>();
+  const anchors = new Map<PartId, number>();
   // Appends the seeds not yet reached, then every part below them, breadth first.
   const sweep = (seeds: readonly PartId[]): void => {
     const start = order.length;
@@ -160,19 +183,39 @@ function computePose(doc: Doc): Pose {
         if (!reached.has(child)) {
           reached.add(child);
           order.push(child);
+          push(children, order[at], child);
         }
       }
     }
   };
+  /** One pass anchoring every island member that has a conn into the posed parts. */
+  const anchorPass = (): boolean => {
+    let progress = false;
+    for (const id of doc.order) {
+      if (reached.has(id)) continue;
+      const conns = doc.parts.get(id)!.conns;
+      const k = conns.findIndex((c) => c.target.kind !== 'raw' && reached.has(c.target.part));
+      if (k < 0) continue;
+      const { target } = conns[k];
+      if (target.kind === 'raw') continue;
+      anchors.set(id, k);
+      push(children, target.part, id);
+      sweep([id]);
+      progress = true;
+    }
+    return progress;
+  };
   sweep(roots(doc));
   const pseudoRoots: PartId[] = [];
-  for (const id of doc.order) {
-    if (reached.has(id)) continue;
-    const entry = cycleEntry(doc, id);
+  for (;;) {
+    while (anchorPass());
+    const next = doc.order.find((id) => !reached.has(id));
+    if (next === undefined) break;
+    const entry = cycleEntry(doc, next);
     pseudoRoots.push(entry);
     sweep([entry]);
   }
-  return { order, pseudoRoots };
+  return { order, pseudoRoots, anchors, children };
 }
 
 /**

@@ -1,4 +1,5 @@
 import {
+  poseAnchors,
   poseDescendants,
   poseParent,
   topoPose,
@@ -60,4 +61,18 @@ test('a tail hanging off a loop is posed from one pseudo-root', () => {
   );
   expect(topoPose(d).pseudoRoots).toEqual([1]);
   expect(topoPose(d).order.sort()).toEqual([1, 2, 3, 4]);
+});
+
+test('a loop island with a joint into the posed build is anchored, not a pseudo-root', () => {
+  // 2 and 3 pose off each other; 2 also has a joint onto the root 1.
+  const d = docOf(
+    part(1, 'Part'),
+    part(2, 'Part', [sock('3', 3, '2'), sock('1', 1, '6')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+  );
+  const p = topoPose(d);
+  expect(p.pseudoRoots).toEqual([]);
+  expect([...poseAnchors(d)]).toEqual([[2, 1]]);
+  expect(p.order).toEqual([1, 2, 3]);
+  expect([...poseDescendants(d, 1)].sort()).toEqual([2, 3]);
 });

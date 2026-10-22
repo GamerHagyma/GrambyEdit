@@ -323,7 +323,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 | E-CODE-LIMIT | error | code length > code limit |
 | W-SOCKET-UNKNOWN | warning | socket id not in the catalog for that type (the loader validates child sockets strictly, spec §11) |
 | W-TYPE-UNKNOWN | warning | type not in the catalog (rendered as a placeholder; data kept) |
-| W-CYCLE | warning | parts no root reaches through first connections |
+| W-CYCLE | warning | parts no root reaches, even through a loop island's anchor joint (§10.6) |
 | W-PART-LIMIT | warning | parts > soft cap (8,000); text escalates past 16,000 |
 | I-POINT-UNUSED | info | point with no child (~110 chars wasted) |
 | I-NO-ANCHOR | info | > 200 parts and no `Anchor` with `Activated: true` (spec §8.3) |
@@ -450,7 +450,7 @@ Every part posed through an `approx` frame, or through a point whose `partName` 
 ### 10.6 Roots and cycles
 Roots: the first root sits at the origin; others line up along +X with 2-stud gaps (bbox-based). `detach` and delete keep a loosened part at its last world pose.
 
-Cycles (2 corpus codes have 0 roots): parts BFS from roots cannot reach get a pseudo-root (lowest entry index) and W-CYCLE.
+Cycles: 30 of the 185 corpus builds have pose loops (53 islands, 703 parts) that no root reaches through pose conns. Such an island is **anchored**: the first member in export order with a conn targeting an already posed part is posed through that conn, and the rest of the island follows through pose conns. 51 of the 53 corpus islands anchor this way. Only an island with no such conn gets a pseudo-root (the first part met twice when walking pose parents up from its first member) and W-CYCLE. "Attached" selection and moves follow the same effective tree.
 
 ### 10.7 Cost and recompute
 About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budget checked at M1, D14). The whole map is recomputed per committed doc version; drags recompute only the dragged subtrees for the preview.

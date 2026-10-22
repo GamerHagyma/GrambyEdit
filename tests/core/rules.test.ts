@@ -171,3 +171,12 @@ test('isSignalJoint: output with input, and conductors with any signal socket', 
   expect(isSignalJoint(MINI, 'Wire', '1', 'Splitter_2', '4')).toBe(true);
   expect(isSignalJoint(MINI, 'Mag', '1', 'Splitter_2', '6')).toBe(false);
 });
+
+test('an anchored loop island raises no W-CYCLE', () => {
+  const d = docOf(
+    part(1, 'Part'),
+    part(2, 'Part', [sock('3', 3, '2'), sock('1', 1, '6')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+  );
+  expect(validate(d, MINI, DEFAULT_LIMITS, 0).map((i) => i.code)).not.toContain('W-CYCLE');
+});

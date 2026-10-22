@@ -4,7 +4,7 @@ import { approxSocketFrame, PLACEHOLDER_BOX } from './approx';
 import type { Catalog, Conventions } from './catalog-types';
 import { cfToMatrix4, IDENTITY_CF } from './cframe';
 import { matingMatrix, orientationMatrix } from './conventions';
-import { topoPose } from './graph';
+import { poseAnchors, topoPose } from './graph';
 import type { CFrame12, Conn, ConnTarget, Doc, Part, PartId, SocketId } from './types';
 
 export const POSE_APPROX = 1,
@@ -116,6 +116,7 @@ export function defaultRootLayout(doc: Doc, cat: Catalog): Map<PartId, CFrame12>
 /** Every part's world matrix (float64) and flags. Recomputed per committed doc version (spec §10.7). */
 export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
   const { order, pseudoRoots } = topoPose(doc);
+  const anchors = poseAnchors(doc);
   const pseudo = new Set(pseudoRoots);
   const world = new Map<PartId, Matrix4>();
   const flags = new Map<PartId, number>();
@@ -128,7 +129,12 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
   for (const id of order) {
     const part = doc.parts.get(id)!;
     let flag = cat.parts[part.type] ? 0 : POSE_UNKNOWN_TYPE;
-    const conn = pseudo.has(id) ? undefined : poseConn(part);
+    const anchor = anchors.get(id);
+    const conn = pseudo.has(id)
+      ? undefined
+      : anchor !== undefined
+        ? (part.conns[anchor] as PoseConn)
+        : poseConn(part);
     const parentWorld = conn && world.get(conn.target.part);
     let m: Matrix4;
     if (!conn || !parentWorld) {

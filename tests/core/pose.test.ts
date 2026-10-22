@@ -102,3 +102,14 @@ test('a point on a non-main sub-part without a captured frame is approximate', (
   expect(computePoses(host('Roof'), MINI, C).flags.get(2)! & POSE_APPROX).toBe(0);
   expect(computePoses(host('Glass'), MINI, C).flags.get(2)! & POSE_APPROX).toBeTruthy();
 });
+test('an anchored loop island hangs from the build, not from a pseudo-root', () => {
+  const d = docOf(
+    part(1, 'Part'),
+    part(2, 'Part', [sock('3', 3, '2'), sock('1', 1, '6')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+  );
+  const p = computePoses(d, MINI, C);
+  expect(pos(p.world.get(2)!)).toEqual([0, 1, 0]);
+  expect(pos(p.world.get(3)!)).toEqual([0, 2, 0]);
+  expect(p.flags.get(3)! & POSE_CYCLE).toBe(0);
+});
