@@ -1,0 +1,116 @@
+import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
+import { toEntries } from '../../core/doc';
+import { formatPercent } from '../../core/size';
+import { codePreview, exportCurrent } from '../../state/io';
+import { settingsSig } from '../../state/settings';
+import { docSig } from '../../state/store';
+import { toast } from '../../state/toasts';
+import { Dialog } from '../layout/Dialog';
+import { ExportErrorsDialog } from './ExportErrorsDialog';
+
+/** The current build as a share code: copy it, or download it as text or as pretty JSON. */
+export function ExportDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose(): void;
+}): JSX.Element | null {
+  return open ? <ExportBody onClose={onClose} /> : null;
+}
+
+/** Mounted only while open, so each opening encodes the build again and asks about errors again. */
+function ExportBody({ onClose }: { onClose(): void }): JSX.Element {
+  const [{ code, issues }] = useState(exportCurrent);
+  const [confirmed, setConfirmed] = useState(false);
+  const errors = issues.filter((i) => i.severity === 'error');
+  if (errors.length > 0 && !confirmed) {
+    return (
+      <ExportErrorsDialog issues={errors} onExport={() => setConfirmed(true)} onClose={onClose} />
+    );
+  }
+
+  const { limits } = settingsSig.value;
+  const parts = docSig.value.order.length;
+  const warnings = issues.filter((i) => i.severity === 'warning').length;
+  const summary =
+    `Parts ${parts.toLocaleString('en-US')} / ${limits.partSoftCap.toLocaleString('en-US')} · ` +
+    `Code ${formatPercent(code.length, limits.codeChars)}% used · ` +
+    `${code.length.toLocaleString('en-US')} characters · ` +
+    `Errors ${errors.length} · Warnings ${warnings}`;
+
+  return (
+    <Dialog
+      title="Export build"
+      open
+      onClose={onClose}
+      footer={
+        <>
+          <button class="button primary" onClick={() => copyCode(code)}>
+            Copy code
+          </button>
+          <button
+            class="button"
+            onClick={() => saveFile(`GrambyEdit-${stamp()}.txt`, () => code, 'text/plain')}
+          >
+            Download .txt
+          </button>
+          <button
+            class="button"
+            onClick={() =>
+              saveFile(
+                `GrambyEdit-${stamp()}.json`,
+                () => JSON.stringify(toEntries(docSig.value), null, 2),
+                'application/json',
+              )
+            }
+          >
+            Download .json
+          </button>
+        </>
+      }
+    >
+      <p>{summary}</p>
+      <code class="mono" style={{ display: 'block', overflowWrap: 'anywhere' }}>
+        {codePreview(code)}
+      </code>
+    </Dialog>
+  );
+}
+
+/** Local date as yyyy-mm-dd, for file names. */
+function stamp(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+async function copyCode(code: string): Promise<void> {
+  if (!navigator.clipboard) {
+    toast('This browser cannot copy here. Download the code instead.', 'error');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(code);
+    toast('Code copied.');
+  } catch (e) {
+    toast(`Could not copy the code: ${(e as Error).message}`, 'error');
+  }
+}
+
+/** Saves text through a temporary object URL, revoked after the download has started. */
+function saveFile(name: string, text: () => string, type: string): void {
+  try {
+    const url = URL.createObjectURL(new Blob([text()], { type }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  } catch (e) {
+    toast(`Download failed: ${(e as Error).message}`, 'error');
+  }
+}
