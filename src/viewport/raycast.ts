@@ -1,7 +1,6 @@
 // Picking (spec §11.2): rays narrowed by the BVH, exact triangle tests on the few candidates.
 import {
   DoubleSide,
-  Matrix4,
   Mesh,
   MeshBasicMaterial,
   Raycaster,
@@ -12,11 +11,10 @@ import {
 import { partGeometry } from '../assets/geometry';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog } from '../core/catalog-types';
-import { cfToMatrix4 } from '../core/cframe';
-import { subPartMatrix, type Poses } from '../core/pose';
+import type { Poses } from '../core/pose';
 import type { Doc, PartId, SocketId, Uuid } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, selectionSig } from '../state/selection';
+import { hiddenSig } from '../state/selection';
 import { assetsSig, catalogSig, docSig } from '../state/store';
 import { SphereBVH } from './bvh';
 import { getViewport } from './context';
@@ -126,57 +124,42 @@ function screenDistance(world: Vector3, ndc: Vector2): number | null {
   return Math.hypot(dx, dy);
 }
 
-/** The displayed socket nearest the cursor, within a small screen radius; sockets of `skip` are ignored. */
+/** Markers this close to the nearest one overlap on screen (a part's mount often sits on a socket). */
+const TIE_PX = 2;
+
+/**
+ * The displayed socket nearest the cursor, within a small screen radius; sockets of `skip` are
+ * ignored. Among overlapping markers, the first that `prefer` accepts wins over the nearest.
+ */
 export function pickSocket(
   ndc: Vector2,
   skip?: ReadonlySet<PartId>,
+  prefer?: (s: { part: PartId; socket: SocketId }) => boolean,
 ): { part: PartId; socket: SocketId } | null {
   const vp = getViewport();
   if (!vp) return null;
-  let best: { part: PartId; socket: SocketId } | null = null;
-  let bestPx = MARKER_PICK_PX;
+  const hits: { part: PartId; socket: SocketId; px: number }[] = [];
   for (const s of vp.sockets?.shown() ?? []) {
     if (skip?.has(s.part)) continue;
     const px = screenDistance(s.world, ndc);
-    if (px !== null && px < bestPx) [bestPx, best] = [px, { part: s.part, socket: s.socket }];
+    if (px !== null && px < MARKER_PICK_PX) hits.push({ part: s.part, socket: s.socket, px });
   }
-  return best;
+  if (hits.length === 0) return null;
+  hits.sort((a, b) => a.px - b.px);
+  const tied = hits.filter((h) => h.px <= hits[0].px + TIE_PX);
+  const { part, socket } = (prefer && tied.find(prefer)) ?? hits[0];
+  return { part, socket };
 }
 
-/** World position of an ephemeral point. */
-export function pointWorld(
-  doc: Doc,
-  poses: Poses,
-  cat: Catalog,
-  host: PartId,
-  uuid: Uuid,
-): Vector3 | null {
-  const part = doc.parts.get(host);
-  const point = part?.points?.get(uuid);
-  const world = poses.world.get(host);
-  if (!part || !point || !world) return null;
-  const m = new Matrix4()
-    .copy(world)
-    .multiply(subPartMatrix(cat, part.type, point.partName).m)
-    .multiply(cfToMatrix4(point.cframe));
-  return new Vector3().setFromMatrixPosition(m);
-}
-
-/** The point nearest the cursor among selected hosts' points (all points when `all`). */
-export function pickPoint(ndc: Vector2, all = false): { host: PartId; uuid: Uuid } | null {
-  const cat = catalogSig.value;
-  if (!getViewport() || !cat) return null;
-  const doc = docSig.value;
-  const poses = posesSig.value;
-  const hosts = all ? doc.order : [...selectionSig.value.parts];
+/** The drawn point nearest the cursor, within a small screen radius. */
+export function pickPoint(ndc: Vector2): { host: PartId; uuid: Uuid } | null {
+  const vp = getViewport();
+  if (!vp) return null;
   let best: { host: PartId; uuid: Uuid } | null = null;
   let bestPx = MARKER_PICK_PX;
-  for (const host of hosts) {
-    for (const uuid of doc.parts.get(host)?.points?.keys() ?? []) {
-      const w = pointWorld(doc, poses, cat, host, uuid);
-      const px = w && screenDistance(w, ndc);
-      if (px !== null && px !== undefined && px < bestPx) [bestPx, best] = [px, { host, uuid }];
-    }
+  for (const p of vp.points?.shown() ?? []) {
+    const px = screenDistance(p.world, ndc);
+    if (px !== null && px < bestPx) [bestPx, best] = [px, { host: p.host, uuid: p.uuid }];
   }
   return best;
 }

@@ -58,7 +58,7 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-function srgbToLinear(hex: number): [number, number, number] {
+export function srgbToLinear(hex: number): [number, number, number] {
   const c = (v: number) => {
     const s = v / 255;
     return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
@@ -66,7 +66,7 @@ function srgbToLinear(hex: number): [number, number, number] {
   return [c((hex >> 16) & 255), c((hex >> 8) & 255), c(hex & 255)];
 }
 
-class Markers {
+export class Markers {
   readonly mesh: InstancedMesh;
   private readonly colors: InstancedBufferAttribute;
 

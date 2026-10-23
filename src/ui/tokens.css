@@ -1329,3 +1329,110 @@ kbd {
 .dialog:has(.shortcuts) {
   width: min(820px, calc(100vw - 32px));
 }
+
+/* Part picker popover (Connect and Point) */
+.part-picker {
+  position: fixed;
+  z-index: 26;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 300px;
+  max-height: 380px;
+  padding: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.4);
+}
+.part-picker-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.part-picker input[type='search'] {
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.part-picker-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.part-picker-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--row);
+  align-items: center;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.part-picker-list li:hover {
+  background: var(--line);
+}
+.part-picker-list li.active {
+  background: var(--accent);
+  color: #fff;
+}
+.part-picker-list li.active .muted {
+  color: #fff;
+}
+.part-picker-empty {
+  margin: 4px;
+  color: var(--muted);
+}
+.part-picker-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+}
+.part-picker-detail select {
+  flex: 1;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+/* Connect hints and the point "+" handle */
+.connect-tip {
+  position: absolute;
+  z-index: 5;
+  max-width: 340px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  font-size: 12px;
+  pointer-events: none;
+}
+.connect-tip.ok {
+  border-left-color: var(--ok);
+}
+.connect-tip.bad {
+  border-left-color: var(--bad);
+}
+.point-plus {
+  position: absolute;
+  z-index: 5;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font: 600 15px/1 var(--font);
+  cursor: pointer;
+}

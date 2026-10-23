@@ -3,7 +3,8 @@ import { effect } from '@preact/signals';
 import { Box3, Sphere, Vector2, Vector3 } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { parseShareText } from '../core/share';
-import type { PartId } from '../core/types';
+import type { Poses } from '../core/pose';
+import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
 import { hiddenSig, hoverSig, selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
@@ -22,8 +23,15 @@ import { Outline } from './outline';
 import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolHotkey, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
+import { createConnectTool } from '../tools/connect';
 import { cancelModal, transformKey } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
+import {
+  createPointTool,
+  pointGizmoHandlers,
+  pointGizmoModeSig,
+  pointGizmoPlacement,
+} from '../tools/point';
 import { createSelectTool } from '../tools/select';
 import {
   createTransformTool,
@@ -44,6 +52,7 @@ import {
 } from '../state/workbench';
 import { toast } from '../state/toasts';
 import { TransformGizmo } from './gizmo';
+import { PointsLayer } from './points-layer';
 import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
@@ -72,6 +81,20 @@ function overlay(
   return box;
 }
 
+/** How many parts near the camera show their markers for Connect and Point (the layers' limit). */
+const NEAR_PARTS = 400;
+
+function nearestParts(doc: Doc, poses: Poses, eye: Vector3, n: number): PartId[] {
+  const at = new Vector3();
+  const all: { id: PartId; d: number }[] = [];
+  for (const id of doc.order) {
+    const m = poses.world.get(id);
+    if (m) all.push({ id, d: at.setFromMatrixPosition(m).distanceToSquared(eye) });
+  }
+  if (all.length > n) all.sort((a, b) => a.d - b.d).length = n;
+  return all.map((p) => p.id);
+}
+
 const selectTool = createSelectTool();
 const moveTool = createTransformTool('move');
 const rotateTool = createTransformTool('rotate');
@@ -80,6 +103,8 @@ const paintTool = createPaintTool({
   inRect: partsInRect,
   inDisc: partsInDisc,
 });
+const connectTool = createConnectTool();
+const pointTool = createPointTool();
 const workbenchTool = createWorkbenchTool();
 
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
@@ -95,6 +120,8 @@ export function mountViewport(el: HTMLElement): () => void {
   registerTool(moveTool);
   registerTool(rotateTool);
   registerTool(paintTool);
+  registerTool(connectTool);
+  registerTool(pointTool);
   registerTool(workbenchTool);
   let stop = () => {};
   const run = () => {
@@ -117,6 +144,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const rig = new CameraRig();
   const sockets = new SocketsLayer();
   scene.add(sockets.group);
+  const points = new PointsLayer();
+  scene.add(points.group);
   const outline = new Outline();
   let frame = 0;
   const request = () => {
@@ -139,18 +168,40 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const inWorkbench = () => toolSig.peek() === 'sockets' && wbTypeSig.peek() !== null;
   let lostBox: HTMLElement | null = null;
 
-  /** Sockets of the hovered part and the selection, rebuilt per frame for constant screen size. */
-  const updateSockets = () => {
+  /**
+   * Socket and point markers, rebuilt per frame for constant screen size. Normally the selection's and
+   * the hovered part's; with Connect, the sockets and free points near the camera; with Point, the
+   * points near the camera; none during a transform, only the target's during a drag re-attach.
+   */
+  const updateMarkers = () => {
     const cat = catalogSig.value;
     if (!cat) return;
+    const doc = docSig.value;
+    const poses = posesSig.value;
+    const s = settingsSig.value;
+    const sel = selectionSig.value;
     const hover = hoverSig.value;
+    const hidden = hiddenSig.value;
+    const tool = toolSig.peek();
     const state = transformStateSig.peek();
-    const shown =
-      state === 'idle'
-        ? [...selectionSig.value.parts].filter((id) => !hiddenSig.value.has(id))
-        : [];
-    if (hover !== null && state !== 'transform' && !shown.includes(hover)) shown.unshift(hover);
-    sockets.update(docSig.value, posesSig.value, cat, shown, rig, settingsSig.value.maxSockets);
+    const near =
+      tool === 'connect' || tool === 'point'
+        ? nearestParts(doc, poses, rig.camera.position, NEAR_PARTS).filter((id) => !hidden.has(id))
+        : null;
+    let socketParts: PartId[] = [];
+    if (state === 'reattach') socketParts = hover === null ? [] : [hover];
+    else if (state === 'idle' && tool === 'connect') socketParts = near!;
+    else if (state === 'idle') {
+      socketParts = [...sel.parts].filter((id) => !hidden.has(id));
+      if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
+    }
+    sockets.update(doc, poses, cat, socketParts, rig, s.maxSockets);
+    const selectedHosts = [...sel.points].map((k) => Number(k.slice(0, k.indexOf(':'))));
+    const pointHosts =
+      state === 'transform'
+        ? []
+        : (near ?? [...new Set([...sel.parts, ...selectedHosts])].filter((id) => !hidden.has(id)));
+    points.update(doc, poses, cat, pointHosts, rig, s.maxSockets, sel.points, tool === 'connect');
   };
 
   const render = () => {
@@ -162,13 +213,15 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const wb = inWorkbench();
     if (ctx.layer) ctx.layer.group.visible = !wb;
     sockets.group.visible = !wb;
+    points.group.visible = !wb;
     workbench.group.visible = wb;
     workbench.setEnabled(wb);
     workbench.setCamera(rig.camera);
     transformGizmo.setCamera(rig.camera);
-    if (!wb) updateSockets();
+    if (!wb) updateMarkers();
     renderer.render(scene, rig.camera);
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
+    for (const after of ctx.afterRender) after();
   };
   const gizmo = createNavGizmo(el, (axis) => {
     rig.setView(axis);
@@ -189,8 +242,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas,
     layer: null,
     sockets,
+    points,
     workbench,
     gizmo: transformGizmo,
+    afterRender: new Set(),
     pointer: null,
     request,
     ndc,
@@ -379,25 +434,28 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const stopGizmo = effect(() => {
     const tool = toolSig.value;
     const s = settingsSig.value;
-    const on = (tool === 'move' || tool === 'rotate') && assetsSig.value !== null;
+    const forPoint = tool === 'point';
+    const on = (tool === 'move' || tool === 'rotate' || forPoint) && assetsSig.value !== null;
+    transformGizmo.handlers = forPoint ? pointGizmoHandlers : gizmoHandlers;
     transformGizmo.configure({
-      mode: tool === 'rotate' ? 'rotate' : 'translate',
-      space: spaceSig.value,
+      mode: forPoint ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',
+      space: forPoint ? 'local' : spaceSig.value,
       steps: { move: s.snapMove, rotate: s.snapRotate },
-      individual: pivotModeSig.value === 'individual',
+      individual: !forPoint && pivotModeSig.value === 'individual',
     });
     transformGizmo.setEnabled(on);
-    transformGizmo.place(
-      on
-        ? gizmoPlacement(
+    const at = !on
+      ? null
+      : forPoint
+        ? pointGizmoPlacement()
+        : gizmoPlacement(
             docSig.value,
             posesSig.value,
             selectionSig.value,
             pivotModeSig.value,
             spaceSig.value,
-          )
-        : null,
-    );
+          );
+    transformGizmo.place(at);
     request();
   });
 
@@ -471,6 +529,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     gizmo.dispose();
     ctx.layer?.dispose();
     sockets.dispose();
+    points.dispose();
     workbench.dispose();
     outline.dispose();
     grid.mesh.geometry.dispose();

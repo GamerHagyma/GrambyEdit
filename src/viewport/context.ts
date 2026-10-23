@@ -2,6 +2,7 @@
 import type { Scene, Vector2, WebGLRenderer } from 'three';
 import type { CameraRig } from './cameras/rig';
 import type { TransformGizmo } from './gizmo';
+import type { PointsLayer } from './points-layer';
 import type { PartsLayer } from './parts-layer';
 import type { SocketsLayer } from './sockets-layer';
 import type { WorkbenchView } from './workbench-view';
@@ -13,8 +14,11 @@ export interface ViewportContext {
   readonly canvas: HTMLCanvasElement;
   layer: PartsLayer | null;
   readonly sockets: SocketsLayer | null;
+  readonly points: PointsLayer | null;
   readonly workbench: WorkbenchView | null;
   readonly gizmo: TransformGizmo | null;
+  /** Called after every rendered frame, for HTML overlays that follow the camera. */
+  readonly afterRender: Set<() => void>;
   /** The last pointer position over the canvas, in client pixels (modal transforms start there). */
   pointer: { x: number; y: number } | null;
   request(): void;

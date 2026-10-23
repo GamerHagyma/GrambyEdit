@@ -180,7 +180,7 @@ export function beginSession(): Session | null {
 }
 
 /** Draws the moving parts at `deltaOf(topmost) · world` without changing the doc. */
-function previewMoving(
+export function previewMoving(
   moving: ReadonlyMap<PartId, PartId>,
   poses: Poses,
   deltaOf: (top: PartId) => Matrix4,
@@ -296,7 +296,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   const conv = cat.conventions;
   const part = doc.parts.get(r.id)!;
   const skip = new Set(r.moving.keys());
-  const sock = pickSocket(ndc, skip);
+  const sock = pickSocket(ndc, skip, (c) => canBeParent(r.check, cat, c.part, c.socket).ok);
   if (sock) {
     const host = doc.parts.get(sock.part)!;
     const self = defaultChildSocket(cat, part.type, host.type, sock.socket);

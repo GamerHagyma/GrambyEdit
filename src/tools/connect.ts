@@ -50,6 +50,8 @@ export interface PickerRequest {
 export const pickerSig = signal<PickerRequest | null>(null);
 /** The type each further click places, until Esc. */
 export const armedSig = signal<string | null>(null);
+/** Targets gathered with Shift+click; closing the picker clears them. */
+export const gatheredSig = signal<readonly PlaceTarget[]>([]);
 /** The attaching socket chosen in the picker ("attach by socket N"), for one type. */
 export const attachSocketSig = signal<{ type: string; socket: SocketId } | null>(null);
 
@@ -180,7 +182,7 @@ export function placeParts(type: string, targets: readonly PlaceTarget[]): void 
   if (trial.ok.length > 0) {
     let placed: PartId[] = [];
     const n = trial.ok.length;
-    commit(`Add ${n} ${type}`, (d) => {
+    commit(n === 1 ? `Add ${type}` : `Add ${n} × ${type}`, (d) => {
       placed = tryAll(d).placed;
     });
     select(placed, 'replace');
@@ -197,6 +199,7 @@ export function openPicker(anchor: { x: number; y: number }, targets: readonly P
 
 export function closePicker(): void {
   pickerSig.value = null;
+  gatheredSig.value = [];
 }
 
 /** A socket's world position. */
@@ -221,6 +224,15 @@ function socketInfo(doc: Doc, cat: Catalog, e: SocketEnd): { text: string; ok: b
 
 const DRAG_PX = 4;
 
+/** A parent-side socket a new part could attach to now. */
+function freeParent(cat: Catalog, s: { part: PartId; socket: SocketId }): boolean {
+  const doc = docSig.value;
+  const type = doc.parts.get(s.part)?.type ?? '';
+  return (
+    parentSide(cat, { ...s, type }) && canBeParent(doc, cat, s.part, s.socket).ok
+  );
+}
+
 export function createConnectTool(): Tool {
   const inner = createSelectTool();
   let press: { x: number; y: number; socket: SocketEnd | null; point: PlaceTarget | null } | null =
@@ -228,8 +240,6 @@ export function createConnectTool(): Tool {
   let wire: { from: SocketEnd; line: Line; to: SocketEnd | null; ok: boolean } | null = null;
   /** The first end of a click-click join. */
   let start: SocketEnd | null = null;
-  /** Targets gathered with Shift+click. */
-  let gathered: PlaceTarget[] = [];
   let tip: HTMLDivElement | null = null;
 
   const showTip = (x: number, y: number, text: string, ok: boolean | null) => {
@@ -283,15 +293,23 @@ export function createConnectTool(): Tool {
     const cat = catalogSig.value;
     const vp = getViewport();
     if (!wire || !cat || !vp) return;
-    const from = socketWorld(cat, wire.from);
-    if (!from) return;
-    const hit = pickSocket(e.ndc);
+    const fromAt = socketWorld(cat, wire.from);
+    if (!fromAt) return;
+    // Among overlapping markers (a joint puts two sockets on one spot): one this wire can join, else
+    // one on the other side from the start, whose refusal explains what the user aimed at.
+    const from = wire.from;
+    const valid = (c: { part: PartId; socket: SocketId }) =>
+      wireVerdict(docSig.value, cat, from, endOf(c)).verdict.ok;
+    const opposite = (c: { part: PartId; socket: SocketId }) =>
+      childSide(cat, from) ? parentSide(cat, endOf(c)) : childSide(cat, endOf(c));
+    const first = pickSocket(e.ndc, undefined, valid);
+    const hit = first && !valid(first) ? pickSocket(e.ndc, undefined, opposite) : first;
     const to = hit && !(hit.part === wire.from.part && hit.socket === wire.from.socket) ? endOf(hit) : null;
     const result = to ? wireVerdict(docSig.value, cat, wire.from, to).verdict : null;
     wire.to = to;
     wire.ok = result?.ok ?? false;
-    const end = (to && socketWorld(cat, to)) ?? cursorAt(e.ndc, from) ?? from;
-    wire.line.geometry.setFromPoints([from, end]);
+    const end = (to && socketWorld(cat, to)) ?? cursorAt(e.ndc, fromAt) ?? fromAt;
+    wire.line.geometry.setFromPoints([fromAt, end]);
     (wire.line.material as LineBasicMaterial).color.set(
       result === null ? 0x4c8dff : result.ok ? 0x3fb950 : 0xf85149,
     );
@@ -314,18 +332,30 @@ export function createConnectTool(): Tool {
     });
   };
 
-  /** A click on a free target: gather it (Shift), place the armed type, or open the picker. */
+  /**
+   * A click on a free target. Shift+click gathers it (the picker opens on the gathered set, unless a
+   * type is armed); a plain click places the armed type on everything gathered plus this target, or
+   * opens the picker for them.
+   */
   const target = (t: PlaceTarget, e: ToolPointer) => {
+    const same = (u: PlaceTarget) => JSON.stringify(u) === JSON.stringify(t);
+    const gathered = gatheredSig.value;
+    const armed = armedSig.value;
     if (e.shift) {
-      const same = (u: PlaceTarget) => JSON.stringify(u) === JSON.stringify(t);
-      gathered = gathered.some(same) ? gathered.filter((u) => !same(u)) : [...gathered, t];
-      showTip(e.x, e.y, `${gathered.length} chosen · click without Shift to place`, null);
+      const next = gathered.some(same) ? gathered.filter((u) => !same(u)) : [...gathered, t];
+      if (armed || next.length === 0) {
+        pickerSig.value = null;
+        gatheredSig.value = next;
+        if (armed) showTip(e.x, e.y, `${next.length} chosen · click without Shift to place`, null);
+      } else {
+        openPicker({ x: e.x, y: e.y }, next);
+        gatheredSig.value = next;
+      }
       return;
     }
-    const all = [...gathered.filter((u) => JSON.stringify(u) !== JSON.stringify(t)), t];
-    gathered = [];
+    const all = [...gathered.filter((u) => !same(u)), t];
+    closePicker();
     hideTip();
-    const armed = armedSig.value;
     if (armed) placeParts(armed, all);
     else openPicker({ x: e.x, y: e.y }, all);
   };
@@ -358,7 +388,7 @@ export function createConnectTool(): Tool {
     hideTip();
     press = null;
     start = null;
-    gathered = [];
+    gatheredSig.value = [];
   };
 
   return {
@@ -372,9 +402,9 @@ export function createConnectTool(): Tool {
     onPointer(e: ToolPointer) {
       if (e.kind === 'move' && e.button === -1) {
         inner.onPointer!(e);
-        if (start || gathered.length > 0) return;
+        if (start || gatheredSig.value.length > 0) return;
         const cat = catalogSig.value;
-        const hit = cat ? pickSocket(e.ndc) : null;
+        const hit = cat ? pickSocket(e.ndc, undefined, (c) => freeParent(cat, c)) : null;
         if (cat && hit) {
           const info = socketInfo(docSig.value, cat, endOf(hit));
           showTip(e.x, e.y, info.text, info.ok);
@@ -383,10 +413,10 @@ export function createConnectTool(): Tool {
       }
       if (e.button !== 0) return;
       if (e.kind === 'down') {
-        const s = pickSocket(e.ndc);
-        const p = s ? null : pickPoint(e.ndc);
         const doc = docSig.value;
         const cat = catalogSig.value;
+        const s = cat ? pickSocket(e.ndc, undefined, (c) => freeParent(cat, c)) : null;
+        const p = s ? null : pickPoint(e.ndc);
         const freePoint = p && cat && canTakeChild(doc, p.host, p.uuid).ok;
         if (s || freePoint) {
           press = {
@@ -395,7 +425,11 @@ export function createConnectTool(): Tool {
             socket: s && endOf(s),
             point: freePoint ? { kind: 'point', host: p!.host, uuid: p!.uuid } : null,
           };
-        } else inner.onPointer!(e);
+        } else {
+          // A press on nothing to attach to closes the picker, then selects as usual.
+          closePicker();
+          inner.onPointer!(e);
+        }
         return;
       }
       if (!press) return inner.onPointer!(e);
@@ -425,7 +459,7 @@ export function createConnectTool(): Tool {
     },
     onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return inner.onKey!(e);
-      if (wire || start || gathered.length > 0 || pickerSig.value) {
+      if (wire || start || gatheredSig.value.length > 0 || pickerSig.value) {
         reset();
         closePicker();
         return true;

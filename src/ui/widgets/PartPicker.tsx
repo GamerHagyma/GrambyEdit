@@ -1,5 +1,5 @@
 // The pop-up part picker (spec §12.6): opens at a point, lists the eligible parts and creations, and picks one.
-import type { JSX } from 'preact';
+import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { catalogSig } from '../../state/store';
 import { fuzzyScore, rankParts } from './fuzzy';
@@ -12,6 +12,10 @@ export interface PartPickerProps {
   onClose(): void;
   anchor: { x: number; y: number };
   creations?: readonly { id: string; name: string }[];
+  /** A line above the search box, such as what the picked part goes on. */
+  title?: string;
+  /** Extra controls under the list for the highlighted choice (Connect's "attach by socket"). */
+  detail?(active: PickChoice | undefined): ComponentChildren;
 }
 
 interface PickOption {
@@ -27,6 +31,8 @@ export function PartPicker({
   onClose,
   anchor,
   creations = [],
+  title,
+  detail,
 }: PartPickerProps): JSX.Element {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -81,6 +87,7 @@ export function PartPicker({
       aria-label="Pick a part"
       style={{ left: `${anchor.x}px`, top: `${anchor.y}px` }}
     >
+      {title && <p class="part-picker-title">{title}</p>}
       <input
         ref={inputRef}
         type="search"
@@ -114,6 +121,7 @@ export function PartPicker({
           ))}
         </ul>
       )}
+      {detail?.(options[at]?.choice)}
     </div>
   );
 }

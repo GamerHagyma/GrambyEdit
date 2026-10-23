@@ -12,6 +12,7 @@ import { toolSig } from '../tools/manager';
 import { AboutDialog } from './dialogs/AboutDialog';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FirstRun } from './dialogs/FirstRun';
+import { PointDeleteDialog } from './dialogs/PointDeleteDialog';
 import { ImportDialog } from './dialogs/ImportDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
 import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
@@ -23,6 +24,7 @@ import { PaintPanel } from './panels/PaintPanel';
 import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
+import { PickerHost } from './widgets/PickerHost';
 import './tokens.css';
 
 /** The open dialog, if it is one that exists yet. */
@@ -36,6 +38,8 @@ function Dialogs(): JSX.Element {
       <AboutDialog open={name === 'about'} onClose={closeDialog} />
       <ShortcutsDialog open={name === 'shortcuts'} onClose={closeDialog} />
       <FirstRun />
+      <PickerHost />
+      <PointDeleteDialog />
     </>
   );
 }

@@ -38,6 +38,8 @@ const TOOLS: Section = {
     { keys: ['1'], action: 'Select' },
     { keys: ['2'], action: 'Move: drag the gizmo, or drag a part onto a socket or surface' },
     { keys: ['3'], action: 'Rotate: drag the gizmo rings' },
+    { keys: ['4'], action: 'Connect: add parts on sockets and points, join sockets' },
+    { keys: ['5'], action: 'Point: add connection points on part surfaces' },
     { keys: ['6'], action: 'Paint' },
     { keys: ['Esc'], action: 'Cancel a gizmo drag or a part drag' },
   ],
@@ -52,6 +54,23 @@ const SELECT: Section = {
     { keys: ['Drag'], action: 'Box select (from empty space)' },
     { keys: ['L'], action: 'Add the part under the cursor and everything attached to it' },
     { keys: ['Ctrl+L'], action: 'Add everything joined to the part under the cursor' },
+  ],
+};
+
+const CONNECT: Section = {
+  title: 'Connect and Point tools',
+  rows: [
+    { keys: ['Click'], action: 'Connect: pick a part for a free socket or point' },
+    {
+      keys: ['Shift+Click'],
+      action: 'Connect: gather several sockets, then click to fill them all',
+    },
+    { keys: ['Drag'], action: 'Connect: drag from a socket to another to join them' },
+    { keys: ['Esc'], action: 'Connect: cancel, or stop placing the armed part' },
+    { keys: ['Click'], action: 'Point: add a point on a part surface, or select one' },
+    { keys: ['G', 'R'], action: 'Point: switch the point’s gizmo to move or rotate' },
+    { keys: ['Enter'], action: 'Point: mount a part on the selected point' },
+    { keys: ['Delete'], action: 'Point: delete the selected point' },
   ],
 };
 
@@ -145,7 +164,7 @@ export function ShortcutsDialog({
   return (
     <Dialog title="Keyboard shortcuts" open={open} onClose={onClose}>
       <div class="shortcuts">
-        {[TRANSFORM, TOOLS, SELECT, cameras[0], FILE, cameras[1]].map((s) => (
+        {[TRANSFORM, TOOLS, SELECT, CONNECT, cameras[0], FILE, cameras[1]].map((s) => (
           <SectionView key={s.title} section={s} />
         ))}
       </div>
