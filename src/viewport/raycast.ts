@@ -70,8 +70,8 @@ function rayAt(ndc: Vector2): Raycaster | null {
   return r;
 }
 
-/** The visible part under `ndc`, with the sub-part whose triangles were hit. */
-export function pickPart(ndc: Vector2): Hit | null {
+/** The visible part under `ndc`, with the sub-part whose triangles were hit; parts in `skip` are ignored. */
+export function pickPart(ndc: Vector2, skip?: ReadonlySet<PartId>): Hit | null {
   const ray = rayAt(ndc);
   const assets = assetsSig.value;
   if (!ray || !assets) return null;
@@ -83,7 +83,7 @@ export function pickPart(ndc: Vector2): Hit | null {
   const d = ray.ray.direction;
   let best: Hit | null = null;
   for (const id of bvhFor(doc, poses, cat).rayCandidates([o.x, o.y, o.z], [d.x, d.y, d.z])) {
-    if (hidden.has(id)) continue;
+    if (hidden.has(id) || skip?.has(id)) continue;
     const part = doc.parts.get(id);
     const world = poses.world.get(id);
     if (!part || !world) continue;
@@ -126,13 +126,17 @@ function screenDistance(world: Vector3, ndc: Vector2): number | null {
   return Math.hypot(dx, dy);
 }
 
-/** The displayed socket nearest the cursor, within a small screen radius. */
-export function pickSocket(ndc: Vector2): { part: PartId; socket: SocketId } | null {
+/** The displayed socket nearest the cursor, within a small screen radius; sockets of `skip` are ignored. */
+export function pickSocket(
+  ndc: Vector2,
+  skip?: ReadonlySet<PartId>,
+): { part: PartId; socket: SocketId } | null {
   const vp = getViewport();
   if (!vp) return null;
   let best: { part: PartId; socket: SocketId } | null = null;
   let bestPx = MARKER_PICK_PX;
   for (const s of vp.sockets?.shown() ?? []) {
+    if (skip?.has(s.part)) continue;
     const px = screenDistance(s.world, ndc);
     if (px !== null && px < bestPx) [bestPx, best] = [px, { part: s.part, socket: s.socket }];
   }

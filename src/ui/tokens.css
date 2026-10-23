@@ -1153,3 +1153,18 @@ textarea.text-value,
   color: var(--warn);
   font-size: 12px;
 }
+
+/* Modal transform hint (G / R) */
+.modal-hint {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 16px);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}

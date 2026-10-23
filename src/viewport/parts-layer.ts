@@ -120,6 +120,17 @@ export class PartsLayer {
     }
   }
 
+  /** Draws parts at the given world matrices without touching the doc: a transform preview. */
+  setPreview(world: ReadonlyMap<PartId, Matrix4>): void {
+    for (const [id, m] of world) {
+      const layer = this.owner.get(id);
+      const slot = layer?.slots.slotOf(id);
+      if (!layer || slot === undefined) continue;
+      layer.mesh.setMatrixAt(slot, m);
+      layer.mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
   /** Sets the selection, hover and active bits, touching only parts whose bits change. */
   highlight(selected: ReadonlySet<PartId>, hovered: PartId | null, active: PartId | null): void {
     const next = new Map<PartId, number>();

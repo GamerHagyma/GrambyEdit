@@ -1,6 +1,7 @@
 // The mounted viewport, shared with picking and tools without an import cycle through index.ts.
 import type { Scene, Vector2, WebGLRenderer } from 'three';
 import type { CameraRig } from './cameras/rig';
+import type { TransformGizmo } from './gizmo';
 import type { PartsLayer } from './parts-layer';
 import type { SocketsLayer } from './sockets-layer';
 import type { WorkbenchView } from './workbench-view';
@@ -13,6 +14,9 @@ export interface ViewportContext {
   layer: PartsLayer | null;
   readonly sockets: SocketsLayer | null;
   readonly workbench: WorkbenchView | null;
+  readonly gizmo: TransformGizmo | null;
+  /** The last pointer position over the canvas, in client pixels (modal transforms start there). */
+  pointer: { x: number; y: number } | null;
   request(): void;
   ndc(e: { clientX: number; clientY: number }): Vector2;
 }

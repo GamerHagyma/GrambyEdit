@@ -1,0 +1,84 @@
+import { Matrix4, Quaternion, Vector3 } from 'three';
+import { DEFAULT_CONVENTIONS as C } from '../../src/core/conventions';
+import { transact } from '../../src/core/ops/transact';
+import { computePoses } from '../../src/core/pose';
+import {
+  applyTransform,
+  constrainDelta,
+  deltaMatrix,
+  pivotOf,
+  snapValue,
+} from '../../src/tools/transform';
+import { MINI } from '../helpers/catalog';
+import { docOf, mount, part, pt, sock } from '../helpers/doc';
+
+const same = (a: Matrix4, b: Matrix4) =>
+  a.elements.forEach((v, i) => expect(v).toBeCloseTo(b.elements[i], 9));
+
+test('pivot, snapping and axis constraints', () => {
+  const poses = {
+    world: new Map([
+      [1, new Matrix4().makeTranslation(0, 0, 0)],
+      [2, new Matrix4().makeTranslation(2, 0, 0)],
+      [3, new Matrix4().makeTranslation(4, 3, 0)],
+    ]),
+    flags: new Map(),
+    approxCount: 0,
+  };
+  expect(pivotOf(poses, [1, 2, 3], 'median', null).toArray()).toEqual([2, 1, 0]);
+  expect(pivotOf(poses, [1, 2, 3], 'active', 3).toArray()).toEqual([4, 3, 0]);
+  expect([snapValue(0.37, 0.25), snapValue(0.38, 0.25), snapValue(-0.38, 0.25)]).toEqual([
+    0.25, 0.5, -0.5,
+  ]);
+  expect(constrainDelta(new Vector3(1, 2, 3), 'Y').toArray()).toEqual([0, 2, 0]);
+});
+
+test('snapping leaves no float noise and no negative zero', () => {
+  expect(snapValue(0.29, 0.1)).toBe(0.3);
+  expect(Object.is(snapValue(-0.01, 0.25), 0)).toBe(true);
+  expect(snapValue(0.3, 0)).toBe(0.3);
+});
+
+test('a rotation turns about the pivot, or about each origin for individual origins', () => {
+  const quarter = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2);
+  const at = (v: Vector3, m: Matrix4) => v.clone().applyMatrix4(m).toArray().map((x) => +x.toFixed(9) + 0);
+  const aboutPivot = deltaMatrix({ kind: 'rotate', rotation: quarter, pivot: new Vector3(1, 0, 0) }, new Vector3(3, 0, 0));
+  expect(at(new Vector3(3, 0, 0), aboutPivot)).toEqual([1, 0, -2]);
+  const individual = deltaMatrix({ kind: 'rotate', rotation: quarter, pivot: 'individual' }, new Vector3(3, 0, 0));
+  expect(at(new Vector3(3, 0, 0), individual)).toEqual([3, 0, 0]);
+  const move = deltaMatrix({ kind: 'move', offset: new Vector3(0, 0, 5) }, new Vector3(3, 0, 0));
+  expect(at(new Vector3(3, 0, 0), move)).toEqual([3, 0, 5]);
+});
+
+test('applyTransform moves topmost parts through points or layout and lists refusals', () => {
+  const d0 = docOf(
+    part(1, 'Base', [], {}, [pt('{a}', undefined, 'Base')]),
+    part(2, 'Part', [mount('1', 1, '{a}')]),
+    part(3, 'Part', [sock('1', 2, '6')]),
+    part(4, 'Gate-AND'),
+    part(5, 'Light', [sock('1', 4, '1')]),
+    part(6, 'Part'),
+  );
+  const poses = computePoses(d0, MINI, C);
+  const shift = new Matrix4().makeTranslation(2, 0, 0);
+  let refused: string[] = [];
+  const { doc } = transact(d0, 'Move 3 parts', (d) => {
+    refused = applyTransform(d, MINI, C, poses, [2, 5, 6], () => shift);
+  });
+  const after = computePoses(doc, MINI, C);
+  for (const id of [2, 3, 6]) same(after.world.get(id)!, shift.clone().multiply(poses.world.get(id)!));
+  same(after.world.get(5)!, poses.world.get(5)!);
+  expect(refused).toEqual([
+    'Light #5 has no free connection point to mount on without breaking its joint to Gate-AND #4. Detach it first to move it freely.',
+  ]);
+});
+
+test('a socket-joined part is converted to a point mount without jumping', () => {
+  const d0 = docOf(part(1, 'Part'), part(2, 'Part', [sock('1', 1, '6')]));
+  const poses = computePoses(d0, MINI, C);
+  const { doc } = transact(d0, 'Move 1 part', (d) => {
+    applyTransform(d, MINI, C, poses, [2], () => new Matrix4());
+  });
+  expect(doc.parts.get(2)!.conns[0].target.kind).toBe('point');
+  same(computePoses(doc, MINI, C).world.get(2)!, poses.world.get(2)!);
+});

@@ -158,6 +158,25 @@ function dropUnusedPoint(d: Draft, host: PartId, uuid: Uuid): void {
   d.set({ ...h, points });
 }
 
+/** The conns a re-attach keeps: all but the pose conn, which stays (as secondary) only when it is a signal joint. */
+function replacedPose(
+  doc: Doc,
+  cat: Catalog,
+  id: PartId,
+): { keepOld: boolean; rest: readonly Conn[] } {
+  const part = doc.parts.get(id)!;
+  const pc = poseConn(part);
+  const keepOld =
+    pc?.target.kind === 'socket' &&
+    isSignalJoint(cat, part.type, pc.self, doc.parts.get(pc.target.part)!.type, pc.target.socket);
+  return { keepOld, rest: keepOld || !pc ? part.conns : part.conns.filter((c) => c !== pc) };
+}
+
+/** The doc `retargetPose` checks socket availability in: `id` without the joint a re-attach replaces. */
+export function retargetCheckDoc(doc: Doc, cat: Catalog, id: PartId): Doc {
+  return withConns(doc, id, replacedPose(doc, cat, id).rest);
+}
+
 /**
  * Re-attaches a part (drag and drop, spec §9.3): a new pose conn to a socket, a point, or a new point
  * on a surface. The old pose conn is dropped, unless it is a signal joint, which stays secondary.
@@ -175,10 +194,7 @@ export function retargetPose(
   if (target.part === id || poseDescendants(doc, id).has(target.part)) return POSE_CYCLE;
   const part = d.get(id)!;
   const pc = poseConn(part);
-  const keepOld =
-    pc?.target.kind === 'socket' &&
-    isSignalJoint(cat, part.type, pc.self, d.get(pc.target.part)!.type, pc.target.socket);
-  const rest = keepOld || !pc ? part.conns : part.conns.filter((c) => c !== pc);
+  const { keepOld, rest } = replacedPose(doc, cat, id);
   const check = withConns(doc, id, rest);
 
   let conn: Conn;

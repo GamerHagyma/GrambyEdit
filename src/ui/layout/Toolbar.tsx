@@ -2,6 +2,14 @@ import type { JSX } from 'preact';
 import { selectModeSig } from '../../state/selection';
 import { settingsSig, updateSettings } from '../../state/settings';
 import { setTool, toolSig, type ToolId } from '../../tools/manager';
+import {
+  pivotModeSig,
+  setPivotMode,
+  setSpace,
+  spaceSig,
+  type PivotMode,
+  type Space,
+} from '../../tools/transform';
 import { Icon, type IconName } from '../icons';
 
 const TOOLS: readonly {
@@ -44,6 +52,31 @@ export function Toolbar(): JSX.Element {
           </button>
         );
       })}
+      {(toolSig.value === 'move' || toolSig.value === 'rotate') && (
+        <>
+          <label class="scheme">
+            <span class="visually-hidden">Transform space</span>
+            <select
+              value={spaceSig.value}
+              onChange={(e) => setSpace(e.currentTarget.value as Space)}
+            >
+              <option value="world">World</option>
+              <option value="local">Local</option>
+            </select>
+          </label>
+          <label class="scheme">
+            <span class="visually-hidden">Pivot</span>
+            <select
+              value={pivotModeSig.value}
+              onChange={(e) => setPivotMode(e.currentTarget.value as PivotMode)}
+            >
+              <option value="median">Median point</option>
+              <option value="active">Active part</option>
+              <option value="individual">Individual origins</option>
+            </select>
+          </label>
+        </>
+      )}
       <span class="sep" />
       <div class="segmented" role="group" aria-label="Selection mode">
         <button

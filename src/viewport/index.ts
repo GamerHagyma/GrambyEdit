@@ -22,7 +22,16 @@ import { Outline } from './outline';
 import { pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
+import { cancelModal, transformKey } from '../tools/modal';
 import { createSelectTool } from '../tools/select';
+import {
+  createTransformTool,
+  gizmoHandlers,
+  gizmoPlacement,
+  pivotModeSig,
+  spaceSig,
+  transformStateSig,
+} from '../tools/transform';
 import { createWorkbenchTool } from '../tools/workbench';
 import { toolSig } from '../tools/manager';
 import {
@@ -33,6 +42,7 @@ import {
   wbTypeSig,
 } from '../state/workbench';
 import { toast } from '../state/toasts';
+import { TransformGizmo } from './gizmo';
 import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
@@ -62,6 +72,8 @@ function overlay(
 }
 
 const selectTool = createSelectTool();
+const moveTool = createTransformTool('move');
+const rotateTool = createTransformTool('rotate');
 const workbenchTool = createWorkbenchTool();
 
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
@@ -74,6 +86,8 @@ export function mountViewport(el: HTMLElement): () => void {
     return () => box.remove();
   }
   registerTool(selectTool);
+  registerTool(moveTool);
+  registerTool(rotateTool);
   registerTool(workbenchTool);
   let stop = () => {};
   const run = () => {
@@ -112,6 +126,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       );
     }
   };
+  const transformGizmo = new TransformGizmo(rig.camera, canvas, scene, () => request());
+  transformGizmo.handlers = gizmoHandlers;
   /** True while the Sockets tool shows a part: the workbench replaces the build in the view. */
   const inWorkbench = () => toolSig.peek() === 'sockets' && wbTypeSig.peek() !== null;
   let lostBox: HTMLElement | null = null;
@@ -121,8 +137,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const cat = catalogSig.value;
     if (!cat) return;
     const hover = hoverSig.value;
-    const shown = [...selectionSig.value.parts].filter((id) => !hiddenSig.value.has(id));
-    if (hover !== null && !shown.includes(hover)) shown.unshift(hover);
+    const state = transformStateSig.peek();
+    const shown =
+      state === 'idle'
+        ? [...selectionSig.value.parts].filter((id) => !hiddenSig.value.has(id))
+        : [];
+    if (hover !== null && state !== 'transform' && !shown.includes(hover)) shown.unshift(hover);
     sockets.update(docSig.value, posesSig.value, cat, shown, rig, settingsSig.value.maxSockets);
   };
 
@@ -138,6 +158,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     workbench.group.visible = wb;
     workbench.setEnabled(wb);
     workbench.setCamera(rig.camera);
+    transformGizmo.setCamera(rig.camera);
     if (!wb) updateSockets();
     renderer.render(scene, rig.camera);
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
@@ -162,6 +183,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     layer: null,
     sockets,
     workbench,
+    gizmo: transformGizmo,
+    pointer: null,
     request,
     ndc,
   };
@@ -248,6 +271,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.addEventListener('pointercancel', up);
   };
   const onHover = (e: PointerEvent) => {
+    ctx.pointer = { x: e.clientX, y: e.clientY };
     if (e.buttons === 0) toolPointer(toTool(e, 'move', -1));
   };
   const onLeave = () => {
@@ -257,7 +281,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
   const onKeyDown = (e: KeyboardEvent) => {
     if (isTyping(e.target) || document.querySelector('.dialog-backdrop')) return;
-    if (controls().onKeyDown(e) || toolKey(e)) e.preventDefault();
+    if (e.key === 'Escape' && transformGizmo.cancel()) e.preventDefault();
+    else if (controls().onKeyDown(e) || transformKey(e) || toolKey(e)) e.preventDefault();
   };
   const onKeyUp = (e: KeyboardEvent) => studio.onKeyUp(e);
   const onBlur = () => studio.releaseAll();
@@ -336,6 +361,31 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     request();
   });
 
+  const stopGizmo = effect(() => {
+    const tool = toolSig.value;
+    const s = settingsSig.value;
+    const on = (tool === 'move' || tool === 'rotate') && assetsSig.value !== null;
+    transformGizmo.configure({
+      mode: tool === 'rotate' ? 'rotate' : 'translate',
+      space: spaceSig.value,
+      snap: s.snapEnabled ? { move: s.snapMove, rotate: s.snapRotate } : null,
+      individual: pivotModeSig.value === 'individual',
+    });
+    transformGizmo.setEnabled(on);
+    transformGizmo.place(
+      on
+        ? gizmoPlacement(
+            docSig.value,
+            posesSig.value,
+            selectionSig.value,
+            pivotModeSig.value,
+            spaceSig.value,
+          )
+        : null,
+    );
+    request();
+  });
+
   const offDebug = registerDebug({
     importCode(code) {
       const r = parseShareText(code);
@@ -396,6 +446,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     offView();
     stopSync();
     stopHighlight();
+    stopGizmo();
+    cancelModal();
+    transformGizmo.dispose();
     stopWorkbench();
     offDebug();
     studio.dispose();
