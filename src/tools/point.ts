@@ -13,7 +13,6 @@ import type { CFrame12, Doc, PartId, PointKey, Uuid } from '../core/types';
 import { posesSig } from '../state/derived';
 import { pointKey, select, selectionSig, selectPoints } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
-import { toast } from '../state/toasts';
 import { getViewport } from '../viewport/context';
 import { pickPart, pickPoint } from '../viewport/raycast';
 import { closePicker, openPicker } from './connect';
@@ -180,11 +179,6 @@ function addPointAt(ndc: Vector2): void {
   }
   const doc = docSig.value;
   const host = doc.parts.get(hit.part)!;
-  const def = Object.hasOwn(cat.parts, host.type) ? cat.parts[host.type] : undefined;
-  if (!def?.props.includes('EphemeralAttachments')) {
-    toast(`${host.type} cannot carry connection points.`, 'warn');
-    return;
-  }
   const sub = subPartMatrix(cat, host.type, hit.subPart).m;
   const cf = surfacePointFrame(posesSig.value.world.get(host.id)!, sub, hit.point, hit.normal);
   let uuid: Uuid = '';
