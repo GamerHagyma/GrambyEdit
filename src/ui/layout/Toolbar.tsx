@@ -17,6 +17,7 @@ const TOOLS: readonly {
   { id: 'connect', label: 'Connect', icon: 'connect', blender: '4' },
   { id: 'point', label: 'Point', icon: 'point', blender: '5' },
   { id: 'paint', label: 'Paint', icon: 'paint', blender: '6' },
+  { id: 'sockets', label: 'Sockets (capture socket positions)', icon: 'sockets', blender: '' },
 ];
 
 const hex = (rgb: readonly number[]) =>

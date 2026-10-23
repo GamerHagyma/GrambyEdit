@@ -23,6 +23,17 @@ import { pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { createSelectTool } from '../tools/select';
+import { createWorkbenchTool } from '../tools/workbench';
+import { toolSig } from '../tools/manager';
+import {
+  candidateSpots,
+  captureSocket,
+  wbMateSig,
+  wbSocketSig,
+  wbTypeSig,
+} from '../state/workbench';
+import { toast } from '../state/toasts';
+import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
 
@@ -51,6 +62,7 @@ function overlay(
 }
 
 const selectTool = createSelectTool();
+const workbenchTool = createWorkbenchTool();
 
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
 export function mountViewport(el: HTMLElement): () => void {
@@ -62,6 +74,7 @@ export function mountViewport(el: HTMLElement): () => void {
     return () => box.remove();
   }
   registerTool(selectTool);
+  registerTool(workbenchTool);
   let stop = () => {};
   const run = () => {
     stop();
@@ -85,6 +98,22 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   scene.add(sockets.group);
   const outline = new Outline();
   let frame = 0;
+  const request = () => {
+    if (!frame && !lostBox) frame = requestAnimationFrame(render);
+  };
+  const workbench = new WorkbenchView(rig.camera, canvas, () => request());
+  scene.add(workbench.group);
+  workbench.onGizmoEnd = (cframe) => {
+    const type = wbTypeSig.value;
+    const socket = wbSocketSig.value;
+    if (type && socket) {
+      captureSocket(type, socket, cframe).catch((e: unknown) =>
+        toast((e as Error).message, 'error'),
+      );
+    }
+  };
+  /** True while the Sockets tool shows a part: the workbench replaces the build in the view. */
+  const inWorkbench = () => toolSig.peek() === 'sockets' && wbTypeSig.peek() !== null;
   let lostBox: HTMLElement | null = null;
 
   /** Sockets of the hovered part and the selection, rebuilt per frame for constant screen size. */
@@ -103,12 +132,15 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     grid.update(rig.target, rig.distance);
     follow(rig.camera);
     gizmo.update(rig.camera);
-    updateSockets();
+    const wb = inWorkbench();
+    if (ctx.layer) ctx.layer.group.visible = !wb;
+    sockets.group.visible = !wb;
+    workbench.group.visible = wb;
+    workbench.setEnabled(wb);
+    workbench.setCamera(rig.camera);
+    if (!wb) updateSockets();
     renderer.render(scene, rig.camera);
-    if (ctx.layer) outline.render(renderer, ctx.layer, rig.camera);
-  };
-  const request = () => {
-    if (!frame && !lostBox) frame = requestAnimationFrame(render);
+    if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
   };
   const gizmo = createNavGizmo(el, (axis) => {
     rig.setView(axis);
@@ -122,7 +154,17 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     );
   };
 
-  const ctx: ViewportContext = { rig, renderer, scene, canvas, layer: null, sockets, request, ndc };
+  const ctx: ViewportContext = {
+    rig,
+    renderer,
+    scene,
+    canvas,
+    layer: null,
+    sockets,
+    workbench,
+    request,
+    ndc,
+  };
   setViewport(ctx);
 
   const resize = () => {
@@ -265,6 +307,27 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     ctx.layer?.sync(doc, poses, hidden, s.desaturateApprox);
     request();
   });
+  let framedType: string | null = null;
+  const stopWorkbench = effect(() => {
+    const active = toolSig.value === 'sockets';
+    const type = wbTypeSig.value;
+    const socket = wbSocketSig.value;
+    const mate = wbMateSig.value;
+    const assets = assetsSig.value;
+    const cat = catalogSig.value;
+    if (active && type && assets && cat) {
+      workbench.show(assets, cat, type, socket, mate, cat.conventions, candidateSpots(cat, type));
+      if (framedType !== type) {
+        const b = workbench.bounds(cat, type);
+        rig.frame(b.center, b.radius);
+        framedType = type;
+      }
+    } else if (!active && framedType !== null) {
+      framedType = null;
+      host.frameAll();
+    }
+    request();
+  });
   const stopHighlight = effect(() => {
     const { parts, active } = selectionSig.value;
     const hover = hoverSig.value;
@@ -333,12 +396,14 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     offView();
     stopSync();
     stopHighlight();
+    stopWorkbench();
     offDebug();
     studio.dispose();
     blender.dispose();
     gizmo.dispose();
     ctx.layer?.dispose();
     sockets.dispose();
+    workbench.dispose();
     outline.dispose();
     grid.mesh.geometry.dispose();
     (grid.mesh.material as { dispose(): void }).dispose();
