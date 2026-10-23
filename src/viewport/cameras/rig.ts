@@ -96,8 +96,9 @@ export class CameraRig {
     // Rotate the eye about the pivot by the same turn, then re-aim the target from it.
     const rel = eye.sub(pivot);
     rel.applyAxisAngle(new Vector3(0, 1, 0), this.yaw - yaw0);
+    // A pitch change turns the view direction by +Δpitch about the camera's right axis.
     const right = new Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
-    rel.applyAxisAngle(right, -(this.pitch - pitch0));
+    rel.applyAxisAngle(right, this.pitch - pitch0);
     const newEye = pivot.clone().add(rel);
     this.target.copy(newEye).addScaledVector(this.back(), -this.distance);
     this.update();

@@ -40,3 +40,17 @@ test('framing fits the sphere in the vertical field of view', () => {
   close(rig.target, new Vector3(5, 1, 0));
   expect(rig.distance * Math.sin(((rig.persp.fov / 2) * Math.PI) / 180)).toBeGreaterThan(2);
 });
+test.each([
+  ['the target', new Vector3(0, 0, 0)],
+  ['an off-centre part surface', new Vector3(2.5, 1.2, -1.5)],
+])('orbiting around %s keeps that pivot fixed on screen', (_, pivot) => {
+  const rig = new CameraRig();
+  rig.setSize(800, 600);
+  const before = pivot.clone().project(rig.persp);
+  rig.orbitAround(pivot, 0.3, 0.2);
+  rig.orbitAround(pivot, -0.1, -0.35);
+  const after = pivot.clone().project(rig.persp);
+  expect(after.x).toBeCloseTo(before.x, 9);
+  expect(after.y).toBeCloseTo(before.y, 9);
+  expect(rig.persp.position.distanceTo(pivot)).toBeGreaterThan(0);
+});
