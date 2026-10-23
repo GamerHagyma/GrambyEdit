@@ -16,7 +16,7 @@ function wrap(e: DOMException | null | undefined): StorageError {
   if (e?.name === 'QuotaExceededError') {
     return new StorageError(
       'quota',
-      'Browser storage is full. Delete saved creations to make room.',
+      'Browser storage is full. Export your library and delete old creations.',
     );
   }
   return new StorageError('other', `Browser storage failed: ${e?.message ?? 'unknown error'}.`);
