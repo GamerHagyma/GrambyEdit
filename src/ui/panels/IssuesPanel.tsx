@@ -1,5 +1,6 @@
 // The validation issues, grouped by severity (spec §13.6). Some issues offer a quick fix, one undoable edit each.
 import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import { graphIndex } from '../../core/graph';
 import { detach, removeConn } from '../../core/ops/conns';
 import { deletePoint } from '../../core/ops/points';
@@ -117,12 +118,17 @@ function quickFix(issue: Issue, joints: ReadonlyMap<PartId, ConnRef>): QuickFix 
   return null;
 }
 
+/** Issues listed per group before "Show all". */
+const LIST_CAP = 200;
+
 /**
  * Clicking an issue selects the parts it names. A quick fix sits beside that row, not inside it,
  * so clicking it selects nothing.
  */
 export function IssuesPanel(): JSX.Element {
   const issues = issuesSig.value;
+  // A damaged 16K build can raise thousands of issues: each group lists the first few hundred.
+  const [expanded, setExpanded] = useState<ReadonlySet<Severity>>(() => new Set());
   // Issues are computed against the part library, so without it an empty list would wrongly read as clean.
   if (catalogSig.value === null) {
     return <p class="empty">Issues appear once the part library loads</p>;
@@ -134,13 +140,14 @@ export function IssuesPanel(): JSX.Element {
       {GROUPS.map((group) => {
         const items = issues.filter((issue) => issue.severity === group.severity);
         if (items.length === 0) return null;
+        const shown = expanded.has(group.severity) ? items : items.slice(0, LIST_CAP);
         return (
           <section key={group.severity} class="issue-group">
             <h3>
               {group.heading} ({items.length})
             </h3>
             <ul class="issue-list">
-              {items.map((issue, i) => {
+              {shown.map((issue, i) => {
                 const fix = quickFix(issue, joints);
                 return (
                   <li key={i}>
@@ -154,6 +161,14 @@ export function IssuesPanel(): JSX.Element {
                 );
               })}
             </ul>
+            {shown.length < items.length && (
+              <button
+                class="button small"
+                onClick={() => setExpanded(new Set([...expanded, group.severity]))}
+              >
+                {`Show all ${items.length.toLocaleString('en-US')}`}
+              </button>
+            )}
           </section>
         );
       })}
