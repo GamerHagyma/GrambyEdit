@@ -47,10 +47,37 @@ const ENUMS: Partial<Record<keyof Settings, readonly string[]>> = {
   theme: ['dark', 'light'],
 };
 
+export interface NumberRange {
+  readonly min: number;
+  readonly max?: number;
+  readonly integer?: boolean;
+}
+
+/** Valid numbers per setting; the Settings dialog enforces the same ranges. */
+export const NUMBER_RANGES = {
+  orbitSensitivity: { min: 0.1 },
+  flySpeed: { min: 1 },
+  snapMove: { min: 0.01 },
+  snapRotate: { min: 0.1 },
+  maxSockets: { min: 1, integer: true },
+  genPosDecimals: { min: 0, max: 10, integer: true },
+  genRotDecimals: { min: 0, max: 10, integer: true },
+} as const satisfies Partial<Record<keyof Settings, NumberRange>>;
+
+/** Each limit is a whole number of at least 1. */
+export const LIMIT_RANGE: NumberRange = { min: 1, integer: true };
+
+const inRange = (v: unknown, r: NumberRange): v is number =>
+  typeof v === 'number' &&
+  Number.isFinite(v) &&
+  v >= r.min &&
+  (r.max === undefined || v <= r.max) &&
+  (!r.integer || Number.isInteger(v));
+
 const isRgb = (v: unknown): v is RGB =>
   Array.isArray(v) && v.length === 3 && v.every((c) => Number.isInteger(c) && c >= 0 && c <= 255);
 
-/** Stored settings are untrusted: each key falls back to its default unless it has the right shape. */
+/** Stored settings are untrusted: each key falls back to its default on a bad shape or range. */
 export function sanitizeSettings(stored: unknown): Settings {
   const src = (typeof stored === 'object' && stored !== null ? stored : {}) as Record<
     string,
@@ -62,10 +89,7 @@ export function sanitizeSettings(stored: unknown): Settings {
     const def = DEFAULT_SETTINGS[key];
     if (key === 'limits') {
       const l = (typeof v === 'object' && v !== null ? v : {}) as Record<string, unknown>;
-      const pick = (k: keyof Limits) =>
-        typeof l[k] === 'number' && Number.isFinite(l[k]) && (l[k] as number) > 0
-          ? (l[k] as number)
-          : DEFAULT_LIMITS[k];
+      const pick = (k: keyof Limits) => (inRange(l[k], LIMIT_RANGE) ? l[k] : DEFAULT_LIMITS[k]);
       out.limits = {
         codeChars: pick('codeChars'),
         partSoftCap: pick('partSoftCap'),
@@ -75,7 +99,12 @@ export function sanitizeSettings(stored: unknown): Settings {
       if (isRgb(v)) out.activeColor = v;
     } else if (ENUMS[key]) {
       if (ENUMS[key]!.includes(v as string)) out[key] = v;
-    } else if (typeof v === typeof def && (typeof v !== 'number' || Number.isFinite(v))) {
+    } else if (typeof def === 'number') {
+      const range: NumberRange = (NUMBER_RANGES as Partial<Record<keyof Settings, NumberRange>>)[
+        key
+      ] ?? { min: -Infinity };
+      if (inRange(v, range)) out[key] = v;
+    } else if (typeof v === typeof def) {
       out[key] = v;
     }
   }

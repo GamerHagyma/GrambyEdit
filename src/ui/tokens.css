@@ -918,3 +918,46 @@ button.issue-row:hover {
   margin: 0;
   color: var(--bad);
 }
+
+/* Settings dialog */
+.settings-section + .settings-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.settings-section h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--row);
+  margin-bottom: 4px;
+}
+.field.check {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+}
+.field input[type='number'],
+.field select {
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.field input[type='color'] {
+  width: 48px;
+  height: var(--row);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: none;
+}
+.dialog-body a {
+  color: var(--accent);
+}

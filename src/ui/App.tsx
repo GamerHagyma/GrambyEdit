@@ -9,8 +9,11 @@ import { closeDialog, dialogSig, openDialog } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
 import { toolSig } from '../tools/manager';
+import { AboutDialog } from './dialogs/AboutDialog';
 import { ExportDialog } from './dialogs/ExportDialog';
+import { FirstRun } from './dialogs/FirstRun';
 import { ImportDialog } from './dialogs/ImportDialog';
+import { SettingsDialog } from './dialogs/SettingsDialog';
 import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
 import { IssuesPanel } from './panels/IssuesPanel';
@@ -26,6 +29,9 @@ function Dialogs(): JSX.Element {
     <>
       <ImportDialog open={name === 'import'} onClose={closeDialog} />
       <ExportDialog open={name === 'export'} onClose={closeDialog} />
+      <SettingsDialog open={name === 'settings'} onClose={closeDialog} />
+      <AboutDialog open={name === 'about'} onClose={closeDialog} />
+      <FirstRun />
     </>
   );
 }

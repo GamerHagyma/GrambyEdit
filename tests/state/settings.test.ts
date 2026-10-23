@@ -31,3 +31,18 @@ test('stored settings of the wrong shape fall back to the defaults key by key', 
   expect('junk' in s).toBe(false);
   expect(sanitizeSettings(null)).toEqual(DEFAULT_SETTINGS);
 });
+test('stored numbers outside the Settings dialog ranges fall back to the defaults', () => {
+  const s = sanitizeSettings({
+    genPosDecimals: 400,
+    genRotDecimals: 2.5,
+    snapMove: 0,
+    snapRotate: 0.05,
+    orbitSensitivity: -1,
+    flySpeed: 0.5,
+    maxSockets: 0,
+    limits: { codeChars: 0.5, partSoftCap: 1e400 },
+  });
+  expect(s).toEqual(DEFAULT_SETTINGS);
+  const edge = sanitizeSettings({ genPosDecimals: 0, genRotDecimals: 10, snapMove: 0.01 });
+  expect([edge.genPosDecimals, edge.genRotDecimals, edge.snapMove]).toEqual([0, 10, 0.01]);
+});
