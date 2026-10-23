@@ -19,6 +19,8 @@ export interface ViewportContext {
   readonly gizmo: TransformGizmo | null;
   /** The viewport's own keys (gizmo cancel, tool keys, camera fly keys); true when it used the key. */
   onKey(e: KeyboardEvent): boolean;
+  /** A 4:3 picture of the view (the library's thumbnail); null when the browser cannot make one. */
+  snapshot(): Promise<Blob | null>;
   /** Called after every rendered frame, for HTML overlays that follow the camera. */
   readonly afterRender: Set<() => void>;
   /** The last pointer position over the canvas, in client pixels (modal transforms start there). */

@@ -243,6 +243,30 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     workbench,
     gizmo: transformGizmo,
     afterRender: new Set(),
+    snapshot: () => {
+      // Drawn right after a render, while the WebGL drawing buffer still holds the frame.
+      render();
+      const out = document.createElement('canvas');
+      out.width = 192;
+      out.height = 144;
+      const g = out.getContext('2d');
+      if (!g || canvas.width === 0 || canvas.height === 0) return Promise.resolve(null);
+      const scale = Math.max(out.width / canvas.width, out.height / canvas.height);
+      const w = out.width / scale;
+      const h = out.height / scale;
+      g.drawImage(
+        canvas,
+        (canvas.width - w) / 2,
+        (canvas.height - h) / 2,
+        w,
+        h,
+        0,
+        0,
+        out.width,
+        out.height,
+      );
+      return new Promise((resolve) => out.toBlob((b) => resolve(b), 'image/png'));
+    },
     onKey: (e) =>
       (e.key === 'Escape' && transformGizmo.cancel()) || toolKey(e) || controls().onKeyDown(e),
     pointer: null,
@@ -375,6 +399,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       request();
     } else if (e.kind === 'flip-view') {
       rig.flipView();
+      request();
+    } else if (e.kind === 'look') {
+      rig.lookFrom(e.position, e.target);
       request();
     } else {
       rig.isOrtho = !rig.isOrtho;

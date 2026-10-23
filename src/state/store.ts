@@ -72,7 +72,12 @@ export type ViewEvent =
   | { kind: 'frame-all' }
   | { kind: 'view'; axis: 'front' | 'back' | 'right' | 'left' | 'top' | 'bottom' }
   | { kind: 'toggle-ortho' }
-  | { kind: 'flip-view' };
+  | { kind: 'flip-view' }
+  | {
+      kind: 'look';
+      readonly position: readonly [number, number, number];
+      readonly target: readonly [number, number, number];
+    };
 
 const viewListeners = new Set<(e: ViewEvent) => void>();
 

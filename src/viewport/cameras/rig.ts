@@ -154,6 +154,17 @@ export class CameraRig {
     this.update();
   }
 
+  /** Puts the camera at `position` looking at `target` (a saved view). */
+  lookFrom(position: readonly number[], target: readonly number[]): void {
+    this.target.set(target[0], target[1], target[2]);
+    const back = new Vector3(position[0], position[1], position[2]).sub(this.target);
+    this.distance = Math.max(0.2, back.length());
+    back.normalize();
+    this.pitch = -Math.asin(MathUtils.clamp(back.y, -1, 1));
+    this.yaw = Math.atan2(back.x, back.z);
+    this.update();
+  }
+
   /** Looks at the target from the opposite side (Blender's numpad 9). */
   flipView(): void {
     this.yaw += Math.PI;
