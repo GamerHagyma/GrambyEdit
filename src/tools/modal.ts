@@ -1,13 +1,11 @@
-// Modal transforms (spec §12.4, Blender scheme): G moves and R rotates the selection with the mouse.
-// X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear), typed
-// numbers set the amount, Ctrl inverts snapping, Enter or a left click confirms, Esc or a right click
-// cancels. Ctrl+R / Ctrl+T turn the selection 90° about Y / X the game's way, in both schemes.
+// Modal transforms (spec §12.4), in both camera schemes: G moves and R rotates the selection with the
+// mouse. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
+// with no axis a move follows the mouse in the view plane and a rotation turns about the view axis.
+// Typed numbers set the amount, holding Ctrl snaps to the snap steps, Enter or a left click confirms,
+// Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them.
 import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
-import { nativeRotate, topmost } from '../core/ops/move';
-import { posesSig } from '../state/derived';
 import { selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
-import { catalogSig, commit, docSig } from '../state/store';
 import { getViewport } from '../viewport/context';
 import { toolSig } from './manager';
 import {
@@ -65,7 +63,8 @@ function typedValue(m: Modal): number | null {
   return m.typed === '' || m.typed === '-' || !Number.isFinite(v) ? null : v;
 }
 
-const snapping = (m: Modal) => settingsSig.value.snapEnabled !== m.ctrl;
+/** Snapping is on while Ctrl (Cmd on a Mac) is held. */
+const snapping = (m: Modal) => m.ctrl;
 
 /** A world point's position in client pixels. */
 function screenOf(p: Vector3): Vector2 {
@@ -143,7 +142,11 @@ function rotateDelta(m: Modal): TransformDelta {
 
 function hintText(m: Modal, d: TransformDelta): string {
   const space = m.space === 'local' ? ' (local)' : '';
-  const keys = 'X/Y/Z axis · type a number · Enter confirms · Esc cancels';
+  const { snapMove, snapRotate } = settingsSig.value;
+  const snap = m.ctrl
+    ? 'snapping'
+    : `hold Ctrl to snap (${d.kind === 'move' ? `${snapMove} studs` : `${snapRotate}°`})`;
+  const keys = `X/Y/Z axis · type a number · ${snap} · Enter confirms · Esc cancels`;
   if (d.kind === 'move') {
     const amount = m.typed || d.offset.toArray().map((v) => v.toFixed(3)).join(', ');
     return `Move${m.axis ? ` along ${m.axis}${space}` : ''}: ${amount} · ${keys}`;
@@ -274,34 +277,10 @@ export function cancelModal(): void {
   end(false);
 }
 
-/** Turns the selection's topmost parts 90° about their Y or X axis, one history entry. */
-export function nativeTurn(axis: 'X' | 'Y'): void {
-  const cat = catalogSig.value;
-  if (!cat) return;
-  const doc = docSig.value;
-  const poses = posesSig.value;
-  const ids = topmost(
-    doc,
-    [...selectionSig.value.parts].filter((id) => poses.world.has(id)),
-  );
-  if (ids.length === 0) return;
-  commit(`Rotate ${ids.length} ${ids.length === 1 ? 'part' : 'parts'}`, (d) => {
-    for (const id of ids) nativeRotate(d, cat, cat.conventions, poses, id, axis, 90);
-  });
-}
-
-/**
- * Transform keys for the viewport: Ctrl+R / Ctrl+T in both schemes, G / R in the Blender scheme.
- * True when the key was used (Ctrl+R always, so it never reloads the page).
- */
+/** G and R start a modal move or rotate, in both camera schemes. True when the key was used. */
 export function transformKey(e: KeyboardEvent): boolean {
-  if (modal || e.altKey || toolSig.value === 'sockets') return false;
-  const ctrl = e.ctrlKey || e.metaKey;
-  if (ctrl && !e.shiftKey && (e.code === 'KeyR' || e.code === 'KeyT')) {
-    nativeTurn(e.code === 'KeyR' ? 'Y' : 'X');
-    return true;
-  }
-  if (ctrl || e.shiftKey || settingsSig.value.cameraScheme !== 'blender') return false;
+  if (modal || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return false;
+  if (toolSig.value === 'sockets') return false;
   if (e.code === 'KeyG') return startModal('move');
   if (e.code === 'KeyR') return startModal('rotate');
   return false;

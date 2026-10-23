@@ -21,7 +21,7 @@ import { getViewport, setViewport, type ViewportContext } from './context';
 import { Outline } from './outline';
 import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
-import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
+import { registerTool, toolHotkey, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { cancelModal, transformKey } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
 import { createSelectTool } from '../tools/select';
@@ -279,6 +279,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   };
   const onHover = (e: PointerEvent) => {
     ctx.pointer = { x: e.clientX, y: e.clientY };
+    // Runs before a gizmo drag's own move handler, so Ctrl decides this move's snapping.
+    transformGizmo.setSnapping(e.ctrlKey || e.metaKey);
     if (e.buttons === 0) toolPointer(toTool(e, 'move', -1));
   };
   const onLeave = () => {
@@ -287,11 +289,17 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(true);
     if (isTyping(e.target) || document.querySelector('.dialog-backdrop')) return;
     if (e.key === 'Escape' && transformGizmo.cancel()) e.preventDefault();
-    else if (controls().onKeyDown(e) || transformKey(e) || toolKey(e)) e.preventDefault();
+    else if (controls().onKeyDown(e) || transformKey(e) || toolKey(e) || toolHotkey(e)) {
+      e.preventDefault();
+    }
   };
-  const onKeyUp = (e: KeyboardEvent) => studio.onKeyUp(e);
+  const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(false);
+    studio.onKeyUp(e);
+  };
   const onBlur = () => studio.releaseAll();
   const onLost = (e: Event) => {
     e.preventDefault();
@@ -375,7 +383,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     transformGizmo.configure({
       mode: tool === 'rotate' ? 'rotate' : 'translate',
       space: spaceSig.value,
-      snap: s.snapEnabled ? { move: s.snapMove, rotate: s.snapRotate } : null,
+      steps: { move: s.snapMove, rotate: s.snapRotate },
       individual: pivotModeSig.value === 'individual',
     });
     transformGizmo.setEnabled(on);

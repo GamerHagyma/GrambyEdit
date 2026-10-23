@@ -196,19 +196,14 @@ export function SettingsDialog({
 
       <section class="settings-section">
         <h3>Editing</h3>
-        <Check
-          label="Snapping on by default"
-          checked={s.snapEnabled}
-          onChange={(v) => updateSettings({ snapEnabled: v })}
-        />
         <NumberField
-          label="Move snap step"
+          label="Move snap step (studs, hold Ctrl)"
           value={s.snapMove}
           {...R.snapMove}
           onCommit={(v) => updateSettings({ snapMove: v })}
         />
         <NumberField
-          label="Rotate snap step"
+          label="Rotate snap step (degrees, hold Ctrl)"
           value={s.snapRotate}
           {...R.snapRotate}
           onCommit={(v) => updateSettings({ snapRotate: v })}

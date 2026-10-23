@@ -154,6 +154,13 @@ export class CameraRig {
     this.update();
   }
 
+  /** Looks at the target from the opposite side (Blender's numpad 9). */
+  flipView(): void {
+    this.yaw += Math.PI;
+    this.pitch = -this.pitch;
+    this.update();
+  }
+
   /** Fits a sphere in view. */
   frame(center: Vector3, radius: number): void {
     this.target.copy(center);

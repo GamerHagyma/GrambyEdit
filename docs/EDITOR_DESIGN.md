@@ -512,14 +512,14 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
   | F | focus selection |
   | MMB | pan |
 
-  Tool keys move to Ctrl+1 / Ctrl+2 / Ctrl+4, as in Studio.
+  Tool keys stay 1–6, as in the Blender scheme: browsers take Ctrl+digits for switching tabs (user decision, 2026-10-23).
 - One keymap table per scheme (`state/keymap.ts`, data only). Hotkeys never fire while a text field has focus. A right-click without drag opens the context menu in both schemes.
 
 ---
 
 ## 12. Tools (`tools/`)
 
-The toolbar holds Select · Move · Rotate · Connect · Point · Paint (keys 1–6 in Blender, Ctrl+1/2/4 in Studio for the first three). A segmented control picks the selection mode: **Part | Part + attached**.
+The toolbar holds Select · Move · Rotate · Connect · Point · Paint (keys 1–6 in both schemes). A segmented control picks the selection mode: **Part | Part + attached**.
 
 ### 12.1 Select (must-have: individual vs part + children)
 
@@ -569,12 +569,14 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
 | control | Blender scheme | Studio scheme |
 |---|---|---|
 | Gizmo | three.js `TransformControls`, restyled | same |
-| Modal move | G | — |
-| Modal rotate | R | — |
-| Native rotate 90° about Y / X (Orientation props on socket joints, `cframe` on points, layout on roots) | Ctrl+R / Ctrl+T | Ctrl+R / Ctrl+T |
+| Modal move | G | G |
+| Modal rotate | R | R |
+| Native rotate 90° about Y / X (Orientation props on socket joints, `cframe` on points, layout on roots) | Properties ±90 buttons; command palette | same |
 
-- Gizmo options: World/Local space; pivot = median, active, or individual origins; snapping as in §12.3.
-- Modal transforms take X/Y/Z axis constraints, typed numbers, Enter or LMB to confirm, Esc or RMB to cancel.
+- Gizmo options: World/Local space; pivot = median, active, or individual origins.
+- Modal transforms take X/Y/Z axis constraints (again for the active part's local axis, again to unlock), typed numbers, Enter or LMB to confirm, Esc or RMB to cancel. With no axis, a move follows the mouse in the view plane and a rotation turns about the view axis with the mouse.
+- **Snapping happens only while Ctrl is held**, for the gizmo and the modal alike, to the snap steps (move in studs, rotate in degrees), which the toolbar's Snap fields and Settings edit (user decision, 2026-10-23).
+- **No shortcut uses a Ctrl combination that browsers reserve or that reloads the page** (Ctrl+T/N/W/Tab, Ctrl+1–9, Ctrl+R; user decision, 2026-10-23).
 - The Move tool also drags parts with **snap-to-socket / snap-to-surface re-attach** (§9.3).
 - All conversions follow §9.3. One transaction per completed transform.
 
@@ -977,11 +979,11 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 
 | action | Blender scheme | Studio scheme |
 |---|---|---|
-| Tools: Select / Move / Rotate | 1 / 2 / 3 | Ctrl+1 / Ctrl+2 / Ctrl+4 |
+| Tools: Select / Move / Rotate | 1 / 2 / 3 | 1 / 2 / 3 |
 | Tools: Connect / Point / Paint | 4 / 5 / 6 | 4 / 5 / 6 |
 | Toggle Part / Part + attached | Tab | Tab |
-| Modal move / rotate | G / R (X/Y/Z constrain, type numbers, Enter/Esc) | — |
-| Rotate 90° about Y / about X (native) | Ctrl+R / Ctrl+T | Ctrl+R / Ctrl+T |
+| Modal move / rotate | G / R (X/Y/Z constrain, type numbers, hold Ctrl to snap, Enter/Esc) | same |
+| Rotate 90° about Y / about X (native) | — (Properties ±90, command palette) | same |
 | Select all / none / invert | A / Alt+A / Ctrl+I | Ctrl+A / Esc / Ctrl+I |
 | Box select | drag on empty / B | drag on empty |
 | Select attached branch / joint-connected | L / Ctrl+L | L / Ctrl+L |
@@ -992,7 +994,7 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 | Hide / unhide all / isolate | H / Alt+H / Shift+H | H / Alt+H / Shift+H |
 | Undo / Redo | Ctrl+Z / Ctrl+Shift+Z | Ctrl+Z / Ctrl+Y |
 | Frame selected / all | Numpad . / Home | F / Home |
-| Views front / right / top, ortho | Numpad 1 / 3 / 7, 5 | — (nav gizmo) |
+| Views front / right / top, opposite side, ortho | Numpad 1 / 3 / 7, 9, 5 | — (nav gizmo) |
 | X-ray | Alt+Z | Alt+Z |
 | Eyedropper (Paint) | Alt+click | Alt+click |
 | Save / Import / Export | Ctrl+S / Ctrl+O / Ctrl+E | same |

@@ -58,3 +58,23 @@ export function toolPointer(e: ToolPointer): void {
 export function toolKey(e: KeyboardEvent): boolean {
   return active?.onKey?.(e) ?? false;
 }
+
+/** Tool hotkeys, plain digits in both camera schemes (Ctrl+digits switch browser tabs). */
+export const TOOL_KEYS: Readonly<Partial<Record<ToolId, string>>> = {
+  select: '1',
+  move: '2',
+  rotate: '3',
+  connect: '4',
+  point: '5',
+  paint: '6',
+};
+
+/** A plain digit switches to its tool. True when the key was used. */
+export function toolHotkey(e: KeyboardEvent): boolean {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || !/^Digit[1-9]$/.test(e.code)) return false;
+  const digit = e.code.slice(5);
+  const id = (Object.keys(TOOL_KEYS) as ToolId[]).find((t) => TOOL_KEYS[t] === digit);
+  if (id === undefined) return false;
+  setTool(id);
+  return true;
+}

@@ -3,7 +3,7 @@ import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
-import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
+import { assetsSig, baseCatalogSig, redo, socketOverridesSig, undo } from '../state/store';
 import { toast } from '../state/toasts';
 import { closeDialog, dialogSig, openDialog } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
@@ -14,6 +14,7 @@ import { ExportDialog } from './dialogs/ExportDialog';
 import { FirstRun } from './dialogs/FirstRun';
 import { ImportDialog } from './dialogs/ImportDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
+import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
 import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
 import { IssuesPanel } from './panels/IssuesPanel';
@@ -33,6 +34,7 @@ function Dialogs(): JSX.Element {
       <ExportDialog open={name === 'export'} onClose={closeDialog} />
       <SettingsDialog open={name === 'settings'} onClose={closeDialog} />
       <AboutDialog open={name === 'about'} onClose={closeDialog} />
+      <ShortcutsDialog open={name === 'shortcuts'} onClose={closeDialog} />
       <FirstRun />
     </>
   );
@@ -46,13 +48,32 @@ function LeftDock(): JSX.Element {
   return <p class="empty">Nothing here yet</p>;
 }
 
-/** Ctrl+O and Ctrl+E open Import and Export. The command registry (Task 30) replaces this. */
-function onFileKey(e: KeyboardEvent): void {
-  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
-  const name = e.code === 'KeyO' ? 'import' : e.code === 'KeyE' ? 'export' : null;
-  if (name === null) return;
-  e.preventDefault();
-  openDialog(name);
+const isTyping = (t: EventTarget | null) =>
+  t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+
+/**
+ * App-wide keys until the command registry (Task 30) owns the keyboard: Ctrl+O / Ctrl+E open Import
+ * and Export, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y undo and redo (text fields keep their own), ? opens the guide.
+ */
+function onAppKey(e: KeyboardEvent): void {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (!ctrl && !e.altKey && e.key === '?' && !isTyping(e.target) && dialogSig.value === null) {
+    e.preventDefault();
+    openDialog('shortcuts');
+    return;
+  }
+  if (!ctrl || e.altKey) return;
+  if (!e.shiftKey && (e.code === 'KeyO' || e.code === 'KeyE')) {
+    e.preventDefault();
+    openDialog(e.code === 'KeyO' ? 'import' : 'export');
+    return;
+  }
+  if (isTyping(e.target) || dialogSig.value !== null) return;
+  if (e.code === 'KeyZ' || (e.code === 'KeyY' && !e.shiftKey)) {
+    e.preventDefault();
+    if (e.code === 'KeyZ' && !e.shiftKey) undo();
+    else redo();
+  }
 }
 
 export function App(): JSX.Element {
@@ -61,7 +82,7 @@ export function App(): JSX.Element {
     const stopTheme = effect(() => {
       document.documentElement.dataset.theme = settingsSig.value.theme;
     });
-    window.addEventListener('keydown', onFileKey);
+    window.addEventListener('keydown', onAppKey);
     let alive = true;
     loadSocketOverrides().then((file) => {
       if (alive) socketOverridesSig.value = file;
@@ -80,7 +101,7 @@ export function App(): JSX.Element {
     return () => {
       alive = false;
       stopTheme();
-      window.removeEventListener('keydown', onFileKey);
+      window.removeEventListener('keydown', onAppKey);
     };
   }, []);
   return (

@@ -14,8 +14,8 @@ export interface GizmoHandlers {
 export interface GizmoOptions {
   readonly mode: 'translate' | 'rotate';
   readonly space: Space;
-  /** Move step in studs and rotate step in degrees; null turns snapping off. */
-  readonly snap: { readonly move: number; readonly rotate: number } | null;
+  /** Snap steps, used while snapping is on: studs for moves, degrees for rotations. */
+  readonly steps: { readonly move: number; readonly rotate: number };
   /** Rotate each part about its own origin instead of about the pivot. */
   readonly individual: boolean;
 }
@@ -27,6 +27,8 @@ export class TransformGizmo {
   private readonly startQuaternion = new Quaternion();
   private dragging = false;
   private moveSnap: number | null = null;
+  private steps = { move: 0.25, rotate: 15 };
+  private snapping = false;
   private individual = false;
   handlers: GizmoHandlers | null = null;
 
@@ -74,9 +76,16 @@ export class TransformGizmo {
     this.controls.setSpace(o.space);
     // TransformControls snaps absolute world positions; moves snap their offset here instead.
     this.controls.setTranslationSnap(null);
-    this.controls.setRotationSnap(o.snap ? MathUtils.degToRad(o.snap.rotate) : null);
-    this.moveSnap = o.snap?.move ?? null;
+    this.steps = o.steps;
     this.individual = o.individual;
+    this.setSnapping(this.snapping);
+  }
+
+  /** Snapping is on while Ctrl is held; it can change in the middle of a drag. */
+  setSnapping(on: boolean): void {
+    this.snapping = on;
+    this.controls.setRotationSnap(on ? MathUtils.degToRad(this.steps.rotate) : null);
+    this.moveSnap = on ? this.steps.move : null;
   }
 
   setCamera(camera: Camera): void {

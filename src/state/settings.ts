@@ -10,7 +10,6 @@ export interface Settings {
   flySpeed: number;
   theme: 'dark' | 'light';
   limits: Limits;
-  snapEnabled: boolean;
   snapMove: number;
   snapRotate: number;
   autoColor: boolean;
@@ -30,7 +29,6 @@ export const DEFAULT_SETTINGS: Settings = {
   flySpeed: 16,
   theme: 'dark',
   limits: DEFAULT_LIMITS,
-  snapEnabled: true,
   snapMove: 0.25,
   snapRotate: 15,
   autoColor: false,
@@ -67,7 +65,7 @@ export const NUMBER_RANGES = {
 /** Each limit is a whole number of at least 1. */
 export const LIMIT_RANGE: NumberRange = { min: 1, integer: true };
 
-const inRange = (v: unknown, r: NumberRange): v is number =>
+export const inRange = (v: unknown, r: NumberRange): v is number =>
   typeof v === 'number' &&
   Number.isFinite(v) &&
   v >= r.min &&

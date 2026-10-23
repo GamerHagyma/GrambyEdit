@@ -2512,7 +2512,7 @@ export function constrainDelta(delta: Vector3, axis: 'X' | 'Y' | 'Z' | null): Ve
 - **Gizmo moves and rotates:** `TransformControls` (restyled to the tokens) on a proxy at `pivotOf`, with World/Local space and snapping from settings.
 - **Modal G/R:** X/Y/Z constraints, typed numbers, Enter or LMB to confirm, Esc or RMB to cancel.
 - **Drag re-attach:** snaps to free sockets (via `canBeParent` + `defaultChildSocket`), else to part surfaces. Empty space cancels.
-- **`Ctrl+R` / `Ctrl+T`:** `nativeRotate` by 90° about Y / X.
+- **Snapping:** only while Ctrl is held (gizmo and modal), to `settings.snapMove` / `snapRotate`. No Ctrl+R / Ctrl+T (user decision 2026-10-23); native 90° turns live in Properties (±90) and the palette.
 - **Commits:** the preview renders an override during the drag and commits one transaction on release (label `Move ${n} parts` / `Rotate ${n} parts`), calling `makeFreeMovable` + `setWorldPose` on `topmost(selection)`. Refused parts produce a toast listing their reasons.
 
 - [ ] **Step 1: Write the failing tests:**
@@ -2536,7 +2536,7 @@ test('pivot, snapping and axis constraints', () => {
 - [ ] **Step 5: Browser check.**
   1. **Modal move:** select a point-mounted part, press `G`, `X`, type `2`, Enter → it moves +2 studs along X, with exactly one new history entry. Repeat and press Esc → the doc is unchanged.
   2. **Gizmo conversion:** gizmo-drag a socket-joined `Part` → it converts to a point mount without jumping.
-  3. **Native rotate:** `Ctrl+R` on a socket-joined part → `OrientationY` reads +90 in Properties.
+  3. **Snapped rotate:** `R`, `Y`, move the mouse while holding Ctrl → the angle lands on a multiple of the rotate step.
   4. **Drag re-attach:** drag a part onto a free socket → it re-attaches.
   5. **Refusal:** try to move a `Light` that sits on a gate output → the refusal toast shows.
 - [ ] **Step 6: Commit:** `git commit -m "feat(tools): gizmo, modal transforms and drag re-attach"`
@@ -2957,7 +2957,8 @@ test('Appendix A bindings resolve per scheme', () => {
   expect(resolveKey(ev('x', 'KeyX'), 'blender')).toBe('edit.delete');
   expect(resolveKey(ev('Tab', 'Tab'), 'blender')).toBe('mode.toggle');
   expect(resolveKey(ev('d', 'KeyD', { ctrlKey: true }), 'studio')).toBe('edit.duplicate');
-  expect(resolveKey(ev('2', 'Digit2', { ctrlKey: true }), 'studio')).toBe('tool.move');
+  expect(resolveKey(ev('2', 'Digit2'), 'studio')).toBe('tool.move');
+  expect(resolveKey(ev('2', 'Digit2', { ctrlKey: true }), 'studio')).toBeNull();
   expect(resolveKey(ev('y', 'KeyY', { ctrlKey: true }), 'studio')).toBe('edit.redo');
   expect(resolveKey(ev('w', 'KeyW'), 'studio')).toBeNull();
 });

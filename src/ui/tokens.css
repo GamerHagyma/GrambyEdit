@@ -1257,3 +1257,75 @@ button.swatch:hover {
   border-radius: 50%;
   pointer-events: none;
 }
+
+/* Snap steps in the toolbar */
+.snap-steps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.snap-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.snap-step input {
+  width: 52px;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keyboard shortcuts guide */
+.shortcuts {
+  columns: 2 300px;
+  column-gap: 24px;
+}
+.shortcut-section {
+  break-inside: avoid;
+  margin-bottom: 14px;
+}
+.shortcut-section h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.shortcut-section > p.muted {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+.shortcut-section dl {
+  margin: 0;
+}
+.shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) minmax(0, 1fr);
+  gap: 10px;
+  padding: 3px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+.shortcut-row dt {
+  white-space: nowrap;
+}
+.shortcut-row dd {
+  margin: 0;
+}
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: var(--panel-2);
+  font: 11px/16px var(--font);
+  text-align: center;
+}
+.dialog:has(.shortcuts) {
+  width: min(820px, calc(100vw - 32px));
+}
