@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
 import { importText } from '../../state/io';
+import { arm } from '../../state/place';
 import { historySig, loadDoc, viewBus } from '../../state/store';
 import { toast } from '../../state/toasts';
 import { Dialog } from '../layout/Dialog';
@@ -49,6 +50,11 @@ function ImportBody({ onClose }: { onClose(): void }): JSX.Element {
     if (historySig.value.past.length > 0) setConfirming(true);
     else replace();
   };
+  const insert = () => {
+    if (!result || !result.ok) return;
+    arm({ kind: 'paste', sub: result.doc });
+    onClose();
+  };
 
   return (
     <Dialog
@@ -69,6 +75,9 @@ function ImportBody({ onClose }: { onClose(): void }): JSX.Element {
           <>
             <button class="button" onClick={onClose}>
               Cancel
+            </button>
+            <button class="button" disabled={!result || !result.ok} onClick={insert}>
+              Insert into current build
             </button>
             <button class="button primary" disabled={!result || !result.ok} onClick={openBuild}>
               Open (replace)

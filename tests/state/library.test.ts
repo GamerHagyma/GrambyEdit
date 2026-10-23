@@ -88,3 +88,18 @@ test('a selection saves as its own creation, joints kept', async () => {
   await refreshCreations();
   expect(creationsSig.value.some((r) => r.id === rec.id)).toBe(true);
 });
+
+test('opening a build is not unsaved work; saving clears the slot', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  const stop = startAutosave();
+  baseCatalogSig.value = MINI;
+  loadDoc(chainDoc(2));
+  await vi.advanceTimersByTimeAsync(2_500);
+  expect(await readAutosave()).toBeUndefined();
+  commit('a', (d) => d.set({ ...d.get(1)!, props: { OrientationY: 1 } }));
+  await vi.advanceTimersByTimeAsync(2_000);
+  expect(await readAutosave()).toBeDefined();
+  await saveCurrent('Kept');
+  expect(await readAutosave()).toBeUndefined();
+  stop();
+});

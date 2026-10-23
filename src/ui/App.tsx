@@ -20,7 +20,10 @@ import { CommandPalette } from './dialogs/CommandPalette';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FirstRun } from './dialogs/FirstRun';
 import { PointDeleteDialog } from './dialogs/PointDeleteDialog';
+import { RestorePrompt } from './dialogs/RestorePrompt';
+import { SaveDialog } from './dialogs/SaveDialog';
 import { ImportDialog } from './dialogs/ImportDialog';
+import { LibraryDialog } from './dialogs/LibraryDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
 import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
 import { Meters } from './layout/Meters';
@@ -48,6 +51,13 @@ function Dialogs(): JSX.Element {
       <AboutDialog open={name === 'about'} onClose={closeDialog} />
       <ShortcutsDialog open={name === 'shortcuts'} onClose={closeDialog} />
       <CommandPalette open={name === 'palette'} onClose={closeDialog} />
+      <LibraryDialog open={name === 'library'} onClose={closeDialog} />
+      <SaveDialog
+        open={name === 'save' || name === 'save-selection'}
+        selectionOnly={name === 'save-selection'}
+        onClose={closeDialog}
+      />
+      <RestorePrompt />
       <FirstRun />
       <PickerHost />
       <ContextMenuHost />

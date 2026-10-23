@@ -6,7 +6,7 @@ import { orderIndex } from '../core/doc';
 import { extractSubDoc } from '../core/ops/clipboard';
 import { parseShareText, toShareCode } from '../core/share';
 import type { CFrame12, Doc, PartId } from '../core/types';
-import { writeAutosave } from '../storage/autosave';
+import { clearAutosave, writeAutosave } from '../storage/autosave';
 import {
   getCreation,
   listCreations,
@@ -17,7 +17,7 @@ import {
 import { getViewport } from '../viewport/context';
 import { posesSig } from './derived';
 import { selectionSig } from './selection';
-import { docSig, loadDoc, viewBus } from './store';
+import { docSig, historySig, loadDoc, viewBus } from './store';
 import { toast } from './toasts';
 
 export const creationsSig = signal<readonly CreationRecord[]>([]);
@@ -82,6 +82,8 @@ export async function saveCurrent(
     ...extra,
   });
   openCreationIdSig.value = record.id;
+  // The build is saved: no unsaved work to restore after a crash.
+  await clearAutosave();
   await askPersistence();
   await refreshCreations();
   return record;
@@ -131,24 +133,35 @@ export async function openCreation(id: string): Promise<void> {
   viewBus.emit(camera ? { kind: 'look', ...camera } : { kind: 'frame-all' });
 }
 
-/** Writes the build to the autosave slot 2 s after the last change; returns the stopper. */
+/**
+ * Keeps unsaved edits in the autosave slot (crash recovery), written 2 s after the last edit (commit,
+ * undo or redo). Opening a build, saving it or emptying it clears the slot: nothing is unsaved then.
+ * Returns the stopper.
+ */
 export function startAutosave(): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let first = true;
+  const report = (e: unknown) => toast(`Autosave failed: ${(e as Error).message}`, 'error');
   const stopEffect = effect(() => {
     const doc = docSig.value;
+    const { past, future } = historySig.value;
     if (first) {
       first = false;
       return;
     }
     clearTimeout(timer);
+    // A load resets the history, so the build is just what was opened.
+    if ((past.length === 0 && future.length === 0) || doc.order.length === 0) {
+      clearAutosave().catch(report);
+      return;
+    }
     timer = setTimeout(() => {
       writeAutosave({
         code: toShareCode(doc),
         editorMeta: editorMetaOf(doc),
         savedAt: Date.now(),
         creationId: openCreationIdSig.peek(),
-      }).catch((e: unknown) => toast(`Autosave failed: ${(e as Error).message}`, 'error'));
+      }).catch(report);
     }, 2_000);
   });
   return () => {

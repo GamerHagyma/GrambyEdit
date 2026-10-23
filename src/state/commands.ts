@@ -336,18 +336,14 @@ for (const [axis, label] of [
 }
 
 // File and app
-const notYet = (what: string) => () => toast(`${what} is not built yet.`, 'warn');
-registerCommand({
-  id: 'file.save',
-  label: 'Save to library',
-  run: notYet('Saving to the library'),
-});
+registerCommand({ id: 'file.save', label: 'Save to library', run: () => openDialog('save') });
 registerCommand({
   id: 'file.saveSelection',
   label: 'Save selection to library',
-  run: notYet('Saving to the library'),
+  enabled: anySelected,
+  run: () => openDialog('save-selection'),
 });
-registerCommand({ id: 'file.library', label: 'Open library', run: notYet('The library') });
+registerCommand({ id: 'file.library', label: 'Open library', run: () => openDialog('library') });
 registerCommand({ id: 'file.import', label: 'Import code', run: () => openDialog('import') });
 registerCommand({ id: 'file.export', label: 'Export code', run: () => openDialog('export') });
 registerCommand({
