@@ -55,6 +55,9 @@ const parseChannel = (text: string): number | null => {
 
 const pickColor = (c: RGB): void => updateSettings({ activeColor: c });
 
+/** The build palette shows the most used colors; a build can hold thousands. */
+const PALETTE_SHOWN = 64;
+
 // Cached, so a colour drag (which changes settings, not the build) does not rebuild it.
 const paletteSig = computed(() => buildPalette(docSig.value));
 
@@ -169,7 +172,7 @@ export function PaintPanel(): JSX.Element {
 
       <h3>Build palette</h3>
       <div class="swatches" role="group" aria-label="Build palette">
-        {paletteSig.value.map(({ rgb, count }) => {
+        {paletteSig.value.slice(0, PALETTE_SHOWN).map(({ rgb, count }) => {
           const label = rgbToHex(rgb);
           const name = `${label}, ${count} ${count === 1 ? 'part' : 'parts'}`;
           return (
@@ -187,6 +190,10 @@ export function PaintPanel(): JSX.Element {
           );
         })}
       </div>
+
+      {paletteSig.value.length > PALETTE_SHOWN && (
+        <p class="muted">{`${paletteSig.value.length - PALETTE_SHOWN} rarer colors not shown`}</p>
+      )}
 
       <h3>Mode</h3>
       <div class="paint-modes" role="group" aria-label="Paint mode">
