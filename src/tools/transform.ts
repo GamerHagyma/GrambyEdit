@@ -27,7 +27,7 @@ import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { loadPref, savePref } from '../storage/prefs';
 import { getViewport } from '../viewport/context';
-import { cursorRay, pickPart, pickSocket } from '../viewport/raycast';
+import { cursorRay, pickPart, pickPoint, pickSocket } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
 import { clickOp, createSelectTool } from './select';
 
@@ -394,7 +394,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
           gizmoPress = true;
           return;
         }
-        const hit = id === 'move' ? pickPart(e.ndc) : null;
+        const hit = id === 'move' && !pickPoint(e.ndc) ? pickPart(e.ndc) : null;
         if (hit) press = { x: e.x, y: e.y, part: hit.part };
         else inner.onPointer!(e);
         return;

@@ -20,6 +20,8 @@ export const selectModeSig = signal<'part' | 'attached'>('part');
 export const hiddenSig = signal<ReadonlySet<PartId>>(new Set());
 /** The part under the pointer, for the hover outline and socket rings. */
 export const hoverSig = signal<PartId | null>(null);
+/** The point marker under the pointer: its host keeps showing its points while the pointer is on it. */
+export const hoverPointSig = signal<PointKey | null>(null);
 
 export function pointKey(host: PartId, uuid: Uuid): PointKey {
   return `${host}:${uuid}`;
@@ -69,13 +71,15 @@ export function selectPoints(keys: Iterable<PointKey>, op: Op): void {
 }
 
 /** Drops parts, points and hidden ids the doc no longer has. Leaves the signals alone when nothing changed. */
+const pointExists = (doc: Doc, key: PointKey): boolean => {
+  const at = key.indexOf(':');
+  return doc.parts.get(Number(key.slice(0, at)))?.points?.has(key.slice(at + 1)) ?? false;
+};
+
 export function sanitizeSelection(doc: Doc): void {
   const cur = selectionSig.value;
   const parts = [...cur.parts].filter((id) => doc.parts.has(id));
-  const points = [...cur.points].filter((key) => {
-    const at = key.indexOf(':');
-    return doc.parts.get(Number(key.slice(0, at)))?.points?.has(key.slice(at + 1)) ?? false;
-  });
+  const points = [...cur.points].filter((key) => pointExists(doc, key));
   if (parts.length !== cur.parts.size || points.length !== cur.points.size) {
     const p = new Set(parts);
     const q = new Set(points);
@@ -86,6 +90,9 @@ export function sanitizeSelection(doc: Doc): void {
     selectionSig.value = { parts: p, points: q, active };
   }
   if (hoverSig.value !== null && !doc.parts.has(hoverSig.value)) hoverSig.value = null;
+  if (hoverPointSig.value !== null && !pointExists(doc, hoverPointSig.value)) {
+    hoverPointSig.value = null;
+  }
   const hidden = hiddenSig.value;
   if ([...hidden].some((id) => !doc.parts.has(id))) {
     hiddenSig.value = new Set([...hidden].filter((id) => doc.parts.has(id)));
@@ -101,4 +108,5 @@ export function resetSelectionForTests(): void {
   selectModeSig.value = 'part';
   hiddenSig.value = new Set();
   hoverSig.value = null;
+  hoverPointSig.value = null;
 }

@@ -3,10 +3,10 @@ import { effect } from '@preact/signals';
 import { Box3, Sphere, Vector2, Vector3 } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { parseShareText } from '../core/share';
-import type { Poses } from '../core/pose';
+import { poseTargets, type Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, hoverSig, select, selectionSig } from '../state/selection';
+import { hiddenSig, hoverPointSig, hoverSig, select, selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { assetsSig, catalogSig, docSig, loadDoc, viewBus } from '../state/store';
 import { BlenderControls, type NavHost } from './cameras/blender';
@@ -32,6 +32,7 @@ import {
   pointGizmoHandlers,
   pointGizmoModeSig,
   pointGizmoPlacement,
+  selectedPoint,
 } from '../tools/point';
 import { createSelectTool } from '../tools/select';
 import {
@@ -179,7 +180,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   /**
    * Socket and point markers, rebuilt per frame for constant screen size. Normally the selection's and
    * the hovered part's; with Connect, the sockets and free points near the camera; with Point, the
-   * points near the camera; none during a transform, only the target's during a drag re-attach.
+   * points near the camera; none during a transform, only the target's during a drag re-attach. Where
+   * the selected parts hang (their parent socket or point) is always drawn, in purple.
    */
   const updateMarkers = () => {
     const cat = catalogSig.value;
@@ -203,14 +205,34 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       socketParts = [...sel.parts].filter((id) => !hidden.has(id));
       if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
     }
-    sockets.update(doc, poses, cat, socketParts, rig, s.maxSockets);
-    const selectedHosts = [...sel.points].map((k) => Number(k.slice(0, k.indexOf(':'))));
+    const attach = state === 'idle' ? poseTargets(doc, [...sel.parts].slice(0, NEAR_PARTS)) : null;
+    sockets.update(doc, poses, cat, socketParts, rig, s.maxSockets, attach?.sockets);
+    const hostOf = (key: string) => Number(key.slice(0, key.indexOf(':')));
+    const hoverPoint = hoverPointSig.value;
     const pointHosts =
       state === 'transform'
         ? []
-        : (near ?? [...new Set([...sel.parts, ...selectedHosts])].filter((id) => !hidden.has(id)));
+        : (near ??
+          [
+            ...new Set([
+              ...sel.parts,
+              ...[...sel.points].map(hostOf),
+              ...(hover === null ? [] : [hover]),
+              ...(hoverPoint === null ? [] : [hostOf(hoverPoint)]),
+            ]),
+          ].filter((id) => !hidden.has(id)));
     const freeOnly = tool === 'connect' || tool === 'place';
-    points.update(doc, poses, cat, pointHosts, rig, s.maxSockets, sel.points, freeOnly);
+    points.update(
+      doc,
+      poses,
+      cat,
+      pointHosts,
+      rig,
+      s.maxSockets,
+      sel.points,
+      freeOnly,
+      attach?.points,
+    );
   };
 
   let markedReady = false;
@@ -533,7 +555,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const stopGizmo = effect(() => {
     const tool = toolSig.value;
     const s = settingsSig.value;
-    const forPoint = tool === 'point';
+    // Move and Rotate serve one selected point too, in its host's axes, like the Point tool.
+    const forPoint =
+      tool === 'point' || ((tool === 'move' || tool === 'rotate') && selectedPoint() !== null);
     // A modal G or R moves the selection away from the gizmo, so it hides until the modal ends.
     const on =
       (tool === 'move' || tool === 'rotate' || forPoint) &&
@@ -541,7 +565,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       !modalActiveSig.value;
     transformGizmo.handlers = forPoint ? pointGizmoHandlers : gizmoHandlers;
     transformGizmo.configure({
-      mode: forPoint ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',
+      mode: tool === 'point' ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',
       space: forPoint ? 'local' : spaceSig.value,
       steps: { move: s.snapMove, rotate: s.snapRotate },
       individual: !forPoint && pivotModeSig.value === 'individual',

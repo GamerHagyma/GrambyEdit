@@ -5,7 +5,7 @@ import type { Catalog, Conventions } from './catalog-types';
 import { cfToMatrix4, IDENTITY_CF } from './cframe';
 import { matingMatrix, orientationMatrix } from './conventions';
 import { poseAnchors, topoPose } from './graph';
-import type { CFrame12, Conn, ConnTarget, Doc, Part, PartId, SocketId } from './types';
+import type { CFrame12, Conn, ConnTarget, Doc, Part, PartId, PointKey, SocketId } from './types';
 
 export const POSE_APPROX = 1,
   POSE_CYCLE = 2,
@@ -95,6 +95,25 @@ export type PoseConn = Conn & { readonly target: Exclude<ConnTarget, { kind: 'ra
 /** The conn that poses a part: its first `socket` or `point` conn (raw conns are skipped). */
 export function poseConn(part: Part): PoseConn | undefined {
   return part.conns.find((c): c is PoseConn => c.target.kind !== 'raw');
+}
+
+/**
+ * Where the given parts hang: the parent sockets (`part:socket`) and points (`host:uuid`) their pose
+ * conns target. The viewport draws these purple for the selection.
+ */
+export function poseTargets(
+  doc: Doc,
+  ids: Iterable<PartId>,
+): { sockets: Set<string>; points: Set<PointKey> } {
+  const sockets = new Set<string>();
+  const points = new Set<PointKey>();
+  for (const id of ids) {
+    const part = doc.parts.get(id);
+    const t = part && poseConn(part)?.target;
+    if (t?.kind === 'socket') sockets.add(`${t.part}:${t.socket}`);
+    else if (t?.kind === 'point') points.add(`${t.part}:${t.uuid}`);
+  }
+  return { sockets, points };
 }
 
 /** Roots and pseudo-roots in export order: the first at the origin, each next 2 studs past the previous bbox along +X. */

@@ -1,5 +1,5 @@
-// Modal transforms (spec §12.4), in both camera schemes: G moves and R rotates the selection with the
-// mouse. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
+// Modal transforms (spec §12.4), in both camera schemes: G moves and R rotates the selection (parts,
+// or one ephemeral point) with the mouse. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
 // with no axis a move follows the mouse in the view plane and a rotation turns about the view axis.
 // Typed numbers set the amount, holding Ctrl snaps to the snap steps, Enter or a left click confirms,
 // Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them. While it runs the
@@ -9,6 +9,7 @@ import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { getViewport } from '../viewport/context';
+import { pointGizmoHandlers, pointGizmoPlacement } from './point';
 import {
   beginSession,
   cancelSession,
@@ -19,7 +20,6 @@ import {
   snapValue,
   transformStateSig,
   type Axis,
-  type Session,
   type TransformDelta,
 } from './transform';
 
@@ -29,11 +29,52 @@ const AXES: Readonly<Record<Axis, Vector3>> = {
   Z: new Vector3(0, 0, 1),
 };
 
+/** What a modal transforms: the selected parts (a transform session) or the one selected point. */
+interface Target {
+  readonly pivot: Vector3;
+  /** The active part's orientation (a point's: its host's), for local axes. */
+  readonly local: Quaternion;
+  preview(d: TransformDelta): void;
+  finish(d: TransformDelta): void;
+  cancel(): void;
+}
+
+function partsTarget(): Target | null {
+  const session = beginSession();
+  if (!session) return null;
+  const sel = selectionSig.value;
+  const ids = [...sel.parts].filter((id) => session.poses.world.has(id));
+  const active = typeof sel.active === 'number' && sel.parts.has(sel.active) ? sel.active : null;
+  const local = new Quaternion();
+  session.poses.world
+    .get(active ?? ids[ids.length - 1])!
+    .decompose(new Vector3(), local, new Vector3());
+  return {
+    pivot: pivotOf(session.poses, ids, pivotModeSig.value, active),
+    local,
+    preview: (d) => previewSession(session, d),
+    finish: (d) => finishSession(session, d),
+    cancel: () => cancelSession(session),
+  };
+}
+
+function pointTarget(): Target | null {
+  const at = pointGizmoPlacement();
+  if (!at) return null;
+  pointGizmoHandlers.start();
+  return {
+    pivot: at.position,
+    local: at.quaternion,
+    preview: (d) => pointGizmoHandlers.change(d),
+    finish: (d) => pointGizmoHandlers.end(d),
+    cancel: () => pointGizmoHandlers.cancel(),
+  };
+}
+
 interface Modal {
   readonly kind: 'move' | 'rotate';
-  readonly session: Session;
+  readonly target: Target;
   readonly pivot: Vector3;
-  /** The active part's orientation, for local axes. */
   readonly local: Quaternion;
   /** Client pixels where the transform started. */
   readonly start: { readonly x: number; readonly y: number };
@@ -167,7 +208,7 @@ function hintText(m: Modal, d: TransformDelta): string {
 
 function update(m: Modal): void {
   m.last = m.kind === 'move' ? moveDelta(m) : rotateDelta(m);
-  previewSession(m.session, m.last);
+  m.target.preview(m.last);
   m.hint.textContent = hintText(m, m.last);
 }
 
@@ -183,8 +224,8 @@ function end(confirm: boolean): void {
   m.hint.remove();
   modalGuideSig.value = null;
   modalActiveSig.value = false;
-  if (confirm) finishSession(m.session, m.last);
-  else cancelSession(m.session);
+  if (confirm) m.target.finish(m.last);
+  else m.target.cancel();
 }
 
 function onMove(e: PointerEvent): void {
@@ -250,14 +291,8 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   if (modal) return true;
   const vp = getViewport();
   if (!vp || transformStateSig.value !== 'idle') return false;
-  const session = beginSession();
-  if (!session) return false;
-  const sel = selectionSig.value;
-  const ids = [...sel.parts].filter((id) => session.poses.world.has(id));
-  const active = typeof sel.active === 'number' && sel.parts.has(sel.active) ? sel.active : null;
-  const pivot = pivotOf(session.poses, ids, pivotModeSig.value, active);
-  const local = new Quaternion();
-  session.poses.world.get(active ?? ids[ids.length - 1])!.decompose(new Vector3(), local, new Vector3());
+  const target = selectionSig.value.parts.size > 0 ? partsTarget() : pointTarget();
+  if (!target) return false;
   const r = vp.canvas.getBoundingClientRect();
   const start = vp.pointer ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   const hint = document.createElement('div');
@@ -265,9 +300,9 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   vp.canvas.parentElement!.append(hint);
   modal = {
     kind,
-    session,
-    pivot,
-    local,
+    target,
+    pivot: target.pivot,
+    local: target.local,
     start,
     hint,
     mouse: { ...start },

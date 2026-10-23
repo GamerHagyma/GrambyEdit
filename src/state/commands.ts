@@ -57,6 +57,8 @@ const selected = (): PartId[] => {
   return doc.order.filter((id) => selectionSig.value.parts.has(id));
 };
 const anySelected = () => selectionSig.value.parts.size > 0;
+/** One ephemeral point and no part: G and R move or turn the point. */
+const onePoint = () => selectionSig.value.parts.size === 0 && selectionSig.value.points.size === 1;
 const anyParts = () => docSig.value.order.length > 0;
 
 /** The part under the pointer in the viewport, for L and Ctrl+L. */
@@ -306,13 +308,13 @@ registerCommand({
 registerCommand({
   id: 'transform.grab',
   label: 'Move (G)',
-  enabled: anySelected,
+  enabled: () => anySelected() || onePoint(),
   run: () => void startModal('move'),
 });
 registerCommand({
   id: 'transform.rotate',
   label: 'Rotate (R)',
-  enabled: anySelected,
+  enabled: () => anySelected() || onePoint(),
   run: () => void startModal('rotate'),
 });
 for (const [axis, label] of [

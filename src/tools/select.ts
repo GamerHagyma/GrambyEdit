@@ -1,12 +1,13 @@
 // The Select tool (spec §12.1): click, Shift/Ctrl modifiers, box select from empty space (or anywhere
-// after B). L / Ctrl+L are commands (select.linked / select.connected).
+// after B). A click on a point marker selects that ephemeral point instead. L / Ctrl+L are commands
+// (select.linked / select.connected).
 import { signal } from '@preact/signals';
 import type { Vector2 } from 'three';
-import type { PartId } from '../core/types';
-import { hoverSig, select } from '../state/selection';
+import type { PartId, PointKey } from '../core/types';
+import { hoverPointSig, hoverSig, pointKey, select, selectPoints } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { getViewport } from '../viewport/context';
-import { partsInRect, pickPart } from '../viewport/raycast';
+import { partsInRect, pickPart, pickPoint } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
 
 /** Set by `select.box`: the next press starts a box select wherever it lands. */
@@ -26,8 +27,14 @@ export function clickOp(
   return { ids: [hit], op: 'replace' };
 }
 
+/** The point marker under the cursor, if one is drawn there. */
+function pointAt(ndc: Vector2): PointKey | null {
+  const p = pickPoint(ndc);
+  return p ? pointKey(p.host, p.uuid) : null;
+}
+
 export function createSelectTool(): Tool {
-  let start: { x: number; y: number; hit: PartId | null } | null = null;
+  let start: { x: number; y: number; hit: PartId | null; point: PointKey | null } | null = null;
   let box: HTMLDivElement | null = null;
   let cursor: Vector2 | null = null;
   let hoverFrame = 0;
@@ -60,6 +67,8 @@ export function createSelectTool(): Tool {
     if (hoverFrame) return;
     hoverFrame = requestAnimationFrame(() => {
       hoverFrame = 0;
+      const point = cursor ? pointAt(cursor) : null;
+      if (hoverPointSig.value !== point) hoverPointSig.value = point;
       const id = cursor ? (pickPart(cursor)?.part ?? null) : null;
       if (hoverSig.value !== id) hoverSig.value = id;
     });
@@ -72,6 +81,7 @@ export function createSelectTool(): Tool {
       cancelAnimationFrame(hoverFrame);
       hoverFrame = 0;
       hoverSig.value = null;
+      hoverPointSig.value = null;
       start = null;
       hideBox();
     },
@@ -82,17 +92,23 @@ export function createSelectTool(): Tool {
         // B (select.box) makes the next drag a box even when it starts on a part.
         const boxed = boxNextSig.peek();
         boxNextSig.value = false;
-        start = { x: e.x, y: e.y, hit: boxed ? null : (pickPart(e.ndc)?.part ?? null) };
+        const point = boxed ? null : pointAt(e.ndc);
+        const hit = boxed || point ? null : (pickPart(e.ndc)?.part ?? null);
+        start = { x: e.x, y: e.y, hit, point };
       } else if (e.kind === 'move' && start) {
         cursor = e.ndc;
         const far = Math.hypot(e.x - start.x, e.y - start.y) > DRAG_PX;
-        if (start.hit === null && (box || far)) showBox(start.x, start.y, e.x, e.y);
+        if (start.hit === null && start.point === null && (box || far)) {
+          showBox(start.x, start.y, e.x, e.y);
+        }
       } else if (e.kind === 'up' && start) {
         if (box) {
           const rect = { x0: start.x, y0: start.y, x1: e.x, y1: e.y };
           const ids = partsInRect(rect, settingsSig.value.xray ? 'xray' : 'visible');
           select(ids, e.shift ? 'add' : e.ctrl ? 'remove' : 'replace');
           hideBox();
+        } else if (start.point !== null) {
+          selectPoints([start.point], e.shift ? 'toggle' : e.ctrl ? 'remove' : 'replace');
         } else {
           const { ids, op } = clickOp(start.hit, e);
           select(ids, op);
