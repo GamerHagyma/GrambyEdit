@@ -19,10 +19,11 @@ import { createRenderer, hasWebGL2 } from './renderer';
 import { createScene } from './scene';
 import { getViewport, setViewport, type ViewportContext } from './context';
 import { Outline } from './outline';
-import { pickPart } from './raycast';
+import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { cancelModal, transformKey } from '../tools/modal';
+import { createPaintTool } from '../tools/paint';
 import { createSelectTool } from '../tools/select';
 import {
   createTransformTool,
@@ -74,6 +75,11 @@ function overlay(
 const selectTool = createSelectTool();
 const moveTool = createTransformTool('move');
 const rotateTool = createTransformTool('rotate');
+const paintTool = createPaintTool({
+  part: (ndc) => pickPart(ndc)?.part ?? null,
+  inRect: partsInRect,
+  inDisc: partsInDisc,
+});
 const workbenchTool = createWorkbenchTool();
 
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
@@ -88,6 +94,7 @@ export function mountViewport(el: HTMLElement): () => void {
   registerTool(selectTool);
   registerTool(moveTool);
   registerTool(rotateTool);
+  registerTool(paintTool);
   registerTool(workbenchTool);
   let stop = () => {};
   const run = () => {

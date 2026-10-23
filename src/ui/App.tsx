@@ -18,6 +18,7 @@ import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
 import { IssuesPanel } from './panels/IssuesPanel';
 import { Outliner } from './panels/Outliner';
+import { PaintPanel } from './panels/PaintPanel';
 import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
@@ -37,9 +38,12 @@ function Dialogs(): JSX.Element {
   );
 }
 
-/** The left dock: the Socket Workbench in Sockets mode. The part browser arrives with placing (Task 33). */
+/** The left dock: the Socket Workbench or the Paint panel for their tools. The part browser arrives with placing (Task 33). */
 function LeftDock(): JSX.Element {
-  return toolSig.value === 'sockets' ? <WorkbenchPanel /> : <p class="empty">Nothing here yet</p>;
+  const tool = toolSig.value;
+  if (tool === 'sockets') return <WorkbenchPanel />;
+  if (tool === 'paint') return <PaintPanel />;
+  return <p class="empty">Nothing here yet</p>;
 }
 
 /** Ctrl+O and Ctrl+E open Import and Export. The command registry (Task 30) replaces this. */

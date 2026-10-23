@@ -1168,3 +1168,92 @@ textarea.text-value,
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
+
+/* Paint panel and brush (spec §12.5) */
+.paint-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+}
+.paint-panel h3 {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.paint-color {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.paint-color label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.paint-color input[type='color'] {
+  width: 40px;
+  height: var(--row);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: none;
+}
+.paint-color input[type='text'] {
+  width: 76px;
+}
+.paint-color input[type='number'] {
+  width: 52px;
+}
+.paint-color input[type='text'],
+.paint-color input[type='number'],
+.paint-field select {
+  height: var(--row);
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+button.swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  cursor: pointer;
+}
+button.swatch:hover {
+  border-color: var(--text);
+}
+.paint-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.paint-modes .button[aria-pressed='true'] {
+  background: var(--line);
+  border-color: var(--accent);
+}
+.paint-field,
+.paint-auto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.paint-field input[type='range'] {
+  flex: 1;
+}
+.brush-cursor {
+  position: absolute;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+}
