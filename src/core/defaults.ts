@@ -14,6 +14,11 @@ const COMPLEMENT: Partial<Record<NonNullable<SocketRole>, readonly SocketRole[]>
   mount: ['socket'],
 };
 
+/** True when a child socket of role `child` completes a parent socket of role `parent`. */
+export function complements(parent: SocketRole, child: SocketRole): boolean {
+  return parent !== null && (COMPLEMENT[parent] ?? []).includes(child);
+}
+
 /**
  * The child socket a new `childType` attaches by onto `parentType`'s `parentSocket`: the most
  * frequent corpus pair (ties in catalog order), else the first role complement, else the default
@@ -34,9 +39,8 @@ export function defaultChildSocket(
     if (n > bestCount) [best, bestCount] = [cs, n];
   }
   if (best !== null) return best;
-  const role = defOf(cat, parentType)?.sockets[parentSocket]?.role;
-  const wanted = role ? (COMPLEMENT[role] ?? []) : [];
-  const complement = child.childSockets.find((cs) => wanted.includes(child.sockets[cs].role));
+  const role = defOf(cat, parentType)?.sockets[parentSocket]?.role ?? null;
+  const complement = child.childSockets.find((cs) => complements(role, child.sockets[cs].role));
   return complement ?? child.defaultMount ?? child.childSockets[0] ?? null;
 }
 
