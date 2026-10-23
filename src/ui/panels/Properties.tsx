@@ -233,7 +233,7 @@ export function Properties(): JSX.Element {
   const cat = catalogSig.value;
   if (cat === null) {
     return (
-      <div class="properties">
+      <div class="properties" data-app-undo>
         <p class="empty">Loading the catalog…</p>
       </div>
     );
@@ -243,7 +243,7 @@ export function Properties(): JSX.Element {
   const ids = doc.order.filter((id) => selected.has(id));
   if (ids.length === 0) {
     return (
-      <div class="properties">
+      <div class="properties" data-app-undo>
         <p class="empty">Select parts to edit their properties.</p>
       </div>
     );
@@ -251,7 +251,7 @@ export function Properties(): JSX.Element {
   // The other props, connections, points and info are for a single part only.
   const single = ids.length === 1 ? doc.parts.get(ids[0])! : null;
   return (
-    <div class="properties">
+    <div class="properties" data-app-undo>
       <Header doc={doc} ids={ids} />
       {unionProps(doc, cat, ids).map((row) => (
         <PropField key={row.key} cat={cat} row={row} ids={ids} />

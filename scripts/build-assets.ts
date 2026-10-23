@@ -30,6 +30,7 @@ const DEFAULT_CONVENTIONS: Conventions = {
 };
 const UNPAINTABLE = /^(Input|Output|Glass|Screw|Light)/;
 const GREY: RGB = [128, 128, 128];
+const ORIENTATIONS = ['OrientationX', 'OrientationY', 'OrientationZ'];
 
 interface MeshGroupInfo {
   subPart: string;
@@ -89,6 +90,11 @@ function readConventions(path: string): Conventions {
     typeof c.orientationOnPoints === 'boolean';
   if (!ok) throw new Error(`${path}: malformed conventions`);
   return c as Conventions;
+}
+
+/** The corpus lists only the orientations real builds used; every type gets all three. */
+export function withOrientation(keys: readonly string[]): string[] {
+  return [...keys, ...ORIENTATIONS.filter((k) => !keys.includes(k))];
 }
 
 export async function buildAssets(opts: {
@@ -173,7 +179,7 @@ export async function buildAssets(opts: {
       pieces: r.pieces ?? null,
       mainPartName,
       subParts,
-      props: Object.keys(r.props ?? {}),
+      props: withOrientation(Object.keys(r.props ?? {})),
       mesh,
     };
   }

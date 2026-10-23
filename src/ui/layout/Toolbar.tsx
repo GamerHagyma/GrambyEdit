@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { runCommand } from '../../state/commands';
 import { selectModeSig } from '../../state/selection';
 import {
   inRange,
@@ -7,6 +8,7 @@ import {
   updateSettings,
   type NumberRange,
 } from '../../state/settings';
+import { historySig } from '../../state/store';
 import { toast } from '../../state/toasts';
 import { keysFor } from '../../state/keymap';
 import { setTool, toolSig, type ToolId } from '../../tools/manager';
@@ -72,11 +74,30 @@ function StepInput({
 const hex = (rgb: readonly number[]) =>
   '#' + rgb.map((c) => c.toString(16).padStart(2, '0')).join('');
 
-/** Tools, the selection mode, snap steps, auto-color and the camera scheme (spec §12, §17). */
+/** Undo, redo, tools, the selection mode, snap steps, auto-color and the camera scheme (spec §12, §17). */
 export function Toolbar(): JSX.Element {
   const s = settingsSig.value;
+  const { past, future } = historySig.value;
   return (
     <div class="toolbar" role="toolbar" aria-label="Tools">
+      <button
+        class="icon-button"
+        aria-label="Undo"
+        title={`Undo (${keysFor('edit.undo', s.cameraScheme).join(', ')})`}
+        disabled={past.length === 0}
+        onClick={() => runCommand('edit.undo')}
+      >
+        <Icon name="undo" />
+      </button>
+      <button
+        class="icon-button"
+        aria-label="Redo"
+        title={`Redo (${keysFor('edit.redo', s.cameraScheme).join(', ')})`}
+        disabled={future.length === 0}
+        onClick={() => runCommand('edit.redo')}
+      >
+        <Icon name="redo" />
+      </button>
       {TOOLS.map((t) => {
         const key = keysFor(`tool.${t.id}`, s.cameraScheme)[0];
         return (

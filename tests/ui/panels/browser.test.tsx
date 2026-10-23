@@ -53,10 +53,13 @@ test('clicking a card arms it and makes it recent', () => {
   expect(onArm).toHaveBeenCalledWith({ kind: 'part', type: 'Connector' });
   expect(recentsSig.value).toEqual(['Connector']);
 });
-test('the card tooltip gives the socket count and corpus usage', () => {
+test('the card tooltip gives the socket count', () => {
   baseCatalogSig.value = MINI;
   render(<PartBrowser onArm={() => {}} />);
-  expect(screen.getByTitle('6 sockets · used 11,484× in 185 real builds')).toBeTruthy();
+  // Part and Base also have six sockets, so scope the check to the Connector card.
+  expect(screen.getByText('Connector').closest('.part-card')?.getAttribute('title')).toBe(
+    '6 sockets',
+  );
 });
 test('arrow keys move the highlight, Enter picks it, and Escape closes the picker', () => {
   baseCatalogSig.value = MINI;

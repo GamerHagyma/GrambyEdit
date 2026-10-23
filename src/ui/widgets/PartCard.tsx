@@ -21,15 +21,9 @@ export interface PartCardProps {
   onDropPart?(type: string): void;
 }
 
-/** The hover text: game tooltip, socket count and corpus usage (spec §13.1). */
+/** The hover text: game tooltip and socket count (spec §13.1). */
 function hoverText(part: PartDef): string {
-  return [
-    part.tooltip,
-    `${Object.keys(part.sockets).length} sockets`,
-    `used ${part.corpusCount.toLocaleString('en-US')}× in 185 real builds`,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  return [part.tooltip, `${Object.keys(part.sockets).length} sockets`].filter(Boolean).join(' · ');
 }
 
 export function PartCard({

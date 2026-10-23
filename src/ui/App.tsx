@@ -114,10 +114,21 @@ const dialogOpen = () => document.querySelector('.dialog-backdrop') !== null;
 
 /**
  * The one key router: the viewport's own keys first (gizmo cancel, tool keys, camera fly keys), then the
- * keymap's command. Text fields and open dialogs keep their keys.
+ * keymap's command. Text fields and open dialogs keep their keys, except undo and redo inside a
+ * `data-app-undo` panel (Properties): the field blurs first, which commits its pending value.
  */
 function onKey(e: KeyboardEvent): void {
-  if (e.defaultPrevented || isTypingTarget(e.target) || dialogOpen()) return;
+  if (e.defaultPrevented || dialogOpen()) return;
+  if (isTypingTarget(e.target)) {
+    const field = e.target as HTMLElement;
+    const id = resolveKey(e, settingsSig.value.cameraScheme);
+    if (field.closest('[data-app-undo]') && (id === 'edit.undo' || id === 'edit.redo')) {
+      field.blur();
+      e.preventDefault();
+      runCommand(id);
+    }
+    return;
+  }
   const t = e.target;
   const control = t instanceof HTMLElement && t !== document.body && t.tagName !== 'CANVAS';
   if (control && FOCUS_KEYS.has(e.key)) return;

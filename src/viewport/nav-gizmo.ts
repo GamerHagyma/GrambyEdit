@@ -13,12 +13,12 @@ const AXES: readonly {
   view: ViewAxis;
   positive: boolean;
 }[] = [
-  { dir: new Vector3(1, 0, 0), label: 'X', color: '#e5484d', view: 'right', positive: true },
-  { dir: new Vector3(0, 1, 0), label: 'Y', color: '#46a758', view: 'top', positive: true },
-  { dir: new Vector3(0, 0, 1), label: 'Z', color: '#3e7bfa', view: 'front', positive: true },
-  { dir: new Vector3(-1, 0, 0), label: '', color: '#e5484d', view: 'left', positive: false },
-  { dir: new Vector3(0, -1, 0), label: '', color: '#46a758', view: 'bottom', positive: false },
-  { dir: new Vector3(0, 0, -1), label: '', color: '#3e7bfa', view: 'back', positive: false },
+  { dir: new Vector3(1, 0, 0), label: 'X+', color: '#e5484d', view: 'right', positive: true },
+  { dir: new Vector3(0, 1, 0), label: 'Y+', color: '#46a758', view: 'top', positive: true },
+  { dir: new Vector3(0, 0, 1), label: 'Z+', color: '#3e7bfa', view: 'front', positive: true },
+  { dir: new Vector3(-1, 0, 0), label: 'X−', color: '#e5484d', view: 'left', positive: false },
+  { dir: new Vector3(0, -1, 0), label: 'Y−', color: '#46a758', view: 'bottom', positive: false },
+  { dir: new Vector3(0, 0, -1), label: 'Z−', color: '#3e7bfa', view: 'back', positive: false },
 ];
 
 export interface NavGizmo {
@@ -74,19 +74,20 @@ export function createNavGizmo(container: HTMLElement, onView: (axis: ViewAxis) 
           const c = document.createElementNS(NS, 'circle');
           c.setAttribute('cx', String(x));
           c.setAttribute('cy', String(y));
-          c.setAttribute('r', a.positive ? '9' : '6.5');
+          c.setAttribute('r', '9');
           c.setAttribute('fill', a.positive ? a.color : 'transparent');
           c.setAttribute('stroke', a.color);
           c.setAttribute('stroke-width', '2');
           g.append(c);
-          if (a.label) {
-            const t = document.createElementNS(NS, 'text');
-            t.setAttribute('x', String(x));
-            t.setAttribute('y', String(y + 3.5));
-            t.setAttribute('text-anchor', 'middle');
-            t.textContent = a.label;
-            g.append(t);
-          }
+          const t = document.createElementNS(NS, 'text');
+          t.setAttribute('x', String(x));
+          t.setAttribute('y', String(y + 3.5));
+          t.setAttribute('text-anchor', 'middle');
+          // The stylesheet paints every label white and beats a fill attribute, so a negative
+          // end's label takes its axis colour inline.
+          if (!a.positive) t.style.fill = a.color;
+          t.textContent = a.label;
+          g.append(t);
           nodes.push(g);
           return nodes;
         }),

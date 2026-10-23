@@ -1,6 +1,6 @@
 // The Connect tool (spec §12.2): click a free parent-side socket or point to place a part from the picker
-// (the type stays armed; Shift+click gathers several targets), or join two existing sockets by dragging
-// from one to the other or clicking one, then the other.
+// (Shift+click gathers several targets to place one part on each), or join two existing sockets by
+// dragging from one to the other or clicking one, then the other.
 import { signal } from '@preact/signals';
 import {
   BufferGeometry,
@@ -48,8 +48,6 @@ export interface PickerRequest {
 }
 
 export const pickerSig = signal<PickerRequest | null>(null);
-/** The type each further click places, until Esc. */
-export const armedSig = signal<string | null>(null);
 /** Targets gathered with Shift+click; closing the picker clears them. */
 export const gatheredSig = signal<readonly PlaceTarget[]>([]);
 /** The attaching socket chosen in the picker ("attach by socket N"), for one type. */
@@ -145,7 +143,7 @@ function connFor(cat: Catalog, doc: Doc, type: string, t: PlaceTarget): Conn | n
 }
 
 /**
- * Places a new `type` part on each target in one history entry, selects them and arms the type.
+ * Places a new `type` part on each target in one history entry, then selects them.
  * Targets that refuse the part are listed in a toast.
  */
 export function placeParts(type: string, targets: readonly PlaceTarget[]): void {
@@ -186,7 +184,6 @@ export function placeParts(type: string, targets: readonly PlaceTarget[]): void 
       placed = tryAll(d).placed;
     });
     select(placed, 'replace');
-    armedSig.value = type;
     pushRecent(type);
   }
   if (trial.refused.length > 0) toast([...new Set(trial.refused)].join('\n'), 'warn');
@@ -333,31 +330,23 @@ export function createConnectTool(): Tool {
   };
 
   /**
-   * A click on a free target. Shift+click gathers it (the picker opens on the gathered set, unless a
-   * type is armed); a plain click places the armed type on everything gathered plus this target, or
-   * opens the picker for them.
+   * A click on a free target. Shift+click gathers it and opens the picker on the gathered set; a plain
+   * click opens the picker for everything gathered plus this target.
    */
   const target = (t: PlaceTarget, e: ToolPointer) => {
     const same = (u: PlaceTarget) => JSON.stringify(u) === JSON.stringify(t);
     const gathered = gatheredSig.value;
-    const armed = armedSig.value;
     if (e.shift) {
       const next = gathered.some(same) ? gathered.filter((u) => !same(u)) : [...gathered, t];
-      if (armed || next.length === 0) {
-        pickerSig.value = null;
-        gatheredSig.value = next;
-        if (armed) showTip(e.x, e.y, `${next.length} chosen · click without Shift to place`, null);
-      } else {
-        openPicker({ x: e.x, y: e.y }, next);
-        gatheredSig.value = next;
-      }
+      if (next.length === 0) pickerSig.value = null;
+      else openPicker({ x: e.x, y: e.y }, next);
+      gatheredSig.value = next;
       return;
     }
     const all = [...gathered.filter((u) => !same(u)), t];
     closePicker();
     hideTip();
-    if (armed) placeParts(armed, all);
-    else openPicker({ x: e.x, y: e.y }, all);
+    openPicker({ x: e.x, y: e.y }, all);
   };
 
   const click = (p: NonNullable<typeof press>, e: ToolPointer) => {
@@ -462,10 +451,6 @@ export function createConnectTool(): Tool {
       if (wire || start || gatheredSig.value.length > 0 || pickerSig.value) {
         reset();
         closePicker();
-        return true;
-      }
-      if (armedSig.value) {
-        armedSig.value = null;
         return true;
       }
       return false;
