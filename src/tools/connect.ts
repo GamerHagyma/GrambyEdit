@@ -6,14 +6,12 @@ import {
   BufferGeometry,
   Line,
   LineBasicMaterial,
-  Matrix4,
   Plane,
   Ray,
   Vector3,
   type Vector2,
 } from 'three';
 import { pairKey, type Catalog } from '../core/catalog-types';
-import { cfToMatrix4 } from '../core/cframe';
 import {
   defaultChildSocket,
   eligibleForPoint,
@@ -32,6 +30,7 @@ import { select } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
+import { socketWorld as poseSocketWorld } from '../core/pose';
 import { getViewport } from '../viewport/context';
 import { pickPoint, pickSocket } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
@@ -199,12 +198,10 @@ export function closePicker(): void {
   gatheredSig.value = [];
 }
 
-/** A socket's world position. */
+/** A socket's world position, on its own body for multi-piece parts. */
 function socketWorld(cat: Catalog, e: SocketEnd): Vector3 | null {
-  const world = posesSig.value.world.get(e.part);
-  const s = Object.hasOwn(cat.parts, e.type) ? cat.parts[e.type].sockets[e.socket] : undefined;
-  if (!world || !s) return null;
-  return new Vector3().setFromMatrixPosition(new Matrix4().copy(world).multiply(cfToMatrix4(s.frame)));
+  const m = poseSocketWorld(posesSig.value, cat, docSig.value, e.part, e.socket);
+  return m && new Vector3().setFromMatrixPosition(m);
 }
 
 /** What hovering a socket shows: id, role, name, piece, and why it is unavailable. */

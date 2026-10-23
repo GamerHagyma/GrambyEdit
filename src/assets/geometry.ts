@@ -2,6 +2,7 @@
 import { BoxGeometry, BufferAttribute, BufferGeometry } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog, Manifest } from '../core/catalog-types';
+import { splitBodies } from '../core/mesh-bodies';
 
 export interface Assets {
   readonly catalog: Catalog;
@@ -71,4 +72,45 @@ export function partGeometry(assets: Assets, type: string): BufferGeometry {
   }
   byType.set(type, g);
   return g;
+}
+
+const bodyCache = new WeakMap<Assets, Map<string, readonly BufferGeometry[] | null>>();
+
+/**
+ * A multi-piece part's geometry split per body (D-F3), in `PartDef.bodies` order: each shares the
+ * part's vertex buffers and has its own index. `userData.faceMap` maps a body's triangle back to the
+ * part's (for sub-part lookups). Null for one-piece parts and placeholders.
+ */
+export function bodyGeometries(assets: Assets, type: string): readonly BufferGeometry[] | null {
+  let byType = bodyCache.get(assets);
+  if (!byType) bodyCache.set(assets, (byType = new Map()));
+  if (byType.has(type)) return byType.get(type)!;
+  const def = Object.hasOwn(assets.catalog.parts, type) ? assets.catalog.parts[type] : undefined;
+  const whole = partGeometry(assets, type);
+  const index = whole.index;
+  let out: BufferGeometry[] | null = null;
+  if (def?.bodies && def.mesh && index) {
+    const { triangleBody } = splitBodies(
+      whole.getAttribute('position').array,
+      index.array,
+      def.bodies.map((b) => b.anchor),
+    );
+    out = def.bodies.map((_, body) => {
+      const faces: number[] = [];
+      triangleBody.forEach((b, t) => {
+        if (b === body) faces.push(t);
+      });
+      const idx = new Uint16Array(faces.length * 3);
+      faces.forEach((t, i) =>
+        idx.set(index.array.subarray(3 * t, 3 * t + 3) as Uint16Array, 3 * i),
+      );
+      const g = new BufferGeometry();
+      for (const [name, attr] of Object.entries(whole.attributes)) g.setAttribute(name, attr);
+      g.setIndex(new BufferAttribute(idx, 1));
+      g.userData.faceMap = Uint32Array.from(faces);
+      return g;
+    });
+  }
+  byType.set(type, out);
+  return out;
 }

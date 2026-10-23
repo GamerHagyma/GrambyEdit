@@ -10,7 +10,7 @@ import {
   MeshStandardMaterial,
   SRGBColorSpace,
 } from 'three';
-import { partGeometry, type Assets } from '../assets/geometry';
+import { bodyGeometries, partGeometry, type Assets } from '../assets/geometry';
 import { POSE_APPROX, type Poses } from '../core/pose';
 import type { Doc, Json, PartId } from '../core/types';
 import { SlotAllocator } from './slots';
@@ -66,7 +66,8 @@ export function createPartMaterial(desaturate: { value: number }): MeshStandardM
 
 interface Layer {
   readonly type: string;
-  mesh: InstancedMesh;
+  /** One mesh, or one per body of a multi-piece part (D-F3); a part uses the same slot in each. */
+  meshes: InstancedMesh[];
   readonly slots: SlotAllocator;
   flags: InstancedBufferAttribute;
 }
@@ -84,12 +85,15 @@ export class PartsLayer {
   private readonly desaturate = { value: 1 };
   readonly material = createPartMaterial(this.desaturate);
   private readonly color = new Color();
+  /** The poses last synced, so a preview can move every body of a part with its lead. */
+  private poses: Poses | null = null;
 
   constructor(readonly assets: Assets) {}
 
   /** Writes every part's matrix, color and base flags. Parts gone from the doc free their slots. */
   sync(doc: Doc, poses: Poses, hidden: ReadonlySet<PartId>, desaturateApprox: boolean): void {
     this.desaturate.value = desaturateApprox ? 1 : 0;
+    this.poses = poses;
     for (const [id, layer] of this.owner) {
       if (doc.parts.get(id)?.type !== layer.type) this.release(id, layer);
     }
@@ -98,14 +102,18 @@ export class PartsLayer {
       const layer = this.owner.get(id) ?? this.attach(id, part.type);
       const slot = layer.slots.slotOf(id)!;
       const world = poses.world.get(id);
+      const bodies = poses.bodies?.get(id);
       const isHidden = hidden.has(id);
-      layer.mesh.setMatrixAt(slot, isHidden || !world ? ZERO : world);
+      layer.meshes.forEach((mesh, b) => {
+        const m = bodies?.[b] ?? world;
+        mesh.setMatrixAt(slot, isHidden || !m ? ZERO : m);
+      });
       const rgb = part.props.RGB;
       let f = 0;
       if (isRgb(rgb)) {
         f |= FLAG_PAINTED;
         this.color.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, SRGBColorSpace);
-        layer.mesh.setColorAt(slot, this.color);
+        for (const mesh of layer.meshes) mesh.setColorAt(slot, this.color);
       }
       if ((poses.flags.get(id) ?? 0) & POSE_APPROX) f |= FLAG_APPROX;
       if (isHidden) f |= FLAG_HIDDEN;
@@ -113,21 +121,31 @@ export class PartsLayer {
       layer.flags.setX(slot, f | (this.highlights.get(id) ?? 0));
     }
     for (const layer of this.layers.values()) {
-      layer.mesh.count = layer.slots.highWater;
-      layer.mesh.instanceMatrix.needsUpdate = true;
-      layer.mesh.instanceColor!.needsUpdate = true;
+      for (const mesh of layer.meshes) {
+        mesh.count = layer.slots.highWater;
+        mesh.instanceMatrix.needsUpdate = true;
+        mesh.instanceColor!.needsUpdate = true;
+      }
       layer.flags.needsUpdate = true;
     }
   }
 
-  /** Draws parts at the given world matrices without touching the doc: a transform preview. */
+  /**
+   * Draws parts at the given world matrices without touching the doc: a transform preview. A
+   * multi-piece part's bodies all move with its lead body.
+   */
   setPreview(world: ReadonlyMap<PartId, Matrix4>): void {
     for (const [id, m] of world) {
       const layer = this.owner.get(id);
       const slot = layer?.slots.slotOf(id);
       if (!layer || slot === undefined) continue;
-      layer.mesh.setMatrixAt(slot, m);
-      layer.mesh.instanceMatrix.needsUpdate = true;
+      const bodies = this.poses?.bodies?.get(id);
+      const lead = this.poses?.world.get(id);
+      const delta = bodies && lead ? m.clone().multiply(lead.clone().invert()) : null;
+      layer.meshes.forEach((mesh, b) => {
+        mesh.setMatrixAt(slot, delta && bodies?.[b] ? delta.clone().multiply(bodies[b]) : m);
+        mesh.instanceMatrix.needsUpdate = true;
+      });
     }
   }
 
@@ -157,7 +175,7 @@ export class PartsLayer {
   /** The part in a mesh slot, for ID-pass decoding. */
   partAt(mesh: InstancedMesh, slot: number): PartId | undefined {
     for (const layer of this.layers.values())
-      if (layer.mesh === mesh) return layer.slots.idAt(slot);
+      if (layer.meshes.includes(mesh)) return layer.slots.idAt(slot);
     return undefined;
   }
 
@@ -169,21 +187,16 @@ export class PartsLayer {
     return n;
   }
 
-  /** The mesh and instance slot of a part, for picking. */
-  locate(id: PartId): { mesh: InstancedMesh; slot: number } | null {
-    const layer = this.owner.get(id);
-    const slot = layer?.slots.slotOf(id);
-    return layer && slot !== undefined ? { mesh: layer.mesh, slot } : null;
-  }
-
   meshes(): InstancedMesh[] {
-    return [...this.layers.values()].map((l) => l.mesh);
+    return [...this.layers.values()].flatMap((l) => l.meshes);
   }
 
   dispose(): void {
     for (const layer of this.layers.values()) {
-      layer.mesh.geometry.dispose();
-      layer.mesh.dispose();
+      for (const mesh of layer.meshes) {
+        mesh.geometry.dispose();
+        mesh.dispose();
+      }
     }
     this.material.dispose();
     this.layers.clear();
@@ -197,7 +210,7 @@ export class PartsLayer {
       this.layers.set(type, layer);
     }
     const slot = layer.slots.alloc(id);
-    if (layer.slots.capacity > layer.mesh.instanceMatrix.count) this.grow(layer);
+    if (layer.slots.capacity > layer.meshes[0].instanceMatrix.count) this.grow(layer);
     layer.flags.setX(slot, 0);
     this.owner.set(id, layer);
     return layer;
@@ -205,7 +218,7 @@ export class PartsLayer {
 
   private release(id: PartId, layer: Layer): void {
     const slot = layer.slots.slotOf(id)!;
-    layer.mesh.setMatrixAt(slot, ZERO);
+    for (const mesh of layer.meshes) mesh.setMatrixAt(slot, ZERO);
     layer.slots.free(id);
     this.owner.delete(id);
     this.base.delete(id);
@@ -213,17 +226,19 @@ export class PartsLayer {
   }
 
   private createLayer(type: string, capacity: number): Layer {
-    // A per-layer geometry that shares the cached part's buffers, so `aFlags` stays per layer.
-    const base = partGeometry(this.assets, type);
-    const geometry = new BufferGeometry();
-    for (const [name, attr] of Object.entries(base.attributes)) geometry.setAttribute(name, attr);
-    geometry.setIndex(base.index);
     const flags = new InstancedBufferAttribute(new Float32Array(capacity), 1).setUsage(
       DynamicDrawUsage,
     );
-    geometry.setAttribute('aFlags', flags);
-    const mesh = this.createMesh(geometry, capacity, type);
-    return { type, mesh, slots: new SlotAllocator(capacity), flags };
+    // Per-layer geometries that share the cached part's buffers, so `aFlags` stays per layer.
+    const bases = bodyGeometries(this.assets, type) ?? [partGeometry(this.assets, type)];
+    const meshes = bases.map((base) => {
+      const geometry = new BufferGeometry();
+      for (const [name, attr] of Object.entries(base.attributes)) geometry.setAttribute(name, attr);
+      geometry.setIndex(base.index);
+      geometry.setAttribute('aFlags', flags);
+      return this.createMesh(geometry, capacity, type);
+    });
+    return { type, meshes, slots: new SlotAllocator(capacity), flags };
   }
 
   private createMesh(geometry: BufferGeometry, capacity: number, type: string): InstancedMesh {
@@ -238,19 +253,20 @@ export class PartsLayer {
     return mesh;
   }
 
-  /** Rebuilds the layer's mesh at the allocator's doubled capacity, keeping every instance. */
+  /** Rebuilds the layer's meshes at the allocator's doubled capacity, keeping every instance. */
   private grow(layer: Layer): void {
     const cap = layer.slots.capacity;
-    const old = layer.mesh;
     const flags = new InstancedBufferAttribute(new Float32Array(cap), 1).setUsage(DynamicDrawUsage);
     flags.array.set(layer.flags.array);
-    old.geometry.setAttribute('aFlags', flags);
-    const mesh = this.createMesh(old.geometry, cap, layer.type);
-    mesh.instanceMatrix.array.set(old.instanceMatrix.array);
-    mesh.instanceColor!.array.set(old.instanceColor!.array);
-    this.group.remove(old);
-    old.dispose();
-    layer.mesh = mesh;
+    layer.meshes = layer.meshes.map((old) => {
+      old.geometry.setAttribute('aFlags', flags);
+      const mesh = this.createMesh(old.geometry, cap, layer.type);
+      mesh.instanceMatrix.array.set(old.instanceMatrix.array);
+      mesh.instanceColor!.array.set(old.instanceColor!.array);
+      this.group.remove(old);
+      old.dispose();
+      return mesh;
+    });
     layer.flags = flags;
   }
 }

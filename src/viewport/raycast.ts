@@ -9,7 +9,7 @@ import {
   Vector3,
   type Intersection,
 } from 'three';
-import { partGeometry } from '../assets/geometry';
+import { bodyGeometries, partGeometry } from '../assets/geometry';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog } from '../core/catalog-types';
 import type { Poses } from '../core/pose';
@@ -23,6 +23,8 @@ import { readIds } from './id-pass';
 
 export interface Hit {
   part: PartId;
+  /** The body hit, for multi-piece parts (D-F3); 0 otherwise. */
+  body: number;
   point: Vector3;
   normal: Vector3;
   subPart: string;
@@ -54,14 +56,17 @@ function bvhFor(doc: Doc, poses: Poses, cat: Catalog | null): SphereBVH {
     const m = poses.world.get(id);
     if (!m) continue;
     const box = cat?.parts[doc.parts.get(id)!.type]?.mesh ?? PLACEHOLDER_BOX;
-    c.set(
-      (box.min[0] + box.max[0]) / 2,
-      (box.min[1] + box.max[1]) / 2,
-      (box.min[2] + box.max[2]) / 2,
-    ).applyMatrix4(m);
     const radius =
       Math.hypot(box.max[0] - box.min[0], box.max[1] - box.min[1], box.max[2] - box.min[2]) / 2;
-    items.push({ id, center: [c.x, c.y, c.z] as const, radius });
+    // One sphere per body: a multi-piece part's bodies can be far apart.
+    for (const w of poses.bodies?.get(id) ?? [m]) {
+      c.set(
+        (box.min[0] + box.max[0]) / 2,
+        (box.min[1] + box.max[1]) / 2,
+        (box.min[2] + box.max[2]) / 2,
+      ).applyMatrix4(w);
+      items.push({ id, center: [c.x, c.y, c.z] as const, radius });
+    }
   }
   const bvh = new SphereBVH(items);
   bvhCache.set(poses, { doc, bvh });
@@ -91,26 +96,37 @@ export function pickPart(ndc: Vector2, skip?: ReadonlySet<PartId>): Hit | null {
   const o = ray.ray.origin;
   const d = ray.ray.direction;
   let best: Hit | null = null;
+  const seen = new Set<PartId>();
   for (const id of bvhFor(doc, poses, cat).rayCandidates([o.x, o.y, o.z], [d.x, d.y, d.z])) {
-    if (hidden.has(id) || skip?.has(id)) continue;
+    if (seen.has(id) || hidden.has(id) || skip?.has(id)) continue;
+    seen.add(id);
     const part = doc.parts.get(id);
-    const world = poses.world.get(id);
-    if (!part || !world) continue;
-    probe.geometry = partGeometry(assets, part.type);
-    probe.matrixWorld.copy(world);
-    const hits: Intersection[] = [];
-    probe.raycast(ray, hits);
-    for (const h of hits) {
-      if (best && h.distance >= best.distance) continue;
-      const normal = (h.face?.normal ?? new Vector3(0, 1, 0)).clone().transformDirection(world);
-      best = {
-        part: id,
-        point: h.point.clone(),
-        normal,
-        subPart: subPartAt(cat, part.type, h.faceIndex ?? 0),
-        distance: h.distance,
-      };
-    }
+    const lead = poses.world.get(id);
+    if (!part || !lead) continue;
+    const bodies = bodyGeometries(assets, part.type);
+    const worlds = poses.bodies?.get(id);
+    const shapes = bodies ?? [partGeometry(assets, part.type)];
+    shapes.forEach((geometry, body) => {
+      const world = (bodies && worlds?.[body]) || lead;
+      probe.geometry = geometry;
+      probe.matrixWorld.copy(world);
+      const hits: Intersection[] = [];
+      probe.raycast(ray, hits);
+      const faceMap = geometry.userData.faceMap as Uint32Array | undefined;
+      for (const h of hits) {
+        if (best && h.distance >= best.distance) continue;
+        const normal = (h.face?.normal ?? new Vector3(0, 1, 0)).clone().transformDirection(world);
+        const face = h.faceIndex ?? 0;
+        best = {
+          part: id,
+          body,
+          point: h.point.clone(),
+          normal,
+          subPart: subPartAt(cat, part.type, faceMap ? faceMap[face] : face),
+          distance: h.distance,
+        };
+      }
+    });
   }
   return best;
 }

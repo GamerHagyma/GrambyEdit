@@ -11,7 +11,15 @@ import { defaultChildSocket } from '../core/defaults';
 import { frameFromNormal } from '../core/frames';
 import { insertSubDoc } from '../core/ops/clipboard';
 import type { PoseTarget } from '../core/ops/move';
-import { computePoses, poseConn, socketMatrix, subPartMatrix } from '../core/pose';
+import {
+  bodyOfSocket,
+  bodyPivot,
+  bodyWorld,
+  computePoses,
+  poseConn,
+  socketMatrix,
+  subPartMatrix,
+} from '../core/pose';
 import { canBeParent, canTakeChild } from '../core/rules';
 import type { Doc, Part, PartId } from '../core/types';
 import { PLACEHOLDER_BOX } from '../core/approx';
@@ -56,11 +64,12 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
     const host = doc.parts.get(sock.part)!;
     const self = defaultChildSocket(cat, type, host.type, sock.socket)!;
     const world = childWorldViaSocket(
-      poses.world.get(sock.part)!,
+      bodyWorld(poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
       socketMatrix(cat, host.type, sock.socket).m,
       socketMatrix(cat, type, self).m,
       props,
       conv,
+      bodyPivot(cat, type, self),
     );
     return { kind: 'attach', target: { kind: 'socket', ...sock, childSocket: self }, world };
   }
@@ -77,6 +86,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
         socketMatrix(cat, type, mount).m,
         props,
         conv,
+        bodyPivot(cat, type, mount),
       );
       return { kind: 'attach', target: { kind: 'point', part: p.host, uuid: p.uuid }, world };
     }
@@ -90,6 +100,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
         socketMatrix(cat, type, mount).m,
         props,
         conv,
+        bodyPivot(cat, type, mount),
       );
       return {
         kind: 'attach',

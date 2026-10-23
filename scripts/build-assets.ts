@@ -6,15 +6,18 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PLACEHOLDER_BOX } from '../src/core/approx';
 import type {
+  BodyDef,
   Catalog,
   Category,
   Conventions,
   Manifest,
   PartDef,
   PropMeta,
+  SocketDef,
   SocketRole,
   Vec3,
 } from '../src/core/catalog-types';
+import { splitBodies } from '../src/core/mesh-bodies';
 import { applySocketGeometry, parseSocketGeometry } from '../src/core/socket-geometry';
 import type { CFrame12, RGB, SocketId } from '../src/core/types';
 import { buildSockets, countPairs, workshopFrames, type RawPart } from './lib/catalog';
@@ -32,6 +35,51 @@ const DEFAULT_CONVENTIONS: Conventions = {
 const UNPAINTABLE = /^(Input|Output|Glass|Screw|Light)/;
 const GREY: RGB = [128, 128, 128];
 const ORIENTATIONS = ['OrientationX', 'OrientationY', 'OrientationZ'];
+/** A socket facing −Y (rows of Rx(180°)) or +Y, at a point. */
+const DOWN = [1, 0, 0, 0, -1, 0, 0, 0, -1] as const;
+const UP = [1, 0, 0, 0, 1, 0, 0, 0, 1] as const;
+
+type BodyCuration = readonly { name: string; sockets: SocketId[]; anchor: Vec3 }[];
+
+/**
+ * A multi-piece part's bodies (D-F3): pivots from the mesh pieces each anchor picks, and frames for
+ * uncaptured body sockets on the body's bottom centre (child, −Y) or top centre (parent, +Y), the
+ * pattern the user's Button capture shows. Those frames stay approximate.
+ */
+export function applyBodies(
+  sockets: Record<SocketId, SocketDef>,
+  mesh: { readonly positions: ArrayLike<number>; readonly indices: ArrayLike<number> },
+  bodies: BodyCuration,
+): { bodies: BodyDef[]; pieces: Record<SocketId, string> } {
+  const split = splitBodies(
+    mesh.positions,
+    mesh.indices,
+    bodies.map((b) => b.anchor),
+  );
+  const pieces: Record<SocketId, string> = {};
+  const out = bodies.map((b, i): BodyDef => {
+    const { min, max } = split.boxes[i];
+    const c = [0, 1, 2].map((a) => Number(((min[a] + max[a]) / 2).toFixed(4)) + 0);
+    for (const id of b.sockets) {
+      const s = sockets[id];
+      if (!s) continue;
+      pieces[id] = b.name;
+      const y = s.side === 'parent' ? max[1] : min[1];
+      const frame =
+        s.frameSource === 'approx'
+          ? ([
+              c[0],
+              Number(y.toFixed(4)) + 0,
+              c[2],
+              ...(s.side === 'parent' ? UP : DOWN),
+            ] as CFrame12)
+          : s.frame;
+      sockets[id] = { ...s, piece: b.name, frame };
+    }
+    return { name: b.name, sockets: b.sockets, anchor: b.anchor, pivot: c as unknown as Vec3 };
+  });
+  return { bodies: out, pieces };
+}
 
 interface MeshGroupInfo {
   subPart: string;
@@ -117,6 +165,7 @@ export async function buildAssets(opts: {
   );
   const propMeta = readJson<Record<string, PropMeta>>('data/curation/prop-meta.json');
   const paintGroups = readJson<Record<string, string>>('data/curation/paint-groups.json');
+  const bodyCuration = readJson<Record<string, BodyCuration>>('data/curation/bodies.json');
   const partNames = readJson<Record<string, string>>('data/curation/part-names.json');
   const frequency = readJson<{ part_frequency: Record<string, number> }>(
     'data/corpus_stats.json',
@@ -131,10 +180,12 @@ export async function buildAssets(opts: {
     const r = raw[type];
     const paintable = Object.hasOwn(r.props ?? {}, 'RGB');
     let mesh: PartDef['mesh'] = null;
+    let objMesh: ObjMesh | null = null;
     let subParts: Record<string, { cframe: CFrame12; approx: boolean }> = {};
     let mainPartName = partNames[type] ?? type;
     if (r.mesh) {
       const obj = parseObj(readText(r.mesh.obj));
+      objMesh = obj;
       const mtlPath = `meshes/workshop/${type}/${type}.mtl`;
       const kd = existsSync(at(mtlPath)) ? parseMtl(readText(mtlPath)) : {};
       const groups = groupInfo(obj, type, kd);
@@ -174,6 +225,8 @@ export async function buildAssets(opts: {
       mesh ?? PLACEHOLDER_BOX,
       type === 'Part' ? workshop : null,
     );
+    const curated = Object.hasOwn(bodyCuration, type) ? bodyCuration[type] : undefined;
+    const split = curated && objMesh ? applyBodies(s.sockets, objMesh, curated) : null;
     parts[type] = {
       type,
       category: categories[type] ?? 'Fun & Misc',
@@ -181,7 +234,8 @@ export async function buildAssets(opts: {
       paintable,
       corpusCount: frequency[type] ?? 0,
       ...s,
-      pieces: r.pieces ?? null,
+      pieces: split ? { ...r.pieces, ...split.pieces } : (r.pieces ?? null),
+      bodies: split?.bodies ?? null,
       mainPartName,
       subParts,
       props: withOrientation(Object.keys(r.props ?? {})),

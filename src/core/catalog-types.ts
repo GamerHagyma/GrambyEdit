@@ -27,6 +27,18 @@ export interface SocketDef {
   readonly frameSource: FrameSource;
 }
 
+/**
+ * One separately placed body of a multi-piece part (D-F3): a Wire end, a splitter circle, a button's
+ * base. `anchor` picks its mesh pieces (`splitBodies`); `pivot` (part space) is what `Orientation`
+ * turns it about.
+ */
+export interface BodyDef {
+  readonly name: string;
+  readonly sockets: readonly SocketId[];
+  readonly anchor: Vec3;
+  readonly pivot: Vec3;
+}
+
 export interface MeshRef {
   readonly id: number;
   readonly min: Vec3;
@@ -47,6 +59,8 @@ export interface PartDef {
   /** Socket used when mounting on a point or placing; `null` = root-only part (Chassis). */
   readonly defaultMount: SocketId | null;
   readonly pieces: Readonly<Record<SocketId, string>> | null;
+  /** Bodies placed separately, the default lead first; absent or null for one-piece parts. */
+  readonly bodies?: readonly BodyDef[] | null;
   /** The `partName` written into new points on this host. */
   readonly mainPartName: string;
   readonly subParts: Readonly<

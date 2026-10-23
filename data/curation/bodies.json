@@ -1,0 +1,53 @@
+{
+  "_doc": "Multi-piece parts (D-F3): bodies the game places separately, each by its own connection. The first body is the default lead. 'anchor' is a point inside the body's mesh pieces (mesh-component analysis, 2026-10-23); socket membership follows roles (mount = base, signal sockets = circle), confirmed for Button by the user's capture. Which identical circle is which output is a guess and only matters for circles with no connection.",
+  "Wire": [
+    { "name": "A", "sockets": ["1", "2"], "anchor": [0, -0.03, -0.5] },
+    { "name": "B", "sockets": ["3", "4"], "anchor": [0, -0.03, 0.5] }
+  ],
+  "Switch": [
+    { "name": "base", "sockets": ["3"], "anchor": [0, 0, -0.81] },
+    { "name": "circle", "sockets": ["1", "2"], "anchor": [0, -0.03, 0.19] }
+  ],
+  "Button": [
+    { "name": "base", "sockets": ["3"], "anchor": [0, 0, -0.47] },
+    { "name": "circle", "sockets": ["1", "2"], "anchor": [0, -0.06, 0.53] }
+  ],
+  "RemoteButton": [
+    { "name": "base", "sockets": ["3"], "anchor": [0, 0.1, -0.3] },
+    { "name": "circle", "sockets": ["1", "2"], "anchor": [0, -0.28, 0.29] }
+  ],
+  "TripWire": [
+    { "name": "base", "sockets": ["3"], "anchor": [0, 0, -0.5] },
+    { "name": "circle", "sockets": ["1", "2"], "anchor": [0, -0.8, 0.5] }
+  ],
+  "Splitter_1": [
+    { "name": "A", "sockets": ["3", "4"], "anchor": [0, 0, 0.85] },
+    { "name": "B", "sockets": ["5", "6"], "anchor": [0, -0.02, -0.15] }
+  ],
+  "Splitter_2": [
+    { "name": "A", "sockets": ["3", "4"], "anchor": [0.46, 0, 0.46] },
+    { "name": "B", "sockets": ["5", "6"], "anchor": [0.46, -0.02, -0.54] },
+    { "name": "C", "sockets": ["9", "10"], "anchor": [-0.54, -0.02, 0.46] }
+  ],
+  "Splitter_3": [
+    { "name": "A", "sockets": ["3", "4"], "anchor": [0, 0, 0.31] },
+    { "name": "B", "sockets": ["5", "6"], "anchor": [0, -0.02, -0.69] },
+    { "name": "C", "sockets": ["7", "8"], "anchor": [-1, -0.02, 0.31] },
+    { "name": "D", "sockets": ["9", "10"], "anchor": [1, -0.02, 0.31] }
+  ],
+  "Splitter_4": [
+    { "name": "B", "sockets": ["3", "4"], "anchor": [0, 0, 0] },
+    { "name": "A", "sockets": ["1", "2"], "anchor": [0, -0.02, -1] },
+    { "name": "C", "sockets": ["5", "6"], "anchor": [-1, -0.02, 0] },
+    { "name": "D", "sockets": ["7", "8"], "anchor": [1, -0.02, 0] },
+    { "name": "E", "sockets": ["9", "10"], "anchor": [0, -0.02, 1] }
+  ],
+  "RubberBand": [
+    { "name": "A", "sockets": ["1"], "anchor": [-1.7, 0, 0] },
+    { "name": "B", "sockets": ["2"], "anchor": [1.7, 0, 0] }
+  ],
+  "Rope": [
+    { "name": "A", "sockets": ["1"], "anchor": [-0.56, 0, 0] },
+    { "name": "B", "sockets": ["2"], "anchor": [0.57, 0, 0] }
+  ]
+}

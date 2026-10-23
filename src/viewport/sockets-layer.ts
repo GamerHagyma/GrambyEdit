@@ -4,7 +4,7 @@
 import { Group, MathUtils, Matrix4, Vector3 } from 'three';
 import type { Catalog, SocketRole } from '../core/catalog-types';
 import { cfToMatrix4 } from '../core/cframe';
-import type { Poses } from '../core/pose';
+import { bodyOfSocket, bodyWorld, type Poses } from '../core/pose';
 import { isSocketUsed, mountSockets, pieceSockets, socketRole } from '../core/rules';
 import type { Doc, PartId, SocketId } from '../core/types';
 import type { CameraRig } from './cameras/rig';
@@ -77,8 +77,9 @@ export class SocketsLayer {
     type Candidate = { part: PartId; socket: SocketId; m: Matrix4; world: Vector3; d: number };
     const candidate = (id: PartId, socket: SocketId): Candidate | null => {
       const part = doc.parts.get(id);
-      const world = poses.world.get(id);
-      const s = part && cat.parts[part.type]?.sockets[socket];
+      const def = part && cat.parts[part.type];
+      const s = def?.sockets[socket];
+      const world = def && bodyWorld(poses, id, bodyOfSocket(def, socket));
       if (!world || !s) return null;
       const m = world.clone().multiply(cfToMatrix4(s.frame));
       const p = new Vector3().setFromMatrixPosition(m);

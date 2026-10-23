@@ -20,7 +20,14 @@ import {
   type PoseTarget,
 } from '../core/ops/move';
 import type { Draft } from '../core/ops/transact';
-import { poseConn, socketMatrix, type Poses } from '../core/pose';
+import {
+  bodyOfSocket,
+  bodyPivot,
+  bodyWorld,
+  poseConn,
+  socketMatrix,
+  type Poses,
+} from '../core/pose';
 import { canBeChild, canBeParent } from '../core/rules';
 import type { Doc, PartId, Verdict } from '../core/types';
 import { posesSig } from '../state/derived';
@@ -320,11 +327,12 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       canBeParent(r.check, cat, sock.part, sock.socket).ok
     ) {
       const world = childWorldViaSocket(
-        r.poses.world.get(sock.part)!,
+        bodyWorld(r.poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
         socketMatrix(cat, host.type, sock.socket).m,
         socketMatrix(cat, part.type, self).m,
         part.props,
         conv,
+        bodyPivot(cat, part.type, self),
       );
       return {
         pose: { kind: 'socket', part: sock.part, socket: sock.socket, childSocket: self },
@@ -345,6 +353,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       socketMatrix(cat, part.type, mount).m,
       part.props,
       conv,
+      bodyPivot(cat, part.type, mount),
     );
     return { pose: { kind: 'surface', part: hit.part, frame, partName: hit.subPart }, world };
   }

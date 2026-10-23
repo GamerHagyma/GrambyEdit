@@ -5,7 +5,7 @@ import { matrix4ToCf } from '../cframe';
 import { orientationFromRotation, orientationMatrix, pointFrameFor } from '../conventions';
 import { graphIndex, poseDescendants } from '../graph';
 import { orderIndex } from '../doc';
-import { poseConn, socketMatrix, subPartMatrix, type Poses } from '../pose';
+import { bodyPivot, poseConn, socketMatrix, subPartMatrix, type Poses } from '../pose';
 import { canBeChild, canBeParent, canTakeChild, isSignalJoint } from '../rules';
 import type { Conn, Doc, Part, PartId, SocketId, Uuid, Verdict } from '../types';
 import { draftDoc } from './conns';
@@ -68,6 +68,7 @@ function pointAtCurrentPose(
     socketMatrix(cat, part.type, socket).m,
     part.props,
     conv,
+    bodyPivot(cat, part.type, socket),
   );
   return addPoint(d, host, cf, partName);
 }
@@ -144,6 +145,7 @@ export function setWorldPose(
     socketMatrix(cat, part.type, pc.self).m,
     part.props,
     conv,
+    bodyPivot(cat, part.type, pc.self),
   );
   setPointCFrame(d, host.id, point.uuid, cf);
 }

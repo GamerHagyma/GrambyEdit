@@ -4,7 +4,14 @@ import { Matrix4 } from 'three';
 import type { Catalog, Conventions } from '../catalog-types';
 import { cfToMatrix4, IDENTITY_CF, matrix4ToCf } from '../cframe';
 import { pointFrameFor } from '../conventions';
-import { computePoses, poseConn, socketMatrix, subPartMatrix, type Poses } from '../pose';
+import {
+  bodyPivot,
+  computePoses,
+  poseConn,
+  socketMatrix,
+  subPartMatrix,
+  type Poses,
+} from '../pose';
 import type { CFrame12, Conn, Doc, Part, PartId, Point, SocketId, Uuid } from '../types';
 import { newUuid } from '../uuid';
 import { draftDoc } from './conns';
@@ -191,6 +198,7 @@ function attachCopy(
     socketMatrix(cat, type, self).m,
     props,
     conv,
+    bodyPivot(cat, type, self),
   );
   const uuid = addPoint(d, host.id, cf, partName);
   const part = d.get(copy)!;
