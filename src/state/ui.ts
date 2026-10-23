@@ -16,3 +16,10 @@ export function closeDialog(): void {
 
 /** A short hint in the status bar, set by a tool while it applies (Place: root positions). */
 export const statusHintSig = signal<string | null>(null);
+
+/** An open right-click menu: where, and the commands it offers. */
+export const contextMenuSig = signal<{
+  readonly x: number;
+  readonly y: number;
+  readonly items: readonly { label: string; command: string; disabled?: boolean }[];
+} | null>(null);

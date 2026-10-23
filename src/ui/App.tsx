@@ -10,12 +10,13 @@ import { arm } from '../state/place';
 import { isTypingTarget, resolveKey } from '../state/keymap';
 import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
-import { closeDialog, dialogSig } from '../state/ui';
+import { closeDialog, contextMenuSig, dialogSig } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
 import { toolSig } from '../tools/manager';
 import { getViewport } from '../viewport/context';
 import { AboutDialog } from './dialogs/AboutDialog';
+import { CommandPalette } from './dialogs/CommandPalette';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FirstRun } from './dialogs/FirstRun';
 import { PointDeleteDialog } from './dialogs/PointDeleteDialog';
@@ -24,6 +25,7 @@ import { SettingsDialog } from './dialogs/SettingsDialog';
 import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
 import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
+import { HistoryPanel } from './panels/HistoryPanel';
 import { IssuesPanel } from './panels/IssuesPanel';
 import { Outliner } from './panels/Outliner';
 import { PaintPanel } from './panels/PaintPanel';
@@ -31,6 +33,7 @@ import { PartBrowser } from './panels/PartBrowser';
 import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
+import { ContextMenu } from './widgets/ContextMenu';
 import { PickerHost } from './widgets/PickerHost';
 import './tokens.css';
 
@@ -44,10 +47,28 @@ function Dialogs(): JSX.Element {
       <SettingsDialog open={name === 'settings'} onClose={closeDialog} />
       <AboutDialog open={name === 'about'} onClose={closeDialog} />
       <ShortcutsDialog open={name === 'shortcuts'} onClose={closeDialog} />
+      <CommandPalette open={name === 'palette'} onClose={closeDialog} />
       <FirstRun />
       <PickerHost />
+      <ContextMenuHost />
       <PointDeleteDialog />
     </>
+  );
+}
+
+/** The open right-click menu, if any. */
+function ContextMenuHost(): JSX.Element | null {
+  const menu = contextMenuSig.value;
+  if (!menu) return null;
+  return (
+    <ContextMenu
+      items={menu.items}
+      x={menu.x}
+      y={menu.y}
+      onClose={() => {
+        contextMenuSig.value = null;
+      }}
+    />
   );
 }
 
@@ -169,6 +190,7 @@ export function App(): JSX.Element {
           outliner: <Outliner />,
           stats: <StatsPanel />,
           issues: <IssuesPanel />,
+          history: <HistoryPanel />,
         }}
         status={<Meters />}
       />

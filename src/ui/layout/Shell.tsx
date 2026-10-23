@@ -76,6 +76,7 @@ const RIGHT_TABS = [
   { id: 'outliner', label: 'Outliner' },
   { id: 'stats', label: 'Stats' },
   { id: 'issues', label: 'Issues' },
+  { id: 'history', label: 'History' },
 ] as const;
 
 export type RightTab = (typeof RIGHT_TABS)[number]['id'];

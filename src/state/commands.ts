@@ -353,7 +353,7 @@ registerCommand({ id: 'file.export', label: 'Export code', run: () => openDialog
 registerCommand({
   id: 'app.palette',
   label: 'Command palette',
-  run: notYet('The command palette'),
+  run: () => openDialog('palette'),
 });
 registerCommand({
   id: 'app.shortcuts',

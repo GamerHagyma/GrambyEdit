@@ -6,7 +6,7 @@ import { parseShareText } from '../core/share';
 import type { Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, hoverSig, selectionSig } from '../state/selection';
+import { hiddenSig, hoverSig, select, selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { assetsSig, catalogSig, docSig, loadDoc, viewBus } from '../state/store';
 import { BlenderControls, type NavHost } from './cameras/blender';
@@ -52,6 +52,8 @@ import {
   wbTypeSig,
 } from '../state/workbench';
 import { toast } from '../state/toasts';
+import { contextMenuSig } from '../state/ui';
+import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
 import { GhostLayer } from './ghost';
 import { TransformGizmo } from './gizmo';
 import './thumbs';
@@ -207,6 +209,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     points.update(doc, poses, cat, pointHosts, rig, s.maxSockets, sel.points, freeOnly);
   };
 
+  let markedReady = false;
   const render = () => {
     frame = 0;
     renderer.info.reset();
@@ -225,6 +228,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     renderer.render(scene, rig.camera);
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
     for (const after of ctx.afterRender) after();
+    // The load budget (spec §19.4) is measured to the first frame drawn with the part library loaded.
+    if (ctx.layer && !markedReady) {
+      markedReady = true;
+      performance.mark('grambyedit:first-render');
+    }
   };
   const gizmo = createNavGizmo(el, (axis) => {
     rig.setView(axis);
@@ -346,8 +354,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     ctrl: e.ctrlKey || e.metaKey,
     alt: e.altKey,
   });
+  /** Where the right button went down on the canvas; a press the modal took never sets it. */
+  let rightDown: { x: number; y: number } | null = null;
   const onPointerDown = (e: PointerEvent) => {
     canvas.focus({ preventScroll: true });
+    if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
     if (controls().onPointerDown(e) || e.button !== 0) return;
     canvas.setPointerCapture(e.pointerId);
     toolPointer(toTool(e, 'down', 0));
@@ -372,7 +383,20 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     if (hoverSig.value !== null) hoverSig.value = null;
   };
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
-  const onContextMenu = (e: MouseEvent) => e.preventDefault();
+  /** A right-click without a drag (a drag is the Studio look) opens the part or view menu. */
+  const onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+    const at = rightDown;
+    rightDown = null;
+    if (!at || Math.hypot(e.clientX - at.x, e.clientY - at.y) > 4 || inWorkbench()) return;
+    const hit = pickPart(ndc(e))?.part ?? null;
+    if (hit !== null && !selectionSig.value.parts.has(hit)) select([hit], 'replace');
+    contextMenuSig.value = {
+      x: e.clientX,
+      y: e.clientY,
+      items: hit !== null ? partMenuItems() : viewMenuItems(),
+    };
+  };
   /** Ctrl turns gizmo snapping on wherever focus is; the other keys reach the viewport through `ctx.onKey`. */
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(true);
