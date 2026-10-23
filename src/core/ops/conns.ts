@@ -4,7 +4,7 @@ import { matrix4ToCf } from '../cframe';
 import { wouldCreatePoseCycle } from '../graph';
 import type { Poses } from '../pose';
 import { canBeChild, canBeParent, canTakeChild } from '../rules';
-import type { Conn, Doc, Part, PartId, Verdict } from '../types';
+import type { CFrame12, Conn, Doc, Part, PartId, Verdict } from '../types';
 import type { Draft } from './transact';
 
 const OK: Verdict = { ok: true };
@@ -14,11 +14,16 @@ const POSE_CYCLE: Verdict = {
   message: 'That joint would make this part hold itself up through its own children.',
 };
 
-/** The draft as a Doc, for rule and graph queries. Layout is not read by them. */
+/** The draft as a Doc, layout included, for rule, graph and pose queries (`nextId` is not filled in). */
 export function draftDoc(d: Draft): Doc {
   const order = d.order();
   const parts = new Map(order.map((id): [PartId, Part] => [id, d.get(id)!]));
-  return { parts, order, layout: new Map(), nextId: 0 };
+  const layout = new Map<PartId, CFrame12>();
+  for (const id of order) {
+    const cf = d.layout(id);
+    if (cf !== undefined) layout.set(id, cf);
+  }
+  return { parts, order, layout, nextId: 0 };
 }
 
 /**
