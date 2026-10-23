@@ -18,6 +18,7 @@ import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
 import { IssuesPanel } from './panels/IssuesPanel';
 import { Outliner } from './panels/Outliner';
+import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
 import './tokens.css';
@@ -82,7 +83,12 @@ export function App(): JSX.Element {
     <>
       <Shell
         parts={<LeftDock />}
-        inspector={{ outliner: <Outliner />, stats: <StatsPanel />, issues: <IssuesPanel /> }}
+        inspector={{
+          properties: <Properties />,
+          outliner: <Outliner />,
+          stats: <StatsPanel />,
+          issues: <IssuesPanel />,
+        }}
         status={<Meters />}
       />
       <Dialogs />

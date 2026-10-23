@@ -961,3 +961,195 @@ button.issue-row:hover {
 .dialog-body a {
   color: var(--accent);
 }
+
+/* Properties (spec §13.3) */
+.properties {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+}
+.properties-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 0;
+  font-weight: 600;
+}
+.chip {
+  margin: 0 2px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.chip:hover {
+  border-color: var(--accent);
+}
+.prop-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.prop-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+.prop-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prop-applies {
+  font-size: 11px;
+}
+.button.small {
+  height: 20px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+.number-row {
+  display: flex;
+  gap: 4px;
+}
+.number-scrub,
+.text-value,
+.hex,
+.json,
+.key-capture {
+  width: 100%;
+  min-width: 0;
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.number-scrub {
+  cursor: ew-resize;
+  font-variant-numeric: tabular-nums;
+}
+.number-scrub:focus {
+  cursor: text;
+}
+textarea.text-value,
+.json {
+  height: auto;
+  padding: 4px 6px;
+  resize: vertical;
+}
+.json {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.key-capture {
+  text-align: left;
+  cursor: pointer;
+}
+.key-capture.armed {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.color-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) repeat(3, 52px);
+  align-items: center;
+  gap: 4px;
+}
+.color-field input[type='color'] {
+  width: 24px;
+  height: var(--row);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: none;
+}
+.channel {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.field-error {
+  margin: 2px 0 0;
+  color: var(--bad);
+  font-size: 12px;
+}
+.properties-section {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.properties-section h3 {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.properties-section > p.muted {
+  margin: 0;
+}
+.conn-list,
+.point-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.conn-row,
+.point-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.conn-row.raw code,
+.point-row code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.pose-badge {
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+}
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+}
+.link:hover {
+  text-decoration: underline;
+}
+.info-list {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 0;
+  font-size: 12px;
+}
+.info-list dt {
+  color: var(--muted);
+}
+.info-list dd {
+  margin: 0;
+}
+.pose-approx {
+  margin: 4px 0 0;
+  color: var(--warn);
+  font-size: 12px;
+}
