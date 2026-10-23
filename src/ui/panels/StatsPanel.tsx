@@ -1,5 +1,6 @@
 // Type counts and shares of parts and code (spec §13.4).
 import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import { formatPercent } from '../../core/size';
 import type { BuildStats } from '../../core/stats';
 import { sizeSig, statsSig } from '../../state/derived';
@@ -39,9 +40,48 @@ function selectType(type: string, add: boolean): void {
   );
 }
 
+type SortBy = 'type' | 'count' | 'code';
+type Sort = { by: SortBy; desc: boolean };
+
+/** A column header that sorts by its key; clicking it again flips the direction. */
+function SortHeader({
+  label,
+  by,
+  sort,
+  onSort,
+}: {
+  label: string;
+  by: SortBy;
+  sort: Sort;
+  onSort(s: Sort): void;
+}): JSX.Element {
+  const active = sort.by === by;
+  return (
+    <th scope="col" aria-sort={active ? (sort.desc ? 'descending' : 'ascending') : 'none'}>
+      <button
+        class="sort-header"
+        onClick={() => onSort({ by, desc: active ? !sort.desc : by !== 'type' })}
+      >
+        {label}
+        {active ? (sort.desc ? ' ▾' : ' ▴') : ''}
+      </button>
+    </th>
+  );
+}
+
 export function StatsPanel(): JSX.Element {
   const stats = statsSig.value;
   const { jsonBytes } = sizeSig.value;
+  const [sort, setSort] = useState<Sort>({ by: 'count', desc: true });
+  const sorted = [...stats.types].sort((a, b) => {
+    const d =
+      sort.by === 'type'
+        ? a.type.localeCompare(b.type)
+        : sort.by === 'count'
+          ? a.count - b.count
+          : a.codeBytes - b.codeBytes;
+    return sort.desc ? -d : d;
+  });
   return (
     <div class="stats">
       {stats.types.length === 0 ? (
@@ -50,17 +90,17 @@ export function StatsPanel(): JSX.Element {
         <table class="stats-table">
           <thead>
             <tr>
-              <th scope="col">Type</th>
-              <th scope="col">Count</th>
-              <th scope="col">% of parts</th>
-              <th scope="col">% of code</th>
+              <SortHeader label="Type" by="type" sort={sort} onSort={setSort} />
+              <SortHeader label="Count" by="count" sort={sort} onSort={setSort} />
+              <SortHeader label="% of parts" by="count" sort={sort} onSort={setSort} />
+              <SortHeader label="% of code" by="code" sort={sort} onSort={setSort} />
               <th scope="col">
                 <span class="visually-hidden">Share</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {stats.types.map((t) => (
+            {sorted.map((t) => (
               <tr
                 key={t.type}
                 class="stats-row"

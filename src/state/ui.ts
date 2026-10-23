@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { loadPref, savePref } from '../storage/prefs';
 
 export type DialogName =
   | 'import'
@@ -31,3 +32,11 @@ export const contextMenuSig = signal<{
   readonly y: number;
   readonly items: readonly { label: string; command: string; disabled?: boolean }[];
 } | null>(null);
+
+/** The inspector tab on show (pref `rightTab`); Shell checks it against its tabs. */
+export const inspectorTabSig = signal<string>(loadPref<string>('rightTab', 'properties'));
+
+export function showInspectorTab(id: string): void {
+  inspectorTabSig.value = id;
+  savePref('rightTab', id);
+}

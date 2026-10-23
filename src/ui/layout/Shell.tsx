@@ -1,11 +1,11 @@
 import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { runCommand } from '../../state/commands';
+import { issuesSig } from '../../state/derived';
 import { keysFor } from '../../state/keymap';
 import { selectionSig, selectModeSig } from '../../state/selection';
 import { settingsSig } from '../../state/settings';
-import { openDialog, statusHintSig } from '../../state/ui';
-import { loadPref, savePref } from '../../storage/prefs';
+import { inspectorTabSig, openDialog, showInspectorTab, statusHintSig } from '../../state/ui';
 import { mountViewport } from '../../viewport/index';
 import { CREDITS } from '../credits';
 import { Dock } from './Dock';
@@ -71,6 +71,23 @@ function Menu({ label, items }: { label: string; items: readonly MenuItem[] }): 
   );
 }
 
+/** Error and warning counts in the status bar (spec §13.6); a click opens the Issues tab. */
+function IssueBadge(): JSX.Element {
+  const issues = issuesSig.value;
+  const errors = issues.filter((i) => i.severity === 'error').length;
+  const warnings = issues.filter((i) => i.severity === 'warning').length;
+  const level = errors > 0 ? 'bad' : warnings > 0 ? 'warn' : 'ok';
+  return (
+    <button
+      class={`meter issue-badge ${level}`}
+      title="Open the Issues tab"
+      onClick={() => showInspectorTab('issues')}
+    >
+      {`${errors} ${errors === 1 ? 'error' : 'errors'} · ${warnings} ${warnings === 1 ? 'warning' : 'warnings'}`}
+    </button>
+  );
+}
+
 const RIGHT_TABS = [
   { id: 'properties', label: 'Properties' },
   { id: 'outliner', label: 'Outliner' },
@@ -93,14 +110,11 @@ export function Shell({
 }): JSX.Element {
   const viewport = useRef<HTMLDivElement>(null);
   useEffect(() => mountViewport(viewport.current!), []);
-  const [tab, setTab] = useState<RightTab>(() => {
-    const stored = loadPref<string>('rightTab', 'properties');
-    return RIGHT_TABS.some((t) => t.id === stored) ? (stored as RightTab) : 'properties';
-  });
-  const chooseTab = (id: string) => {
-    setTab(id as RightTab);
-    savePref('rightTab', id);
-  };
+  const stored = inspectorTabSig.value;
+  const tab: RightTab = RIGHT_TABS.some((t) => t.id === stored)
+    ? (stored as RightTab)
+    : 'properties';
+  const chooseTab = (id: string) => showInspectorTab(id);
   const selected = selectionSig.value.parts.size;
   const scheme = settingsSig.value.cameraScheme;
   /** A menu item that runs a command and shows its first key in the current scheme. */
@@ -174,6 +188,7 @@ export function Shell({
           {selectModeSig.value === 'attached' ? 'Part + attached' : 'Part'} · {selected} selected
         </span>
         {status}
+        <IssueBadge />
         {statusHintSig.value && <span class="status-hint">{statusHintSig.value}</span>}
         <small class="credit">{CREDITS}</small>
       </StatusBar>

@@ -1740,3 +1740,20 @@ kbd {
   border-radius: var(--radius);
   background: var(--panel-2);
 }
+
+/* Sortable stats headers and the status-bar issue badge */
+.sort-header {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.stats-table th[aria-sort='ascending'],
+.stats-table th[aria-sort='descending'] {
+  color: var(--text);
+}
+.issue-badge.ok::before {
+  background: var(--ok);
+}
