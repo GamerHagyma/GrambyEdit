@@ -1,13 +1,16 @@
-// The Select tool (spec §12.1): click, Shift/Ctrl modifiers, box select from empty space, L / Ctrl+L.
+// The Select tool (spec §12.1): click, Shift/Ctrl modifiers, box select from empty space (or anywhere
+// after B). L / Ctrl+L are commands (select.linked / select.connected).
+import { signal } from '@preact/signals';
 import type { Vector2 } from 'three';
-import { component, poseDescendants } from '../core/graph';
 import type { PartId } from '../core/types';
 import { hoverSig, select } from '../state/selection';
 import { settingsSig } from '../state/settings';
-import { docSig } from '../state/store';
 import { getViewport } from '../viewport/context';
 import { partsInRect, pickPart } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
+
+/** Set by `select.box`: the next press starts a box select wherever it lands. */
+export const boxNextSig = signal(false);
 
 /** Movement past this many pixels turns a click on empty space into a box drag. */
 const DRAG_PX = 4;
@@ -76,7 +79,10 @@ export function createSelectTool(): Tool {
       if (e.kind === 'move' && e.button === -1) return hover(e.ndc);
       if (e.button !== 0) return;
       if (e.kind === 'down') {
-        start = { x: e.x, y: e.y, hit: pickPart(e.ndc)?.part ?? null };
+        // B (select.box) makes the next drag a box even when it starts on a part.
+        const boxed = boxNextSig.peek();
+        boxNextSig.value = false;
+        start = { x: e.x, y: e.y, hit: boxed ? null : (pickPart(e.ndc)?.part ?? null) };
       } else if (e.kind === 'move' && start) {
         cursor = e.ndc;
         const far = Math.hypot(e.x - start.x, e.y - start.y) > DRAG_PX;
@@ -93,16 +99,6 @@ export function createSelectTool(): Tool {
         }
         start = null;
       }
-    },
-    onKey(e: KeyboardEvent) {
-      if (e.code !== 'KeyL' || e.altKey || e.shiftKey || !cursor) return false;
-      const hit = pickPart(cursor)?.part;
-      if (hit === undefined) return true;
-      const doc = docSig.value;
-      const ids =
-        e.ctrlKey || e.metaKey ? component(doc, hit, () => true) : new Set([hit, ...poseDescendants(doc, hit)]);
-      select(ids, 'add');
-      return true;
     },
   };
 }

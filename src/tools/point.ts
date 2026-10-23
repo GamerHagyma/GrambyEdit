@@ -312,7 +312,7 @@ export function createPointTool(): Tool {
         pointGizmoModeSig.value = e.code === 'KeyG' ? 'translate' : 'rotate';
         return true;
       }
-      return inner.onKey!(e);
+      return (inner.onKey?.(e) ?? false);
     },
   };
 }

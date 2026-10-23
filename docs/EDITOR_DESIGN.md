@@ -989,7 +989,7 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 | Select attached branch / joint-connected | L / Ctrl+L | L / Ctrl+L |
 | Select similar | Shift+G | Shift+G |
 | Delete | X or Delete | Delete |
-| Duplicate | Shift+D | Ctrl+D |
+| Duplicate | Shift+D (then the copies follow the mouse, as G) | Ctrl+D |
 | Copy / Paste | Ctrl+C / Ctrl+V | Ctrl+C / Ctrl+V |
 | Hide / unhide all / isolate | H / Alt+H / Shift+H | H / Alt+H / Shift+H |
 | Undo / Redo | Ctrl+Z / Ctrl+Shift+Z | Ctrl+Z / Ctrl+Y |
@@ -998,7 +998,7 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 | X-ray | Alt+Z | Alt+Z |
 | Eyedropper (Paint) | Alt+click | Alt+click |
 | Save / Import / Export | Ctrl+S / Ctrl+O / Ctrl+E | same |
-| Command palette | F3 or Ctrl+Shift+P | Ctrl+Shift+P |
+| Command palette | F3 or Ctrl+Shift+P | F3 or Ctrl+Shift+P |
 | Shortcuts overlay | ? | ? |
 | Camera | MMB orbit, Shift+MMB pan, wheel zoom | RMB look, WASD + QE, Shift slow, wheel |
 

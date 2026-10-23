@@ -458,7 +458,7 @@ export function createConnectTool(): Tool {
       }
     },
     onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape') return inner.onKey!(e);
+      if (e.key !== 'Escape') return (inner.onKey?.(e) ?? false);
       if (wire || start || gatheredSig.value.length > 0 || pickerSig.value) {
         reset();
         closePicker();

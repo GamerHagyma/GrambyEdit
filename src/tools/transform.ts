@@ -434,7 +434,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
         reset();
         return true;
       }
-      return inner.onKey!(e);
+      return (inner.onKey?.(e) ?? false);
     },
   };
 }

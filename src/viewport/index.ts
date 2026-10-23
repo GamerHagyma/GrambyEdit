@@ -22,9 +22,9 @@ import { getViewport, setViewport, type ViewportContext } from './context';
 import { Outline } from './outline';
 import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
-import { registerTool, toolHotkey, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
+import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { createConnectTool } from '../tools/connect';
-import { cancelModal, transformKey } from '../tools/modal';
+import { cancelModal } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
 import {
   createPointTool,
@@ -56,9 +56,6 @@ import { PointsLayer } from './points-layer';
 import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
-
-const isTyping = (t: EventTarget | null) =>
-  t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 
 function overlay(
   el: HTMLElement,
@@ -246,6 +243,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     workbench,
     gizmo: transformGizmo,
     afterRender: new Set(),
+    onKey: (e) =>
+      (e.key === 'Escape' && transformGizmo.cancel()) || toolKey(e) || controls().onKeyDown(e),
     pointer: null,
     request,
     ndc,
@@ -343,13 +342,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   };
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
   const onContextMenu = (e: MouseEvent) => e.preventDefault();
+  /** Ctrl turns gizmo snapping on wherever focus is; the other keys reach the viewport through `ctx.onKey`. */
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(true);
-    if (isTyping(e.target) || document.querySelector('.dialog-backdrop')) return;
-    if (e.key === 'Escape' && transformGizmo.cancel()) e.preventDefault();
-    else if (controls().onKeyDown(e) || transformKey(e) || toolKey(e) || toolHotkey(e)) {
-      e.preventDefault();
-    }
   };
   const onKeyUp = (e: KeyboardEvent) => {
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(false);
@@ -377,6 +372,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     else if (e.kind === 'frame-selection') host.frameSelection();
     else if (e.kind === 'view') {
       rig.setView(e.axis);
+      request();
+    } else if (e.kind === 'flip-view') {
+      rig.flipView();
       request();
     } else {
       rig.isOrtho = !rig.isOrtho;

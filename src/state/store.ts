@@ -71,7 +71,8 @@ export type ViewEvent =
   | { kind: 'frame-selection' }
   | { kind: 'frame-all' }
   | { kind: 'view'; axis: 'front' | 'back' | 'right' | 'left' | 'top' | 'bottom' }
-  | { kind: 'toggle-ortho' };
+  | { kind: 'toggle-ortho' }
+  | { kind: 'flip-view' };
 
 const viewListeners = new Set<(e: ViewEvent) => void>();
 

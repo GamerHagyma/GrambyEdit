@@ -1,28 +1,39 @@
 // @vitest-environment jsdom
-import { registerTool, toolHotkey, toolSig, type ToolId } from '../../src/tools/manager';
-import { transformKey } from '../../src/tools/modal';
+import { runCommand } from '../../src/state/commands';
+import { resolveKey } from '../../src/state/keymap';
+import { registerTool, toolSig, type ToolId } from '../../src/tools/manager';
 
-const key = (code: string, mods: Partial<KeyboardEventInit> = {}) =>
-  new KeyboardEvent('keydown', { code, ...mods });
+const ev = (code: string, key: string, mods: Partial<KeyboardEventInit> = {}) => ({
+  code,
+  key,
+  ctrlKey: false,
+  shiftKey: false,
+  altKey: false,
+  metaKey: false,
+  ...mods,
+});
 const dummy = (id: ToolId) => ({ id, activate() {}, deactivate() {} });
 
 test('plain digits switch tools in both schemes; Ctrl+digits are left to the browser', () => {
   registerTool(dummy('select'));
   registerTool(dummy('move'));
-  expect(toolHotkey(key('Digit2'))).toBe(true);
+  for (const scheme of ['blender', 'studio'] as const) {
+    expect(resolveKey(ev('Digit2', '2'), scheme)).toBe('tool.move');
+    expect(resolveKey(ev('Digit2', '2', { ctrlKey: true }), scheme)).toBeNull();
+  }
+  expect(runCommand('tool.move')).toBe(true);
   expect(toolSig.value).toBe('move');
-  expect(toolHotkey(key('Digit1', { ctrlKey: true }))).toBe(false);
-  expect(toolSig.value).toBe('move');
-  expect(toolHotkey(key('Numpad1'))).toBe(false);
-  expect(toolHotkey(key('Digit9'))).toBe(false);
 });
 
-test('transform keys never take a Ctrl, Cmd, Alt or Shift combination', () => {
-  for (const code of ['KeyR', 'KeyT', 'KeyG']) {
-    for (const mods of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { shiftKey: true }]) {
-      expect(transformKey(key(code, mods))).toBe(false);
+test('G and R move and rotate in both schemes; with Ctrl, Cmd, Alt or Shift they are not taken', () => {
+  for (const scheme of ['blender', 'studio'] as const) {
+    expect(resolveKey(ev('KeyG', 'g'), scheme)).toBe('transform.grab');
+    expect(resolveKey(ev('KeyR', 'r'), scheme)).toBe('transform.rotate');
+    for (const mods of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }]) {
+      expect(resolveKey(ev('KeyR', 'r', mods), scheme)).toBeNull();
+      expect(resolveKey(ev('KeyT', 't', mods), scheme)).toBeNull();
     }
   }
-  // Nothing is selected and no viewport is mounted, so G and R have nothing to start.
-  expect(transformKey(key('KeyG'))).toBe(false);
+  // Nothing is selected, so G has nothing to move.
+  expect(runCommand('transform.grab')).toBe(false);
 });

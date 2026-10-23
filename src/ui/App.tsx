@@ -3,12 +3,16 @@ import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
-import { assetsSig, baseCatalogSig, redo, socketOverridesSig, undo } from '../state/store';
+import { copyPayload, pasteText, rememberCopy } from '../state/clipboard';
+import { hasCommand, runCommand } from '../state/commands';
+import { isTypingTarget, resolveKey } from '../state/keymap';
+import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
-import { closeDialog, dialogSig, openDialog } from '../state/ui';
+import { closeDialog, dialogSig } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
 import { toolSig } from '../tools/manager';
+import { getViewport } from '../viewport/context';
 import { AboutDialog } from './dialogs/AboutDialog';
 import { ExportDialog } from './dialogs/ExportDialog';
 import { FirstRun } from './dialogs/FirstRun';
@@ -52,32 +56,61 @@ function LeftDock(): JSX.Element {
   return <p class="empty">Nothing here yet</p>;
 }
 
-const isTyping = (t: EventTarget | null) =>
-  t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+/** Keys a focused button, link or list keeps for itself: activation and focus moves. */
+const FOCUS_KEYS = new Set([
+  'Tab',
+  'Enter',
+  ' ',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+]);
+/** Copy and paste go through the browser's copy and paste events, which need no permission. */
+const NATIVE = new Set(['edit.copy', 'edit.paste']);
+
+const dialogOpen = () => document.querySelector('.dialog-backdrop') !== null;
 
 /**
- * App-wide keys until the command registry (Task 30) owns the keyboard: Ctrl+O / Ctrl+E open Import
- * and Export, Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y undo and redo (text fields keep their own), ? opens the guide.
+ * The one key router: the viewport's own keys first (gizmo cancel, tool keys, camera fly keys), then the
+ * keymap's command. Text fields and open dialogs keep their keys.
  */
-function onAppKey(e: KeyboardEvent): void {
-  const ctrl = e.ctrlKey || e.metaKey;
-  if (!ctrl && !e.altKey && e.key === '?' && !isTyping(e.target) && dialogSig.value === null) {
+function onKey(e: KeyboardEvent): void {
+  if (e.defaultPrevented || isTypingTarget(e.target) || dialogOpen()) return;
+  const t = e.target;
+  const control = t instanceof HTMLElement && t !== document.body && t.tagName !== 'CANVAS';
+  if (control && FOCUS_KEYS.has(e.key)) return;
+  if (getViewport()?.onKey(e)) {
     e.preventDefault();
-    openDialog('shortcuts');
     return;
   }
-  if (!ctrl || e.altKey) return;
-  if (!e.shiftKey && (e.code === 'KeyO' || e.code === 'KeyE')) {
-    e.preventDefault();
-    openDialog(e.code === 'KeyO' ? 'import' : 'export');
+  const id = resolveKey(e, settingsSig.value.cameraScheme);
+  if (id === null || NATIVE.has(id) || !hasCommand(id)) return;
+  e.preventDefault();
+  runCommand(id);
+}
+
+/** Ctrl+C on the build: the selection's share code goes to the system clipboard. Selected text copies as usual. */
+function onCopy(e: ClipboardEvent): void {
+  if (
+    isTypingTarget(e.target) ||
+    dialogOpen() ||
+    (window.getSelection()?.toString() ?? '') !== ''
+  ) {
     return;
   }
-  if (isTyping(e.target) || dialogSig.value !== null) return;
-  if (e.code === 'KeyZ' || (e.code === 'KeyY' && !e.shiftKey)) {
-    e.preventDefault();
-    if (e.code === 'KeyZ' && !e.shiftKey) undo();
-    else redo();
-  }
+  const payload = copyPayload();
+  if (!payload || !e.clipboardData) return;
+  e.preventDefault();
+  e.clipboardData.setData('text/plain', payload.code);
+  rememberCopy(payload);
+}
+
+/** Ctrl+V on the build: a share code from the clipboard, or the editor's own copy. */
+function onPaste(e: ClipboardEvent): void {
+  if (isTypingTarget(e.target) || dialogOpen()) return;
+  e.preventDefault();
+  pasteText(e.clipboardData?.getData('text/plain') ?? null);
 }
 
 export function App(): JSX.Element {
@@ -86,7 +119,9 @@ export function App(): JSX.Element {
     const stopTheme = effect(() => {
       document.documentElement.dataset.theme = settingsSig.value.theme;
     });
-    window.addEventListener('keydown', onAppKey);
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('copy', onCopy);
+    document.addEventListener('paste', onPaste);
     let alive = true;
     loadSocketOverrides().then((file) => {
       if (alive) socketOverridesSig.value = file;
@@ -105,7 +140,9 @@ export function App(): JSX.Element {
     return () => {
       alive = false;
       stopTheme();
-      window.removeEventListener('keydown', onAppKey);
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('copy', onCopy);
+      document.removeEventListener('paste', onPaste);
     };
   }, []);
   return (

@@ -61,11 +61,7 @@ export class StudioControls {
   onKeyDown(e: KeyboardEvent): boolean {
     if (e.ctrlKey || e.metaKey || e.altKey) return false;
     this.slow = e.shiftKey;
-    if (e.code === 'KeyF') {
-      this.host.frameSelection();
-      this.host.request();
-      return true;
-    }
+    // F (frame selection) is a command in the keymap; only the fly keys are handled here.
     if (!MOVE_KEYS.has(e.code)) return false;
     this.held.add(e.code);
     if (!this.frame) {

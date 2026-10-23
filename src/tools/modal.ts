@@ -7,7 +7,6 @@ import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { getViewport } from '../viewport/context';
-import { toolSig } from './manager';
 import {
   beginSession,
   cancelSession,
@@ -275,13 +274,4 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
 /** Ends a modal transform without committing (tool switch, viewport teardown). */
 export function cancelModal(): void {
   end(false);
-}
-
-/** G and R start a modal move or rotate, in both camera schemes. True when the key was used. */
-export function transformKey(e: KeyboardEvent): boolean {
-  if (modal || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return false;
-  if (toolSig.value === 'sockets') return false;
-  if (e.code === 'KeyG') return startModal('move');
-  if (e.code === 'KeyR') return startModal('rotate');
-  return false;
 }

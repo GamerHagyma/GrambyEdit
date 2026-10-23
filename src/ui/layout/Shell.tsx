@@ -1,7 +1,9 @@
 import type { ComponentChildren, JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { runCommand } from '../../state/commands';
+import { keysFor } from '../../state/keymap';
 import { selectionSig, selectModeSig } from '../../state/selection';
-import { redo, undo, viewBus } from '../../state/store';
+import { settingsSig } from '../../state/settings';
 import { openDialog } from '../../state/ui';
 import { loadPref, savePref } from '../../storage/prefs';
 import { mountViewport } from '../../viewport/index';
@@ -99,6 +101,13 @@ export function Shell({
     savePref('rightTab', id);
   };
   const selected = selectionSig.value.parts.size;
+  const scheme = settingsSig.value.cameraScheme;
+  /** A menu item that runs a command and shows its first key in the current scheme. */
+  const cmd = (id: string, label: string): MenuItem => ({
+    label,
+    run: () => void runCommand(id),
+    hint: keysFor(id, scheme)[0],
+  });
 
   return (
     <div class="app">
@@ -107,27 +116,36 @@ export function Shell({
         <Menu
           label="File"
           items={[
-            { label: 'Import code…', run: () => openDialog('import'), hint: 'Ctrl+O' },
-            { label: 'Export code…', run: () => openDialog('export'), hint: 'Ctrl+E' },
-            { label: 'Library…', run: () => openDialog('library') },
-            { label: 'Save to library…', run: () => openDialog('save'), hint: 'Ctrl+S' },
+            cmd('file.import', 'Import code…'),
+            cmd('file.export', 'Export code…'),
+            cmd('file.library', 'Library…'),
+            cmd('file.save', 'Save to library…'),
           ]}
         />
         <Menu
           label="Edit"
           items={[
-            { label: 'Undo', run: undo, hint: 'Ctrl+Z' },
-            { label: 'Redo', run: redo, hint: 'Ctrl+Shift+Z' },
+            cmd('edit.undo', 'Undo'),
+            cmd('edit.redo', 'Redo'),
+            cmd('edit.copy', 'Copy'),
+            cmd('edit.paste', 'Paste'),
+            cmd('edit.duplicate', 'Duplicate'),
+            cmd('edit.delete', 'Delete'),
+            cmd('select.all', 'Select all'),
+            cmd('select.none', 'Select none'),
             { label: 'Settings…', run: () => openDialog('settings') },
           ]}
         />
         <Menu
           label="View"
           items={[
-            { label: 'Frame selection', run: () => viewBus.emit({ kind: 'frame-selection' }) },
-            { label: 'Frame all', run: () => viewBus.emit({ kind: 'frame-all' }), hint: 'Home' },
-            { label: 'Toggle orthographic', run: () => viewBus.emit({ kind: 'toggle-ortho' }) },
-            { label: 'Keyboard shortcuts', run: () => openDialog('shortcuts'), hint: '?' },
+            cmd('view.frameSelected', 'Frame selection'),
+            cmd('view.frameAll', 'Frame all'),
+            cmd('view.ortho', 'Toggle orthographic'),
+            cmd('view.hide', 'Hide selected'),
+            cmd('view.unhide', 'Show all'),
+            cmd('view.isolate', 'Isolate selected'),
+            cmd('app.shortcuts', 'Keyboard shortcuts'),
             { label: 'About GrambyEdit', run: () => openDialog('about') },
           ]}
         />

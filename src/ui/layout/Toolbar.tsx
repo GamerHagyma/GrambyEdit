@@ -8,7 +8,8 @@ import {
   type NumberRange,
 } from '../../state/settings';
 import { toast } from '../../state/toasts';
-import { setTool, TOOL_KEYS, toolSig, type ToolId } from '../../tools/manager';
+import { keysFor } from '../../state/keymap';
+import { setTool, toolSig, type ToolId } from '../../tools/manager';
 import {
   pivotModeSig,
   setPivotMode,
@@ -77,7 +78,7 @@ export function Toolbar(): JSX.Element {
   return (
     <div class="toolbar" role="toolbar" aria-label="Tools">
       {TOOLS.map((t) => {
-        const key = TOOL_KEYS[t.id];
+        const key = keysFor(`tool.${t.id}`, s.cameraScheme)[0];
         return (
           <button
             key={t.id}

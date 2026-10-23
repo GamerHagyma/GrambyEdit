@@ -64,40 +64,9 @@ export class BlenderControls {
     this.host.request();
   }
 
-  /**
-   * Numpad 1/3/7 front/right/top, 9 the opposite side, 5 ortho, `.` frame selection, Home frame all.
-   * No Ctrl variants: browsers take Ctrl+digits for switching tabs.
-   */
-  onKeyDown(e: KeyboardEvent): boolean {
-    const { rig } = this.host;
-    if (e.ctrlKey || e.metaKey || e.altKey) return false;
-    switch (e.code) {
-      case 'Numpad1':
-        rig.setView('front');
-        break;
-      case 'Numpad3':
-        rig.setView('right');
-        break;
-      case 'Numpad7':
-        rig.setView('top');
-        break;
-      case 'Numpad9':
-        rig.flipView();
-        break;
-      case 'Numpad5':
-        rig.isOrtho = !rig.isOrtho;
-        break;
-      case 'NumpadDecimal':
-        this.host.frameSelection();
-        break;
-      case 'Home':
-        this.host.frameAll();
-        break;
-      default:
-        return false;
-    }
-    this.host.request();
-    return true;
+  /** Blender's view keys (numpad, Home) are commands in the keymap; nothing is handled here. */
+  onKeyDown(_e: KeyboardEvent): boolean {
+    return false;
   }
 
   dispose(): void {}
