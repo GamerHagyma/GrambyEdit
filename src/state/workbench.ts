@@ -14,6 +14,7 @@ export const wbSocketSig = signal<SocketId | null>(null);
 /** Shows a grey Part cube mated to the selected socket. */
 export const wbMateSig = signal(false);
 
+/** Applied before the save, so a failed save keeps the capture for this session; the caller reports it. */
 async function commitFile(file: SocketGeometryFile): Promise<void> {
   socketOverridesSig.value = file;
   await saveSocketOverrides(file);

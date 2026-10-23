@@ -81,6 +81,9 @@ textarea {
   cursor: pointer;
 }
 .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   height: var(--row);
   padding: 0 10px;
   border-color: var(--line);
@@ -748,4 +751,170 @@ button.issue-row:hover {
 .meter-note {
   color: var(--warn);
   font-size: 11px;
+}
+
+/* Socket Workbench panel (spec §12.7) */
+.workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+}
+.wb-search,
+.part-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.wb-search input {
+  flex: 1;
+  min-width: 0;
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.wb-part-list {
+  max-height: 220px;
+  margin: 6px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.wb-part-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--row);
+  padding: 0 6px;
+  cursor: pointer;
+}
+.wb-part-list li:hover {
+  background: var(--panel-2);
+}
+.wb-part-list li[aria-selected='true'] {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.wb-type {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wb-progress,
+.wb-uses {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.workbench h3 {
+  margin: 6px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wb-detail > p.muted,
+.wb-probes > p.muted {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+.wb-socket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.wb-socket-table th {
+  padding: 2px 4px;
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+.wb-socket-table td {
+  height: var(--row);
+  padding: 0 4px;
+}
+.wb-socket-table tbody tr {
+  cursor: pointer;
+}
+.wb-socket-table tbody tr:hover {
+  background: var(--panel-2);
+}
+.wb-socket-table tr[aria-selected='true'] {
+  background: color-mix(in srgb, var(--active) 25%, transparent);
+}
+.wb-socket-table .button {
+  height: 20px;
+  padding: 0 6px;
+}
+.wb-status {
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.wb-status.captured {
+  color: var(--ok);
+}
+.wb-status.workshop {
+  color: var(--accent);
+}
+.wb-status.approx {
+  color: var(--muted);
+}
+.wb-mate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+}
+.wb-probe {
+  margin-bottom: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.wb-probe header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wb-probe h4 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wb-legend {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+}
+.wb-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+.wb-legend .swatch {
+  flex: none;
+}
+.wb-legend-socket {
+  flex: none;
+  color: var(--muted);
+}
+.wb-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.wb-error {
+  width: 100%;
+  margin: 0;
+  color: var(--bad);
 }
