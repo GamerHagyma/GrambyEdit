@@ -22,3 +22,18 @@ export function parseMtl(text: string): Record<string, [number, number, number]>
   }
   return out;
 }
+
+/** Diffuse texture file (`map_Kd`) per material, keyed by the exact `newmtl` name. */
+export function parseMtlTextures(text: string): Record<string, string> {
+  const out: Record<string, string> = Object.create(null);
+  let current: string | undefined;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    const kind = line.split(/\s+/, 1)[0];
+    if (kind === 'newmtl') current = line.slice(kind.length).trim();
+    else if (kind === 'map_Kd' && current !== undefined) {
+      out[current] = line.slice(kind.length).trim();
+    }
+  }
+  return out;
+}

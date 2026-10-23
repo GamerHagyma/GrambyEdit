@@ -2,7 +2,7 @@
 // Usage: `npm run assets` (writes public/assets/). Fails only on malformed input files.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PLACEHOLDER_BOX } from '../src/core/approx';
 import type {
@@ -21,10 +21,11 @@ import { splitBodies } from '../src/core/mesh-bodies';
 import { applySocketGeometry, parseSocketGeometry } from '../src/core/socket-geometry';
 import type { CFrame12, RGB, SocketId } from '../src/core/types';
 import { buildSockets, countPairs, workshopFrames, type RawPart } from './lib/catalog';
-import { parseMtl } from './lib/mtl';
+import { parseMtl, parseMtlTextures } from './lib/mtl';
 import { materialBase, subPartName } from './lib/names';
 import { parseObj, type ObjMesh } from './lib/obj';
 import { groupsOf, packMeshes, type PackInput } from './lib/pack';
+import { averageColor } from './lib/png';
 
 const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
@@ -145,6 +146,24 @@ function readConventions(path: string): Conventions {
   return c as Conventions;
 }
 
+const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+
+/**
+ * `Kd` per material, times the average colour of its texture where it has one: the game tints a
+ * textured group by its texture (a white `Kd` with a dark tread texture is a dark tire).
+ */
+function tinted(mtlPath: string, text: string): Record<string, [number, number, number]> {
+  const kd = parseMtl(text);
+  for (const [material, file] of Object.entries(parseMtlTextures(text))) {
+    const texture = join(dirname(mtlPath), file);
+    if (!Object.hasOwn(kd, material) || !existsSync(texture)) continue;
+    const avg = averageColor(readFileSync(texture));
+    if (avg)
+      kd[material] = kd[material].map((v, k) => v * linear(avg[k])) as [number, number, number];
+  }
+  return kd;
+}
+
 /** The corpus lists only the orientations real builds used; every type gets all three. */
 export function withOrientation(keys: readonly string[]): string[] {
   return [...keys, ...ORIENTATIONS.filter((k) => !keys.includes(k))];
@@ -187,7 +206,7 @@ export async function buildAssets(opts: {
       const obj = parseObj(readText(r.mesh.obj));
       objMesh = obj;
       const mtlPath = `meshes/workshop/${type}/${type}.mtl`;
-      const kd = existsSync(at(mtlPath)) ? parseMtl(readText(mtlPath)) : {};
+      const kd = existsSync(at(mtlPath)) ? tinted(at(mtlPath), readText(mtlPath)) : {};
       const groups = groupInfo(obj, type, kd);
       const paint = paintable ? paintableGroup(groups, paintGroups[type]) : -1;
       for (const g of groups) {
