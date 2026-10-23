@@ -17,6 +17,7 @@ import {
   type CreationRecord,
 } from '../../storage/library';
 import { Icon } from '../icons';
+import { dateStamp, downloadText } from '../download';
 import { Dialog } from '../layout/Dialog';
 import { fuzzyScore } from '../widgets/fuzzy';
 
@@ -324,37 +325,18 @@ function importFile(file: File): Promise<void> {
 async function exportAll(): Promise<void> {
   try {
     const records = await listCreations();
-    saveFile(`GrambyEdit-library-${stamp()}.json`, exportBundle(records), 'application/json');
+    downloadText(
+      `GrambyEdit-library-${dateStamp()}.json`,
+      exportBundle(records),
+      'application/json',
+    );
   } catch (e) {
     failed(e);
   }
 }
 
 function exportOne(r: CreationRecord): void {
-  saveFile(`${r.name.replace(/[\\/:*?"<>|]/g, '_')}.txt`, r.code, 'text/plain');
-}
-
-/** Saves text through a temporary object URL, revoked after the download has started. */
-function saveFile(name: string, text: string, type: string): void {
-  try {
-    const url = URL.createObjectURL(new Blob([text], { type }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1_000);
-  } catch (e) {
-    toast(`Download failed: ${(e as Error).message}`, 'error');
-  }
-}
-
-/** Local date as yyyy-mm-dd, for file names. */
-function stamp(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  downloadText(`${r.name.replace(/[\\/:*?"<>|]/g, '_')}.txt`, r.code, 'text/plain');
 }
 
 const megabytes = (bytes: number): string =>

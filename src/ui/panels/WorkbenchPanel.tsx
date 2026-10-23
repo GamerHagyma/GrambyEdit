@@ -16,28 +16,13 @@ import {
   wbSocketSig,
   wbTypeSig,
 } from '../../state/workbench';
+import { downloadText } from '../download';
 import { Icon } from '../icons';
 import { CopyButton } from '../widgets/CopyButton';
 import { fuzzyScore } from '../widgets/fuzzy';
 
 const reportFailure = (what: string) => (e: unknown) =>
   toast(`${what}: ${(e as Error).message}`, 'error');
-
-/** Saves text through a temporary object URL, revoked once the download has started. */
-function download(name: string, text: string): void {
-  try {
-    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1_000);
-  } catch (e) {
-    toast(`Download failed: ${(e as Error).message}`, 'error');
-  }
-}
 
 export function WorkbenchPanel(): JSX.Element {
   const [query, setQuery] = useState('');
@@ -59,7 +44,11 @@ export function WorkbenchPanel(): JSX.Element {
     wbSocketSig.value = null;
   };
   const exportFile = () =>
-    download('socket_geometry.json', exportSocketFile(socketOverridesSig.value));
+    downloadText(
+      'socket_geometry.json',
+      exportSocketFile(socketOverridesSig.value),
+      'application/json',
+    );
   const importFile = async (input: HTMLInputElement) => {
     const picked = input.files?.[0];
     input.value = '';
