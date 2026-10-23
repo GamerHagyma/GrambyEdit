@@ -52,6 +52,7 @@ import {
   wbTypeSig,
 } from '../state/workbench';
 import { toast } from '../state/toasts';
+import { arm, dragTypeSig, placeSig } from '../state/place';
 import { contextMenuSig } from '../state/ui';
 import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
 import { GhostLayer } from './ghost';
@@ -383,6 +384,32 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     if (hoverSig.value !== null) hoverSig.value = null;
   };
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
+  /** A part card dragged over the view arms the Place tool; its ghost follows, and the drop places it. */
+  const dragPointer = (e: DragEvent, kind: 'move' | 'up'): ToolPointer => ({
+    kind,
+    button: kind === 'move' ? -1 : 0,
+    x: e.clientX,
+    y: e.clientY,
+    ndc: ndc(e),
+    shift: e.shiftKey,
+    ctrl: e.ctrlKey || e.metaKey,
+    alt: e.altKey,
+  });
+  const onDragOver = (e: DragEvent) => {
+    const type = dragTypeSig.peek();
+    if (type === null || inWorkbench()) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    const src = placeSig.peek();
+    if (src?.kind !== 'part' || src.type !== type) arm({ kind: 'part', type });
+    toolPointer(dragPointer(e, 'move'));
+  };
+  const onDrop = (e: DragEvent) => {
+    if (dragTypeSig.peek() === null) return;
+    e.preventDefault();
+    dragTypeSig.value = null;
+    toolPointer(dragPointer(e, 'up'));
+  };
   /** A right-click without a drag (a drag is the Studio look) opens the part or view menu. */
   const onContextMenu = (e: MouseEvent) => {
     e.preventDefault();
@@ -417,6 +444,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   canvas.addEventListener('pointerleave', onLeave);
   canvas.addEventListener('wheel', onWheel, { passive: false });
   canvas.addEventListener('contextmenu', onContextMenu);
+  canvas.addEventListener('dragover', onDragOver);
+  canvas.addEventListener('drop', onDrop);
   canvas.addEventListener('webglcontextlost', onLost);
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
@@ -574,6 +603,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.removeEventListener('pointerleave', onLeave);
     canvas.removeEventListener('wheel', onWheel);
     canvas.removeEventListener('contextmenu', onContextMenu);
+    canvas.removeEventListener('dragover', onDragOver);
+    canvas.removeEventListener('drop', onDrop);
     canvas.removeEventListener('webglcontextlost', onLost);
     window.removeEventListener('keydown', onKeyDown);
     window.removeEventListener('keyup', onKeyUp);

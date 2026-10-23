@@ -4,6 +4,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { PartDef } from '../../core/catalog-types';
 import { thumbnailUrl } from '../../assets/thumbnails';
 import { toggleFavourite } from '../../state/favourites';
+import { dragTypeSig } from '../../state/place';
 import { Icon } from '../icons';
 
 /** The drag payload: the part type. The viewport reads it when a part is dropped there. */
@@ -66,7 +67,13 @@ export function PartCard({
       class="part-card"
       draggable
       title={hoverText(part)}
-      onDragStart={(e) => e.dataTransfer?.setData(PART_MIME, part.type)}
+      onDragStart={(e) => {
+        e.dataTransfer?.setData(PART_MIME, part.type);
+        dragTypeSig.value = part.type;
+      }}
+      onDragEnd={() => {
+        dragTypeSig.value = null;
+      }}
       onDragOver={onDropPart ? allowDrop : undefined}
       onDrop={onDropPart ? dropOnto : undefined}
     >

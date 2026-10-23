@@ -19,6 +19,8 @@ export type PlaceSource =
   | { kind: 'generated'; sub: Doc };
 
 export const placeSig = signal<PlaceSource | null>(null);
+/** The part type being dragged from the Parts dock, while the drag lasts (spec §13.1). */
+export const dragTypeSig = signal<string | null>(null);
 /** The tool to go back to when placing ends. */
 let before: ToolId = 'select';
 
