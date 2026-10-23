@@ -24,7 +24,7 @@ import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { createConnectTool } from '../tools/connect';
-import { cancelModal } from '../tools/modal';
+import { cancelModal, modalActiveSig, modalGuideSig } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
 import { createPlaceTool } from '../tools/place';
 import {
@@ -55,6 +55,7 @@ import { toast } from '../state/toasts';
 import { arm, dragTypeSig, placeSig } from '../state/place';
 import { contextMenuSig } from '../state/ui';
 import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
+import { AxisGuide } from './axis-guide';
 import { GhostLayer } from './ghost';
 import { TransformGizmo } from './gizmo';
 import './thumbs';
@@ -152,6 +153,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const points = new PointsLayer();
   scene.add(points.group);
   const outline = new Outline();
+  const guide = new AxisGuide();
+  scene.add(guide.line);
   let frame = 0;
   const request = () => {
     if (!frame && !lostBox) frame = requestAnimationFrame(render);
@@ -295,6 +298,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const r = el.getBoundingClientRect();
     renderer.setSize(r.width, r.height, false);
     rig.setSize(r.width, r.height);
+    guide.setResolution(r.width, r.height);
     request();
   };
   const observer = new ResizeObserver(resize);
@@ -522,11 +526,19 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     request();
   });
 
+  const stopGuide = effect(() => {
+    guide.set(modalGuideSig.value);
+    request();
+  });
   const stopGizmo = effect(() => {
     const tool = toolSig.value;
     const s = settingsSig.value;
     const forPoint = tool === 'point';
-    const on = (tool === 'move' || tool === 'rotate' || forPoint) && assetsSig.value !== null;
+    // A modal G or R moves the selection away from the gizmo, so it hides until the modal ends.
+    const on =
+      (tool === 'move' || tool === 'rotate' || forPoint) &&
+      assetsSig.value !== null &&
+      !modalActiveSig.value;
     transformGizmo.handlers = forPoint ? pointGizmoHandlers : gizmoHandlers;
     transformGizmo.configure({
       mode: forPoint ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',
@@ -614,6 +626,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     stopHighlight();
     stopGizmo();
     cancelModal();
+    stopGuide();
+    guide.dispose();
     transformGizmo.dispose();
     stopWorkbench();
     offDebug();

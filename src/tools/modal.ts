@@ -2,7 +2,9 @@
 // mouse. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
 // with no axis a move follows the mouse in the view plane and a rotation turns about the view axis.
 // Typed numbers set the amount, holding Ctrl snaps to the snap steps, Enter or a left click confirms,
-// Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them.
+// Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them. While it runs the
+// transform gizmo hides, and a chosen axis is drawn through the pivot in its colour, as in Blender.
+import { signal } from '@preact/signals';
 import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
@@ -45,6 +47,15 @@ interface Modal {
 }
 
 let modal: Modal | null = null;
+
+/** True while a modal move or rotate runs; the viewport hides the transform gizmo meanwhile. */
+export const modalActiveSig = signal(false);
+/** The constrained axis through the pivot, for the viewport to draw; null when none is chosen. */
+export const modalGuideSig = signal<{
+  readonly origin: Vector3;
+  readonly dir: Vector3;
+  readonly axis: Axis;
+} | null>(null);
 
 export function modalActive(): boolean {
   return modal !== null;
@@ -170,6 +181,8 @@ function end(confirm: boolean): void {
   window.removeEventListener('keyup', onKeyUp, true);
   window.removeEventListener('contextmenu', onContextMenu, true);
   m.hint.remove();
+  modalGuideSig.value = null;
+  modalActiveSig.value = false;
   if (confirm) finishSession(m.session, m.last);
   else cancelSession(m.session);
 }
@@ -204,6 +217,8 @@ function onKey(e: KeyboardEvent): void {
     if (m.axis !== axis) [m.axis, m.space] = [axis, 'world'];
     else if (m.space === 'world') m.space = 'local';
     else m.axis = null;
+    const dir = axisVector(m);
+    modalGuideSig.value = dir && m.axis ? { origin: m.pivot.clone(), dir, axis: m.axis } : null;
     update(m);
   } else if (plain && /^[0-9.]$/.test(e.key)) {
     m.typed += e.key;
@@ -267,6 +282,7 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   window.addEventListener('keydown', onKey, true);
   window.addEventListener('keyup', onKeyUp, true);
   window.addEventListener('contextmenu', onContextMenu, true);
+  modalActiveSig.value = true;
   update(modal);
   return true;
 }
