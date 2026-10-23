@@ -469,3 +469,283 @@ button:disabled {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Inspector: the tab body fills the dock and scrolls; the outliner scrolls its own list. */
+.dock-right .dock-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.dock-right .tab-body {
+  flex: 1;
+}
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.outliner-bar input,
+.part-search input {
+  flex: 1;
+  min-width: 0;
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.outliner-bar .button[aria-pressed='true'] {
+  background: var(--line);
+  border-color: var(--accent);
+}
+
+/* Virtual list */
+.virtual-list {
+  overflow-y: auto;
+}
+.virtual-spacer {
+  position: relative;
+}
+.virtual-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* Outliner */
+.outliner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.outliner-bar {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.outliner-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding-right: 4px;
+  white-space: nowrap;
+  cursor: default;
+}
+.tree-row:hover {
+  background: var(--panel-2);
+}
+.tree-row.selected {
+  background: color-mix(in srgb, var(--select) 22%, transparent);
+}
+.tree-disclosure {
+  flex: none;
+  width: 20px;
+}
+.icon-button.tree-disclosure,
+.icon-button.tree-eye {
+  width: 20px;
+  height: 20px;
+}
+.tree-color {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.tree-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tree-index {
+  flex: none;
+}
+.tree-badge {
+  flex: none;
+  margin-left: auto;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 11px;
+  text-align: center;
+  color: #fff;
+}
+.tree-badge.bad {
+  background: var(--bad);
+}
+.tree-badge.warn {
+  background: var(--warn);
+}
+.tree-badge.info {
+  background: var(--accent);
+}
+.tree-eye {
+  margin-left: auto;
+}
+.tree-badge + .tree-eye {
+  margin-left: 0;
+}
+.tree-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 8px;
+  background: var(--panel-2);
+  font-weight: 600;
+}
+
+/* Stats */
+.stats {
+  padding: 6px;
+}
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.stats-table th {
+  position: sticky;
+  top: 0;
+  padding: 4px;
+  background: var(--panel);
+  color: var(--muted);
+  font-weight: 600;
+  text-align: left;
+}
+.stats-table th:nth-child(2),
+.stats-table th:nth-child(3),
+.stats-table th:nth-child(4) {
+  text-align: right;
+}
+.stats-table td {
+  height: var(--row);
+  padding: 0 4px;
+}
+.stats-row {
+  cursor: pointer;
+}
+.stats-row:hover {
+  background: var(--panel-2);
+}
+.stat-bar {
+  display: block;
+  width: 60px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--panel-2);
+}
+.stat-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.stats-foot {
+  margin: 8px 4px;
+  color: var(--muted);
+}
+
+/* Issues */
+.issues {
+  padding: 6px;
+}
+.issue-group h3 {
+  margin: 8px 4px 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.issue-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.issue-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  text-align: left;
+}
+button.issue-row {
+  cursor: pointer;
+}
+button.issue-row:hover {
+  background: var(--panel-2);
+}
+.issue-row .icon {
+  margin-top: 2px;
+}
+.issue-row.bad .icon {
+  color: var(--bad);
+}
+.issue-row.warn .icon {
+  color: var(--warn);
+}
+.issue-row.info .icon {
+  color: var(--accent);
+}
+.issue-message {
+  flex: 1;
+}
+.issue-code {
+  flex: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Meters (spec §13.5): a dot in the level's color; orange sits between amber and red. */
+.meters {
+  display: flex;
+  gap: 6px;
+}
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+.meter:hover {
+  background: var(--panel-2);
+}
+.meter::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+}
+.meter.warn::before {
+  background: var(--warn);
+}
+.meter.high::before {
+  background: color-mix(in srgb, var(--warn), var(--bad));
+}
+.meter.bad::before {
+  background: var(--bad);
+}
+.meter.bad .meter-note {
+  color: var(--bad);
+}
+.meter-note {
+  color: var(--warn);
+  font-size: 11px;
+}

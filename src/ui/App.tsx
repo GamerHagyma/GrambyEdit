@@ -5,10 +5,37 @@ import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
 import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
+import { closeDialog, dialogSig, openDialog } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
+import { ExportDialog } from './dialogs/ExportDialog';
+import { ImportDialog } from './dialogs/ImportDialog';
+import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
+import { IssuesPanel } from './panels/IssuesPanel';
+import { Outliner } from './panels/Outliner';
+import { StatsPanel } from './panels/StatsPanel';
 import './tokens.css';
+
+/** The open dialog, if it is one that exists yet. */
+function Dialogs(): JSX.Element {
+  const name = dialogSig.value;
+  return (
+    <>
+      <ImportDialog open={name === 'import'} onClose={closeDialog} />
+      <ExportDialog open={name === 'export'} onClose={closeDialog} />
+    </>
+  );
+}
+
+/** Ctrl+O and Ctrl+E open Import and Export. The command registry (Task 30) replaces this. */
+function onFileKey(e: KeyboardEvent): void {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  const name = e.code === 'KeyO' ? 'import' : e.code === 'KeyE' ? 'export' : null;
+  if (name === null) return;
+  e.preventDefault();
+  openDialog(name);
+}
 
 export function App(): JSX.Element {
   useEffect(() => {
@@ -16,6 +43,7 @@ export function App(): JSX.Element {
     const stopTheme = effect(() => {
       document.documentElement.dataset.theme = settingsSig.value.theme;
     });
+    window.addEventListener('keydown', onFileKey);
     let alive = true;
     loadSocketOverrides().then((file) => {
       if (alive) socketOverridesSig.value = file;
@@ -34,7 +62,16 @@ export function App(): JSX.Element {
     return () => {
       alive = false;
       stopTheme();
+      window.removeEventListener('keydown', onFileKey);
     };
   }, []);
-  return <Shell />;
+  return (
+    <>
+      <Shell
+        inspector={{ outliner: <Outliner />, stats: <StatsPanel />, issues: <IssuesPanel /> }}
+        status={<Meters />}
+      />
+      <Dialogs />
+    </>
+  );
 }
