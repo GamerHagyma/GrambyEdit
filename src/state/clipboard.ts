@@ -1,17 +1,17 @@
 // Copy and paste (spec §9.2). A copy keeps the selection as a sub-doc inside the editor (it keeps the
 // roots' relative layout) and puts its share code on the system clipboard, so it also pastes into another
 // tab or the game. Paste uses the system clipboard's code when it holds one, else the editor's copy, and
-// inserts at the origin until placing exists (Task 33).
+// arms the Place tool with it.
 import { signal } from '@preact/signals';
-import { IDENTITY_CF } from '../core/cframe';
 import { encode } from '../core/codec';
 import { toEntries } from '../core/doc';
-import { extractSubDoc, insertSubDoc } from '../core/ops/clipboard';
+import { extractSubDoc } from '../core/ops/clipboard';
 import { parseShareText } from '../core/share';
-import type { Doc, PartId } from '../core/types';
+import type { Doc } from '../core/types';
 import { posesSig } from './derived';
-import { select, selectionSig } from './selection';
-import { catalogSig, commit, docSig } from './store';
+import { arm } from './place';
+import { selectionSig } from './selection';
+import { docSig } from './store';
 import { toast } from './toasts';
 
 /** The last copy, and its code (a paste of that same code uses the sub-doc, which keeps the layout). */
@@ -76,17 +76,7 @@ export function pasteText(text: string | null): void {
     toast('Nothing to paste. Copy parts or a share code first.', 'warn');
     return;
   }
-  const cat = catalogSig.value;
-  if (!cat) return;
-  const insert = sub;
-  let ids: PartId[] = [];
-  commit(`Paste ${parts(insert.order.length)}`, (d) => {
-    const map = insertSubDoc(d, cat, cat.conventions, posesSig.value, insert, {
-      root: IDENTITY_CF,
-    });
-    ids = [...map.values()];
-  });
-  select(ids, 'replace');
+  arm({ kind: 'paste', sub });
 }
 
 /** Pastes from the system clipboard (palette and menus), or the editor's copy when it cannot be read. */

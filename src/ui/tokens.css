@@ -1436,3 +1436,93 @@ kbd {
   font: 600 15px/1 var(--font);
   cursor: pointer;
 }
+
+/* Part browser (spec §13.1) */
+.part-browser {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+}
+.part-search input {
+  flex: 1;
+}
+.part-section h3 {
+  margin: 6px 2px 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.part-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.part-card {
+  position: relative;
+}
+.part-card-arm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  padding: 4px 2px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  cursor: pointer;
+}
+.part-card-arm:hover {
+  border-color: var(--line);
+  background: var(--panel-2);
+}
+.part-thumb {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  color: var(--muted);
+}
+.part-card-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.part-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+.part-star {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  opacity: 0.55;
+}
+.part-star[aria-pressed='true'] {
+  color: var(--active);
+  opacity: 1;
+}
+.part-empty {
+  margin: 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.status-hint {
+  color: var(--warn);
+}

@@ -13,3 +13,6 @@ export function openDialog(name: DialogName): void {
 export function closeDialog(): void {
   dialogSig.value = null;
 }
+
+/** A short hint in the status bar, set by a tool while it applies (Place: root positions). */
+export const statusHintSig = signal<string | null>(null);

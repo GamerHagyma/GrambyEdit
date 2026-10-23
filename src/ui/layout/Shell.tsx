@@ -4,7 +4,7 @@ import { runCommand } from '../../state/commands';
 import { keysFor } from '../../state/keymap';
 import { selectionSig, selectModeSig } from '../../state/selection';
 import { settingsSig } from '../../state/settings';
-import { openDialog } from '../../state/ui';
+import { openDialog, statusHintSig } from '../../state/ui';
 import { loadPref, savePref } from '../../storage/prefs';
 import { mountViewport } from '../../viewport/index';
 import { CREDITS } from '../credits';
@@ -173,6 +173,7 @@ export function Shell({
           {selectModeSig.value === 'attached' ? 'Part + attached' : 'Part'} · {selected} selected
         </span>
         {status}
+        {statusHintSig.value && <span class="status-hint">{statusHintSig.value}</span>}
         <small class="credit">{CREDITS}</small>
       </StatusBar>
       <Toasts />

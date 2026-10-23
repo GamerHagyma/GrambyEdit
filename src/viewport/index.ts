@@ -26,6 +26,7 @@ import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/m
 import { createConnectTool } from '../tools/connect';
 import { cancelModal } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
+import { createPlaceTool } from '../tools/place';
 import {
   createPointTool,
   pointGizmoHandlers,
@@ -51,7 +52,9 @@ import {
   wbTypeSig,
 } from '../state/workbench';
 import { toast } from '../state/toasts';
+import { GhostLayer } from './ghost';
 import { TransformGizmo } from './gizmo';
+import './thumbs';
 import { PointsLayer } from './points-layer';
 import { WorkbenchView } from './workbench-view';
 
@@ -101,6 +104,7 @@ const paintTool = createPaintTool({
   inDisc: partsInDisc,
 });
 const connectTool = createConnectTool();
+const placeTool = createPlaceTool();
 const pointTool = createPointTool();
 const workbenchTool = createWorkbenchTool();
 
@@ -118,6 +122,7 @@ export function mountViewport(el: HTMLElement): () => void {
   registerTool(rotateTool);
   registerTool(paintTool);
   registerTool(connectTool);
+  registerTool(placeTool);
   registerTool(pointTool);
   registerTool(workbenchTool);
   let stop = () => {};
@@ -182,12 +187,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const tool = toolSig.peek();
     const state = transformStateSig.peek();
     const near =
-      tool === 'connect' || tool === 'point'
+      tool === 'connect' || tool === 'point' || tool === 'place'
         ? nearestParts(doc, poses, rig.camera.position, NEAR_PARTS).filter((id) => !hidden.has(id))
         : null;
     let socketParts: PartId[] = [];
     if (state === 'reattach') socketParts = hover === null ? [] : [hover];
-    else if (state === 'idle' && tool === 'connect') socketParts = near!;
+    else if (state === 'idle' && (tool === 'connect' || tool === 'place')) socketParts = near!;
     else if (state === 'idle') {
       socketParts = [...sel.parts].filter((id) => !hidden.has(id));
       if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
@@ -198,7 +203,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       state === 'transform'
         ? []
         : (near ?? [...new Set([...sel.parts, ...selectedHosts])].filter((id) => !hidden.has(id)));
-    points.update(doc, poses, cat, pointHosts, rig, s.maxSockets, sel.points, tool === 'connect');
+    const freeOnly = tool === 'connect' || tool === 'place';
+    points.update(doc, poses, cat, pointHosts, rig, s.maxSockets, sel.points, freeOnly);
   };
 
   const render = () => {
@@ -238,6 +244,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     scene,
     canvas,
     layer: null,
+    ghost: null,
     sockets,
     points,
     workbench,
@@ -421,8 +428,14 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
         scene.remove(ctx.layer.group);
         ctx.layer.dispose();
       }
+      if (ctx.ghost) {
+        scene.remove(ctx.ghost.group);
+        ctx.ghost.dispose();
+      }
       ctx.layer = new PartsLayer(assets);
       scene.add(ctx.layer.group);
+      ctx.ghost = new GhostLayer(assets);
+      scene.add(ctx.ghost.group);
     }
     ctx.layer?.sync(doc, poses, hidden, s.desaturateApprox);
     request();

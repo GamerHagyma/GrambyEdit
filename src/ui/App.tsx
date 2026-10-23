@@ -5,6 +5,8 @@ import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
 import { copyPayload, pasteText, rememberCopy } from '../state/clipboard';
 import { hasCommand, runCommand } from '../state/commands';
+import { creationsSig, refreshCreations, startAutosave } from '../state/library';
+import { arm } from '../state/place';
 import { isTypingTarget, resolveKey } from '../state/keymap';
 import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
@@ -25,6 +27,7 @@ import { Shell } from './layout/Shell';
 import { IssuesPanel } from './panels/IssuesPanel';
 import { Outliner } from './panels/Outliner';
 import { PaintPanel } from './panels/PaintPanel';
+import { PartBrowser } from './panels/PartBrowser';
 import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
@@ -48,12 +51,19 @@ function Dialogs(): JSX.Element {
   );
 }
 
-/** The left dock: the Socket Workbench or the Paint panel for their tools. The part browser arrives with placing (Task 33). */
+/** The left dock: the Socket Workbench or the Paint panel for their tools, else the part browser. */
 function LeftDock(): JSX.Element {
   const tool = toolSig.value;
   if (tool === 'sockets') return <WorkbenchPanel />;
   if (tool === 'paint') return <PaintPanel />;
-  return <p class="empty">Nothing here yet</p>;
+  return (
+    <PartBrowser
+      onArm={(c) =>
+        arm(c.kind === 'part' ? { kind: 'part', type: c.type } : { kind: 'creation', id: c.id })
+      }
+      creations={creationsSig.value.map((r) => ({ id: r.id, name: r.name }))}
+    />
+  );
 }
 
 /** Keys a focused button, link or list keeps for itself: activation and focus moves. */
@@ -123,6 +133,10 @@ export function App(): JSX.Element {
     document.addEventListener('copy', onCopy);
     document.addEventListener('paste', onPaste);
     let alive = true;
+    const stopAutosave = startAutosave();
+    refreshCreations().catch((e: unknown) =>
+      toast(`Could not read the library: ${(e as Error).message}`, 'error'),
+    );
     loadSocketOverrides().then((file) => {
       if (alive) socketOverridesSig.value = file;
     });
@@ -140,6 +154,7 @@ export function App(): JSX.Element {
     return () => {
       alive = false;
       stopTheme();
+      stopAutosave();
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('copy', onCopy);
       document.removeEventListener('paste', onPaste);

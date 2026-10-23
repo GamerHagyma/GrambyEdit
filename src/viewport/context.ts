@@ -1,6 +1,7 @@
 // The mounted viewport, shared with picking and tools without an import cycle through index.ts.
 import type { Scene, Vector2, WebGLRenderer } from 'three';
 import type { CameraRig } from './cameras/rig';
+import type { GhostLayer } from './ghost';
 import type { TransformGizmo } from './gizmo';
 import type { PointsLayer } from './points-layer';
 import type { PartsLayer } from './parts-layer';
@@ -13,6 +14,8 @@ export interface ViewportContext {
   readonly scene: Scene;
   readonly canvas: HTMLCanvasElement;
   layer: PartsLayer | null;
+  /** The Place tool's ghost; made with the parts layer when the assets load. */
+  ghost: GhostLayer | null;
   readonly sockets: SocketsLayer | null;
   readonly points: PointsLayer | null;
   readonly workbench: WorkbenchView | null;

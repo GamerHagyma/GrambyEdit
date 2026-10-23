@@ -3,6 +3,7 @@ import {
   DoubleSide,
   Mesh,
   MeshBasicMaterial,
+  Ray,
   Raycaster,
   Vector2,
   Vector3,
@@ -26,6 +27,16 @@ export interface Hit {
   normal: Vector3;
   subPart: string;
   distance: number;
+}
+
+/** The ray from the camera through a viewport position. */
+export function cursorRay(ndc: Vector2): Ray | null {
+  const vp = getViewport();
+  if (!vp) return null;
+  const camera = vp.rig.camera;
+  const origin = new Vector3(ndc.x, ndc.y, -1).unproject(camera);
+  const far = new Vector3(ndc.x, ndc.y, 1).unproject(camera);
+  return new Ray(origin, far.sub(origin).normalize());
 }
 
 /** Screen-space pick radius for sockets and points, in CSS pixels. */

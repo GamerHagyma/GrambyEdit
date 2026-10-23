@@ -1,7 +1,7 @@
 // Transform tools (spec §12.4, §9.3): the Move and Rotate tools, gizmo drags and drag re-attach, plus
 // the pure helpers and the preview session they share with the modal G/R (modal.ts).
 import { signal } from '@preact/signals';
-import { Matrix4, Plane, Quaternion, Ray, Vector3, type Vector2 } from 'three';
+import { Matrix4, Plane, Quaternion, Vector3, type Vector2 } from 'three';
 import { cfToMatrix4 } from '../core/cframe';
 import type { Catalog, Conventions } from '../core/catalog-types';
 import { childWorldViaPoint, childWorldViaSocket } from '../core/conventions';
@@ -27,7 +27,7 @@ import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { loadPref, savePref } from '../storage/prefs';
 import { getViewport } from '../viewport/context';
-import { pickPart, pickSocket } from '../viewport/raycast';
+import { cursorRay, pickPart, pickSocket } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
 import { clickOp, createSelectTool } from './select';
 
@@ -264,15 +264,6 @@ interface Reattach {
   target: { pose: PoseTarget; world: Matrix4 } | { root: Matrix4 } | null;
 }
 
-function rayAt(ndc: Vector2): Ray | null {
-  const vp = getViewport();
-  if (!vp) return null;
-  const camera = vp.rig.camera;
-  const origin = new Vector3(ndc.x, ndc.y, -1).unproject(camera);
-  const far = new Vector3(ndc.x, ndc.y, 1).unproject(camera);
-  return new Ray(origin, far.sub(origin).normalize());
-}
-
 function beginReattach(id: PartId, ndc: Vector2): Reattach | null {
   const doc = docSig.value;
   const poses = posesSig.value;
@@ -284,7 +275,7 @@ function beginReattach(id: PartId, ndc: Vector2): Reattach | null {
   for (const below of poseDescendants(doc, id)) moving.set(below, id);
   const facing = vp.rig.camera.getWorldDirection(new Vector3());
   const plane = new Plane().setFromNormalAndCoplanarPoint(facing, positionOf(world));
-  const grab = rayAt(ndc)?.intersectPlane(plane, new Vector3()) ?? null;
+  const grab = cursorRay(ndc)?.intersectPlane(plane, new Vector3()) ?? null;
   transformStateSig.value = 'reattach';
   return { id, moving, poses, check: retargetCheckDoc(doc, cat, id), plane, grab, target: null };
 }
@@ -336,7 +327,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   }
   // Empty space: a root follows the cursor; anything else would cancel, so it stays put.
   if (poseConn(part) || !r.grab) return null;
-  const at = rayAt(ndc)?.intersectPlane(r.plane, new Vector3());
+  const at = cursorRay(ndc)?.intersectPlane(r.plane, new Vector3());
   return at ? { root: translation(at.sub(r.grab)) } : null;
 }
 
