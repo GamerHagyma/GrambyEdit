@@ -1,5 +1,5 @@
 // Mating and orientation conventions (spec §10.2–§10.3). Defaults are guesses that calibration replaces.
-import { Euler, Matrix4 } from 'three';
+import { Euler, Matrix4, type Vector3 } from 'three';
 import type { Conventions } from './catalog-types';
 import { matrix4ToCf } from './cframe';
 import type { CFrame12, Json } from './types';
@@ -8,6 +8,7 @@ export const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
   orientationOrder: 'XYZ',
   orientationOnPoints: true,
+  orientationPivot: 'part',
 };
 
 const RX180 = new Matrix4().set(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
@@ -21,7 +22,7 @@ export function matingMatrix(c: Conventions): Matrix4 {
 
 const angle = (v: Json | undefined) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
 
-/** `R`: the child's `OrientationX/Y/Z` (degrees) about the parent socket's axes; missing keys are 0. */
+/** `R`: the child's `OrientationX/Y/Z` (degrees) in the convention's order; missing keys are 0. */
 export function orientationMatrix(props: Readonly<Record<string, Json>>, c: Conventions): Matrix4 {
   const x = angle(props.OrientationX);
   const y = angle(props.OrientationY);
@@ -31,23 +32,57 @@ export function orientationMatrix(props: Readonly<Record<string, Json>>, c: Conv
   return m.makeRotationFromEuler(new Euler(x * DEG, y * DEG, z * DEG, c.orientationOrder));
 }
 
-/** `World(c) = World(q) · S(q, b) · R(c) · M · S(c, a)⁻¹`. */
+/** The `Orientation` angles of a rotation matrix: degrees in `order`, 4 decimals, no −0. */
+export function orientationFromRotation(
+  m: Matrix4,
+  order: Conventions['orientationOrder'],
+): { x: number; y: number; z: number } {
+  const e = new Euler().setFromRotationMatrix(m, order);
+  const deg = (r: number) => Number((r / DEG).toFixed(4)) + 0;
+  return { x: deg(e.x), y: deg(e.y), z: deg(e.z) };
+}
+
+/** `R` turning about `pivot` (part space): `T(p) · R · T(−p)`. */
+function pivoted(r: Matrix4, pivot: Vector3 | undefined): Matrix4 {
+  if (!pivot || pivot.lengthSq() === 0) return r;
+  return new Matrix4()
+    .makeTranslation(pivot.x, pivot.y, pivot.z)
+    .multiply(r)
+    .multiply(new Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z));
+}
+
+/**
+ * A child's world matrix from `at`, the world frame of the parent socket or point it mates with: the
+ * one place `R` is applied. `'part'`: `at · M · S(c, a)⁻¹ · T(p) · R · T(−p)`, so `R` turns the child
+ * about its own pivot `p` (its origin unless given). `'socket'`: `at · R · M · S(c, a)⁻¹`.
+ */
+export function mateWorld(
+  at: Matrix4,
+  childSocket: Matrix4,
+  childProps: Readonly<Record<string, Json>>,
+  c: Conventions,
+  pivot?: Vector3,
+): Matrix4 {
+  const r = orientationMatrix(childProps, c);
+  const mated = matingMatrix(c).multiply(childSocket.clone().invert());
+  return c.orientationPivot === 'socket'
+    ? at.clone().multiply(r).multiply(mated)
+    : at.clone().multiply(mated).multiply(pivoted(r, pivot));
+}
+
+/** `World(c)` for a socket joint: `mateWorld(World(q) · S(q, b), …)`. */
 export function childWorldViaSocket(
   parentWorld: Matrix4,
   parentSocket: Matrix4,
   childSocket: Matrix4,
   childProps: Readonly<Record<string, Json>>,
   c: Conventions,
+  pivot?: Vector3,
 ): Matrix4 {
-  return parentWorld
-    .clone()
-    .multiply(parentSocket)
-    .multiply(orientationMatrix(childProps, c))
-    .multiply(matingMatrix(c))
-    .multiply(childSocket.clone().invert());
+  return mateWorld(parentWorld.clone().multiply(parentSocket), childSocket, childProps, c, pivot);
 }
 
-/** `World(c) = World(h) · Sub · CF(u) · Re(c) · M · S(c, a)⁻¹`; `Re` is the identity unless `orientationOnPoints`. */
+/** `World(c)` for a point mount: `mateWorld(World(h) · Sub · CF(u), …)`; `Re` is the identity unless `orientationOnPoints`. */
 export function childWorldViaPoint(
   hostWorld: Matrix4,
   subPart: Matrix4,
@@ -55,13 +90,14 @@ export function childWorldViaPoint(
   childSocket: Matrix4,
   childProps: Readonly<Record<string, Json>>,
   c: Conventions,
+  pivot?: Vector3,
 ): Matrix4 {
-  return childWorldViaSocket(
-    hostWorld.clone().multiply(subPart),
-    point,
+  return mateWorld(
+    hostWorld.clone().multiply(subPart).multiply(point),
     childSocket,
     c.orientationOnPoints ? childProps : {},
     c,
+    pivot,
   );
 }
 
@@ -73,16 +109,13 @@ export function pointFrameFor(
   childSocket: Matrix4,
   childProps: Readonly<Record<string, Json>>,
   c: Conventions,
+  pivot?: Vector3,
 ): CFrame12 {
-  const re = orientationMatrix(c.orientationOnPoints ? childProps : {}, c);
-  return matrix4ToCf(
-    hostWorld
-      .clone()
-      .multiply(subPart)
-      .invert()
-      .multiply(childWorld)
-      .multiply(childSocket)
-      .multiply(matingMatrix(c).invert())
-      .multiply(re.invert()),
-  );
+  const r = orientationMatrix(c.orientationOnPoints ? childProps : {}, c);
+  const unmate = childSocket.clone().multiply(matingMatrix(c).invert());
+  const toPoint =
+    c.orientationPivot === 'socket'
+      ? childWorld.clone().multiply(unmate).multiply(r.invert())
+      : childWorld.clone().multiply(pivoted(r.invert(), pivot)).multiply(unmate);
+  return matrix4ToCf(hostWorld.clone().multiply(subPart).invert().multiply(toPoint));
 }

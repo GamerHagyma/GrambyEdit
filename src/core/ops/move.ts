@@ -1,8 +1,8 @@
 // Moving parts (spec §9.3): "mirror the game" without ever silently breaking a signal joint.
-import { Matrix4, Vector3 } from 'three';
+import { Matrix4, Quaternion, Vector3 } from 'three';
 import type { Catalog, Conventions } from '../catalog-types';
 import { matrix4ToCf } from '../cframe';
-import { pointFrameFor } from '../conventions';
+import { orientationFromRotation, orientationMatrix, pointFrameFor } from '../conventions';
 import { graphIndex, poseDescendants } from '../graph';
 import { orderIndex } from '../doc';
 import { poseConn, socketMatrix, subPartMatrix, type Poses } from '../pose';
@@ -260,12 +260,59 @@ export function topmost(doc: Doc, ids: Iterable<PartId>): PartId[] {
   return list.filter((id) => !carried.has(id));
 }
 
+/**
+ * Whether turning `part` goes through its `Orientation` props (D-F2): it hangs from a socket, or from a
+ * point that `Orientation` applies on, and `Orientation` turns a part about its own origin.
+ */
+export function turnsInPlace(part: Part, conv: Conventions): boolean {
+  const t = poseConn(part)?.target;
+  return (
+    conv.orientationPivot !== 'socket' &&
+    t !== undefined &&
+    (t.kind === 'socket' || conv.orientationOnPoints)
+  );
+}
+
+/**
+ * Turns a part about its own origin by the world rotation `turn`, through its `Orientation` props, as
+ * the in-game rotate tool does. Only for parts `turnsInPlace` accepts. Existing keys keep their place;
+ * new non-zero ones are appended.
+ */
+export function rotateInPlace(
+  d: Draft,
+  conv: Conventions,
+  poses: Poses,
+  id: PartId,
+  turn: Quaternion,
+): void {
+  const part = d.get(id)!;
+  const r = orientationMatrix(part.props, conv);
+  // World = Base · R with R about the origin, so the world turn is Base⁻¹ · turn · Base in part space.
+  const base = new Quaternion().setFromRotationMatrix(
+    poses.world.get(id)!.clone().multiply(r.clone().invert()),
+  );
+  const local = base.clone().invert().multiply(turn).multiply(base);
+  const o = orientationFromRotation(
+    new Matrix4().makeRotationFromQuaternion(local).multiply(r),
+    conv.orientationOrder,
+  );
+  const props = { ...part.props };
+  for (const [key, v] of [
+    ['OrientationX', o.x],
+    ['OrientationY', o.y],
+    ['OrientationZ', o.z],
+  ] as const) {
+    if (v !== 0 || Object.hasOwn(props, key)) props[key] = v;
+  }
+  d.set({ ...part, props });
+}
+
 const AXES = { X: [1, 0, 0], Y: [0, 1, 0] } as const;
 
 /**
- * Rotates a part in place by `degrees` about its own X or Y axis. Socket-joined parts that take the
- * matching `Orientation` prop rotate the game's way, through that prop; others are freed and turned
- * through their point or layout.
+ * Rotates a part in place by `degrees` about its own X or Y axis. Parts whose pose takes `Orientation`
+ * (socket joints, and point mounts when `orientationOnPoints`) rotate the game's way, adding to that
+ * prop; roots turn through their layout.
  */
 export function nativeRotate(
   d: Draft,
@@ -278,7 +325,8 @@ export function nativeRotate(
 ): void {
   const part = d.get(id)!;
   const key = `Orientation${axis}`;
-  if (poseConn(part)?.target.kind === 'socket' && propApplies(cat, part, key)) {
+  const t = poseConn(part)?.target;
+  if (t && (t.kind === 'socket' || conv.orientationOnPoints) && propApplies(cat, part, key)) {
     const now = typeof part.props[key] === 'number' ? (part.props[key] as number) : 0;
     setProp(d, cat, [id], key, now + degrees);
     return;

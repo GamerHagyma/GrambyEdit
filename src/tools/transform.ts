@@ -13,8 +13,10 @@ import {
   makeFreeMovable,
   retargetCheckDoc,
   retargetPose,
+  rotateInPlace,
   setWorldPose,
   topmost,
+  turnsInPlace,
   type PoseTarget,
 } from '../core/ops/move';
 import type { Draft } from '../core/ops/transact';
@@ -109,9 +111,18 @@ export function deltaMatrix(delta: TransformDelta, origin: Vector3): Matrix4 {
     .multiply(translation(c.clone().negate()));
 }
 
+/** True when `delta` turns a part about its own origin (a rotation that leaves the origin put). */
+function turnsAboutOrigin(delta: Matrix4, world: Matrix4): boolean {
+  const o = positionOf(world);
+  const turn = new Quaternion().setFromRotationMatrix(delta);
+  return turn.angleTo(new Quaternion()) > 1e-9 && o.clone().applyMatrix4(delta).distanceTo(o) < 1e-9;
+}
+
 /**
- * Moves each of `ids` (topmost parts: none carries another) to `deltaOf(id) · world`, freeing socket
- * joints as spec §9.3 says; descendants follow. Returns the reasons of the parts that cannot move.
+ * Moves each of `ids` (topmost parts: none carries another) to `deltaOf(id) · world`; descendants
+ * follow. A jointed part turned about its own origin turns through its `Orientation` props, as in
+ * game (D-F2); anything else is freed as spec §9.3 says. Returns the reasons of the parts that cannot
+ * move.
  */
 export function applyTransform(
   d: Draft,
@@ -125,12 +136,17 @@ export function applyTransform(
   for (const id of ids) {
     const world = poses.world.get(id);
     if (!world) continue;
+    const delta = deltaOf(id);
+    if (turnsInPlace(d.get(id)!, conv) && turnsAboutOrigin(delta, world)) {
+      rotateInPlace(d, conv, poses, id, new Quaternion().setFromRotationMatrix(delta));
+      continue;
+    }
     const free = makeFreeMovable(d, cat, conv, poses, id);
     if (!free.ok) {
       refused.push(free.reason);
       continue;
     }
-    setWorldPose(d, cat, conv, poses, id, deltaOf(id).clone().multiply(world));
+    setWorldPose(d, cat, conv, poses, id, delta.clone().multiply(world));
   }
   return refused;
 }
@@ -161,6 +177,8 @@ export interface Session {
   /** Every part that moves (topmost parts and their pose descendants), mapped to its topmost part. */
   readonly moving: ReadonlyMap<PartId, PartId>;
   readonly poses: Poses;
+  /** Topmost parts that turn about their own origin, through `Orientation`, whatever the pivot. */
+  readonly inPlace: ReadonlySet<PartId>;
 }
 
 /** Starts a transform of the selection; null when nothing is selected or the library is not loaded. */
@@ -168,7 +186,8 @@ export function beginSession(): Session | null {
   const doc = docSig.value;
   const poses = posesSig.value;
   const sel = [...selectionSig.value.parts].filter((id) => poses.world.has(id));
-  if (sel.length === 0 || catalogSig.value === null) return null;
+  const cat = catalogSig.value;
+  if (sel.length === 0 || cat === null) return null;
   const ids = topmost(doc, sel);
   const moving = new Map<PartId, PartId>();
   for (const id of ids) {
@@ -176,7 +195,8 @@ export function beginSession(): Session | null {
     for (const below of poseDescendants(doc, id)) moving.set(below, id);
   }
   transformStateSig.value = 'transform';
-  return { ids, moving, poses };
+  const inPlace = new Set(ids.filter((id) => turnsInPlace(doc.parts.get(id)!, cat.conventions)));
+  return { ids, moving, poses, inPlace };
 }
 
 /** Draws the moving parts at `deltaOf(topmost) · world` without changing the doc. */
@@ -201,8 +221,11 @@ export function previewMoving(
   vp.request();
 }
 
-const originDelta = (s: { poses: Poses }, delta: TransformDelta) => (top: PartId) =>
-  deltaMatrix(delta, positionOf(s.poses.world.get(top)!));
+const originDelta = (s: Session, delta: TransformDelta) => (top: PartId) =>
+  deltaMatrix(
+    delta.kind === 'rotate' && s.inPlace.has(top) ? { ...delta, pivot: 'individual' } : delta,
+    positionOf(s.poses.world.get(top)!),
+  );
 
 export function previewSession(s: Session, delta: TransformDelta): void {
   previewMoving(s.moving, s.poses, originDelta(s, delta));

@@ -177,7 +177,6 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
         const ps = socketFrame(cat, parent.type, t.socket, 'parent');
         if (ps.approx) flag |= POSE_APPROX;
         m.multiply(ps.m);
-        m.multiply(orientationMatrix(part.props, conv));
       } else {
         const point = parent.points?.get(t.uuid);
         // An undeclared uuid (E-UUID) seats the child at the host origin, flagged approximate.
@@ -188,9 +187,13 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
         } else {
           flag |= POSE_APPROX;
         }
-        if (conv.orientationOnPoints) m.multiply(orientationMatrix(part.props, conv));
       }
-      m.multiply(after);
+      // `mateWorld` (conventions.ts) inline: R turns the child about its origin, or (v1 guess) the socket.
+      const turns = t.kind === 'socket' || conv.orientationOnPoints;
+      const r = turns ? orientationMatrix(part.props, conv) : null;
+      if (r && conv.orientationPivot === 'socket') m.multiply(r).multiply(after);
+      else if (r) m.multiply(after).multiply(r);
+      else m.multiply(after);
     }
     world.set(id, m);
     flags.set(id, flag);

@@ -82,3 +82,26 @@ test('a socket-joined part is converted to a point mount without jumping', () =>
   expect(doc.parts.get(2)!.conns[0].target.kind).toBe('point');
   same(computePoses(doc, MINI, C).world.get(2)!, poses.world.get(2)!);
 });
+
+test('turning a socket-joined part keeps its joint and writes its Orientation, as the game does', () => {
+  const d0 = docOf(part(1, 'Part'), part(2, 'Gate-AND', [sock('4', 1, '6')], { OrientationX: 1080 }));
+  const poses = computePoses(d0, MINI, C);
+  const world = poses.world.get(2)!;
+  const quarter = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2);
+  const delta = deltaMatrix(
+    { kind: 'rotate', rotation: quarter, pivot: 'individual' },
+    new Vector3().setFromMatrixPosition(world),
+  );
+  const { doc } = transact(d0, 'Rotate 1 part', (d) => {
+    applyTransform(d, MINI, C, poses, [2], () => delta);
+  });
+  const turned = doc.parts.get(2)!;
+  expect(turned.conns).toEqual(d0.parts.get(2)!.conns);
+  for (const k of ['OrientationX', 'OrientationY', 'OrientationZ']) {
+    expect(Number.isFinite(Number(turned.props[k] ?? 0))).toBe(true);
+  }
+  const after = computePoses(doc, MINI, C).world.get(2)!;
+  after.elements.forEach((v, i) =>
+    expect(v).toBeCloseTo(delta.clone().multiply(world).elements[i], 4),
+  );
+});

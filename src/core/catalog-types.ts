@@ -73,6 +73,11 @@ export interface Conventions {
   readonly mating: 'rx180' | 'rz180';
   readonly orientationOrder: 'XYZ' | 'XZY' | 'YXZ' | 'YZX' | 'ZXY' | 'ZYX';
   readonly orientationOnPoints: boolean;
+  /**
+   * What `Orientation` turns about: the part's own origin after mating (`'part'`, as the in-game rotate
+   * tool turns parts about their centre), or the parent socket before mating (`'socket'`, the v1 guess).
+   */
+  readonly orientationPivot: 'part' | 'socket';
 }
 
 export interface Catalog {

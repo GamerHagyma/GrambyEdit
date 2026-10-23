@@ -287,5 +287,10 @@ export const MINI: Catalog = {
     Bullets: { widget: 'int', label: 'Bullets' },
     Activated: { widget: 'bool', label: 'Activated' },
   },
-  conventions: { mating: 'rx180', orientationOrder: 'XYZ', orientationOnPoints: true },
+  conventions: {
+    mating: 'rx180',
+    orientationOrder: 'XYZ',
+    orientationOnPoints: true,
+    orientationPivot: 'part',
+  },
 };
