@@ -205,7 +205,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       socketParts = [...sel.parts].filter((id) => !hidden.has(id));
       if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
     }
-    const attach = state === 'idle' ? poseTargets(doc, [...sel.parts].slice(0, NEAR_PARTS)) : null;
+    const attach =
+      state === 'idle' ? poseTargets(doc, cat, [...sel.parts].slice(0, NEAR_PARTS)) : null;
     sockets.update(doc, poses, cat, socketParts, rig, s.maxSockets, attach?.sockets);
     const hostOf = (key: string) => Number(key.slice(0, key.indexOf(':')));
     const hoverPoint = hoverPointSig.value;
@@ -559,10 +560,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const forPoint =
       tool === 'point' || ((tool === 'move' || tool === 'rotate') && selectedPoint() !== null);
     // A modal G or R moves the selection away from the gizmo, so it hides until the modal ends.
+    // A drag re-attach moves the part away from the gizmo too.
     const on =
       (tool === 'move' || tool === 'rotate' || forPoint) &&
       assetsSig.value !== null &&
-      !modalActiveSig.value;
+      !modalActiveSig.value &&
+      transformStateSig.value !== 'reattach';
     transformGizmo.handlers = forPoint ? pointGizmoHandlers : gizmoHandlers;
     transformGizmo.configure({
       mode: tool === 'point' ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',

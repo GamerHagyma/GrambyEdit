@@ -174,6 +174,18 @@ function replacedPose(
   return { keepOld, rest: keepOld || !pc ? part.conns : part.conns.filter((c) => c !== pc) };
 }
 
+/** The doc `retargetBody` checks availability in: `id` without the conn of the body it re-attaches. */
+export function bodyCheckDoc(doc: Doc, cat: Catalog, id: PartId, body: number): Doc {
+  const part = doc.parts.get(id)!;
+  const sockets = cat.parts[part.type]?.bodies?.[body]?.sockets ?? [];
+  const k = part.conns.findIndex((c) => c.target.kind !== 'raw' && sockets.includes(c.self));
+  return withConns(
+    doc,
+    id,
+    part.conns.filter((_, i) => i !== k),
+  );
+}
+
 /** The doc `retargetPose` checks socket availability in: `id` without the joint a re-attach replaces. */
 export function retargetCheckDoc(doc: Doc, cat: Catalog, id: PartId): Doc {
   return withConns(doc, id, replacedPose(doc, cat, id).rest);
@@ -242,6 +254,110 @@ export function retargetPose(
   d.set({ ...d.get(id)!, conns: [conn, ...rest] });
   if (!pc) d.setLayout(id, null);
   if (pc?.target.kind === 'point' && !keepOld) dropUnusedPoint(d, pc.target.part, pc.target.uuid);
+  return { ok: true };
+}
+
+/**
+ * The parts that hang from one body of a multi-piece part: those whose pose conn targets one of its
+ * sockets, and everything posed off them.
+ */
+export function bodyDescendants(doc: Doc, cat: Catalog, id: PartId, body: number): Set<PartId> {
+  const part = doc.parts.get(id);
+  const sockets = part && cat.parts[part.type]?.bodies?.[body]?.sockets;
+  const out = new Set<PartId>();
+  if (!sockets) return out;
+  const { socketUsers } = graphIndex(doc);
+  for (const socket of sockets) {
+    for (const r of socketUsers.get(`${id}:${socket}`) ?? []) {
+      const child = doc.parts.get(r.child);
+      const pc = child && poseConn(child);
+      if (pc?.target.kind !== 'socket' || pc.target.part !== id || pc.target.socket !== socket) {
+        continue;
+      }
+      out.add(r.child);
+      for (const below of poseDescendants(doc, r.child)) out.add(below);
+    }
+  }
+  out.delete(id);
+  return out;
+}
+
+/**
+ * Re-attaches one body of a multi-piece part (D-F3), as dragging a circle or a Wire end does in game:
+ * its own conn (the first on its sockets) gets the new target, or one is added. The other bodies stay
+ * where their own conns put them.
+ */
+export function retargetBody(
+  d: Draft,
+  cat: Catalog,
+  poses: Poses,
+  id: PartId,
+  body: number,
+  target: PoseTarget,
+): Verdict {
+  const doc = draftDoc(d);
+  const part = d.get(id)!;
+  const def = Object.hasOwn(cat.parts, part.type) ? cat.parts[part.type] : undefined;
+  const sockets = def?.bodies?.[body]?.sockets;
+  if (!def || !sockets) {
+    return { ok: false, code: 'no-body', message: `${part.type} has no body ${body}.` };
+  }
+  if (target.part === id) {
+    return { ok: false, code: 'self-target', message: 'A part cannot join itself.' };
+  }
+  if (bodyDescendants(doc, cat, id, body).has(target.part)) return POSE_CYCLE;
+  const k = part.conns.findIndex((c) => c.target.kind !== 'raw' && sockets.includes(c.self));
+  const old = k >= 0 ? part.conns[k] : undefined;
+  const check = withConns(
+    doc,
+    id,
+    part.conns.filter((_, i) => i !== k),
+  );
+  const own = sockets.filter((s) => def.childSockets.includes(s));
+  const noSocket: Verdict = {
+    ok: false,
+    code: 'no-socket',
+    message: 'This piece has no free connection point here.',
+  };
+  let conn: Conn;
+  if (target.kind === 'socket') {
+    const self =
+      target.childSocket !== undefined && own.includes(target.childSocket)
+        ? target.childSocket
+        : own.find((s) => canBeChild(check, cat, id, s, 'joint').ok);
+    if (self === undefined) return noSocket;
+    const child = canBeChild(check, cat, id, self, 'joint');
+    if (!child.ok) return child;
+    const host = canBeParent(check, cat, target.part, target.socket);
+    if (!host.ok) return host;
+    conn = { self, target: { kind: 'socket', part: target.part, socket: target.socket } };
+  } else {
+    const self = own.find((s) => canBeChild(check, cat, id, s, 'mount').ok);
+    if (self === undefined) return noSocket;
+    let uuid: Uuid;
+    if (target.kind === 'point') {
+      const host = canTakeChild(check, target.part, target.uuid);
+      if (!host.ok) return host;
+      uuid = target.uuid;
+    } else {
+      const h = d.get(target.part)!;
+      const cf = matrix4ToCf(
+        new Matrix4()
+          .copy(poses.world.get(target.part)!)
+          .multiply(subPartMatrix(cat, h.type, target.partName).m)
+          .invert()
+          .multiply(target.frame),
+      );
+      uuid = addPoint(d, target.part, cf, target.partName);
+    }
+    conn = { self, target: { kind: 'point', part: target.part, uuid } };
+  }
+  const conns = [...part.conns];
+  if (k >= 0) conns[k] = conn;
+  else conns.push(conn);
+  d.set({ ...d.get(id)!, conns });
+  if (!poseConn(part)) d.setLayout(id, null);
+  if (old?.target.kind === 'point') dropUnusedPoint(d, old.target.part, old.target.uuid);
   return { ok: true };
 }
 

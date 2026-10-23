@@ -51,7 +51,7 @@ test("a selected part's pose target is drawn even when its parent is not shown",
     part(3, 'Part', [sock('1', 2, '6')]),
   );
   const poses = computePoses(doc, MINI, C);
-  const t = poseTargets(doc, [2, 3]);
+  const t = poseTargets(doc, MINI, [2, 3]);
   expect([...t.sockets]).toEqual(['2:6']);
   expect([...t.points]).toEqual(['1:{a}']);
   const sockets = new SocketsLayer();

@@ -9,9 +9,12 @@ import { defaultChildSocket } from '../core/defaults';
 import { frameFromNormal } from '../core/frames';
 import { poseDescendants } from '../core/graph';
 import {
+  bodyCheckDoc,
+  bodyDescendants,
   chooseMountSocket,
   makeFreeMovable,
   retargetCheckDoc,
+  retargetBody,
   retargetPose,
   rotateInPlace,
   setWorldPose,
@@ -29,7 +32,7 @@ import {
   type Poses,
 } from '../core/pose';
 import { canBeChild, canBeParent } from '../core/rules';
-import type { Doc, PartId, Verdict } from '../core/types';
+import type { Doc, PartId, SocketId, Verdict } from '../core/types';
 import { posesSig } from '../state/derived';
 import { hiddenSig, hoverSig, select, selectionSig, type Selection } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
@@ -284,6 +287,8 @@ const DRAG_PX = 4;
 
 interface Reattach {
   readonly id: PartId;
+  /** The body dragged, for multi-piece parts (D-F3): only it re-attaches; null drags the whole part. */
+  readonly body: number | null;
   readonly moving: ReadonlyMap<PartId, PartId>;
   readonly poses: Poses;
   /** The doc `retargetPose` will check availability in. */
@@ -294,20 +299,32 @@ interface Reattach {
   target: { pose: PoseTarget; world: Matrix4 } | { root: Matrix4 } | null;
 }
 
-function beginReattach(id: PartId, ndc: Vector2): Reattach | null {
+function beginReattach(id: PartId, ndc: Vector2, body: number | null): Reattach | null {
   const doc = docSig.value;
   const poses = posesSig.value;
   const cat = catalogSig.value;
-  const world = poses.world.get(id);
+  const world = body === null ? poses.world.get(id) : bodyWorld(poses, id, body);
   const vp = getViewport();
   if (!cat || !world || !vp) return null;
-  const moving = new Map<PartId, PartId>([[id, id]]);
-  for (const below of poseDescendants(doc, id)) moving.set(below, id);
+  // A body drag carries only what hangs from that body; the part's other bodies stay.
+  const below = body === null ? poseDescendants(doc, id) : bodyDescendants(doc, cat, id, body);
+  const moving = new Map<PartId, PartId>(body === null ? [[id, id]] : []);
+  for (const other of below) moving.set(other, id);
   const facing = vp.rig.camera.getWorldDirection(new Vector3());
   const plane = new Plane().setFromNormalAndCoplanarPoint(facing, positionOf(world));
   const grab = cursorRay(ndc)?.intersectPlane(plane, new Vector3()) ?? null;
   transformStateSig.value = 'reattach';
-  return { id, moving, poses, check: retargetCheckDoc(doc, cat, id), plane, grab, target: null };
+  const check = body === null ? retargetCheckDoc(doc, cat, id) : bodyCheckDoc(doc, cat, id, body);
+  return { id, body, moving, poses, check, plane, grab, target: null };
+}
+
+/** The child sockets of a dragged body that can take `kind` in the check doc, preferred first. */
+function bodySockets(r: Reattach, kind: 'joint' | 'mount', prefer: SocketId | null): SocketId[] {
+  const cat = catalogSig.value!;
+  const def = cat.parts[docSig.value.parts.get(r.id)!.type];
+  const own = (def?.bodies?.[r.body!]?.sockets ?? []).filter((s) => def!.childSockets.includes(s));
+  const ok = own.filter((s) => canBeChild(r.check, cat, r.id, s, kind).ok);
+  return prefer !== null && ok.includes(prefer) ? [prefer, ...ok.filter((s) => s !== prefer)] : ok;
 }
 
 /** The drop target under the cursor: a free compatible socket, else a part surface (spec §9.3). */
@@ -316,11 +333,13 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   const cat = catalogSig.value!;
   const conv = cat.conventions;
   const part = doc.parts.get(r.id)!;
-  const skip = new Set(r.moving.keys());
+  const skip = new Set([...r.moving.keys(), r.id]);
+  if (r.body === null) skip.delete(r.id);
   const sock = pickSocket(ndc, skip, (c) => canBeParent(r.check, cat, c.part, c.socket).ok);
   if (sock) {
     const host = doc.parts.get(sock.part)!;
-    const self = defaultChildSocket(cat, part.type, host.type, sock.socket);
+    const fit = defaultChildSocket(cat, part.type, host.type, sock.socket);
+    const self = r.body === null ? fit : (bodySockets(r, 'joint', fit)[0] ?? null);
     if (
       self !== null &&
       canBeChild(r.check, cat, r.id, self, 'joint').ok &&
@@ -343,7 +362,10 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   const hit = pickPart(ndc, skip);
   hoverSig.value = hit?.part ?? null;
   if (hit) {
-    const mount = chooseMountSocket(r.check, cat, r.id);
+    const mount =
+      r.body === null
+        ? chooseMountSocket(r.check, cat, r.id)
+        : (bodySockets(r, 'mount', null)[0] ?? null);
     if (mount === null) return null;
     const frame = cfToMatrix4(frameFromNormal(hit.point.toArray(), hit.normal.toArray()));
     const world = childWorldViaPoint(
@@ -357,15 +379,15 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
     );
     return { pose: { kind: 'surface', part: hit.part, frame, partName: hit.subPart }, world };
   }
-  // Empty space: a root follows the cursor; anything else would cancel, so it stays put.
-  if (poseConn(part) || !r.grab) return null;
+  // Empty space: a root follows the cursor; anything else (a body too) would cancel, so it stays put.
+  if (r.body !== null || poseConn(part) || !r.grab) return null;
   const at = cursorRay(ndc)?.intersectPlane(r.plane, new Vector3());
   return at ? { root: translation(at.sub(r.grab)) } : null;
 }
 
 function updateReattach(r: Reattach, ndc: Vector2): void {
   r.target = findTarget(r, ndc);
-  const before = r.poses.world.get(r.id)!;
+  const before = (r.body === null ? r.poses.world.get(r.id) : bodyWorld(r.poses, r.id, r.body))!;
   const t = r.target;
   const delta = !t
     ? new Matrix4()
@@ -373,6 +395,20 @@ function updateReattach(r: Reattach, ndc: Vector2): void {
       ? t.root
       : t.world.clone().multiply(before.clone().invert());
   previewMoving(r.moving, r.poses, () => delta);
+  if (r.body !== null) previewBody(r, delta.clone().multiply(before));
+}
+
+/** Draws the dragged body at `m` (its doc pose to undo the preview). */
+function previewBody(r: Reattach, m: Matrix4): void {
+  const vp = getViewport();
+  vp?.layer?.setBodyPreview(r.id, r.body!, m);
+  vp?.request();
+}
+
+/** Puts the dragged parts (and body) back where the doc has them. */
+function undoPreview(r: Reattach): void {
+  previewMoving(r.moving, r.poses, () => new Matrix4());
+  if (r.body !== null) previewBody(r, bodyWorld(r.poses, r.id, r.body)!);
 }
 
 function endReattach(r: Reattach): void {
@@ -381,14 +417,16 @@ function endReattach(r: Reattach): void {
   const cat = catalogSig.value;
   const t = r.target;
   let verdict = { ok: true } as Verdict;
+  const type = docSig.value.parts.get(r.id)?.type ?? 'part';
   const patch =
     cat && t
-      ? commit('Move 1 part', (d) => {
+      ? commit(r.body === null ? 'Move 1 part' : `Move ${type} piece`, (d) => {
           if ('root' in t) applyTransform(d, cat, cat.conventions, r.poses, [r.id], () => t.root);
+          else if (r.body !== null) verdict = retargetBody(d, cat, r.poses, r.id, r.body, t.pose);
           else verdict = retargetPose(d, cat, cat.conventions, r.poses, r.id, t.pose);
         })
       : null;
-  if (patch === null) previewMoving(r.moving, r.poses, () => new Matrix4());
+  if (patch === null) undoPreview(r);
   if (!verdict.ok) toast(verdict.message, 'warn');
 }
 
@@ -398,12 +436,12 @@ function endReattach(r: Reattach): void {
  */
 export function createTransformTool(id: 'move' | 'rotate'): Tool {
   const inner = createSelectTool();
-  let press: { x: number; y: number; part: PartId } | null = null;
+  let press: { x: number; y: number; part: PartId; body: number } | null = null;
   let drag: Reattach | null = null;
   let gizmoPress = false;
   const reset = () => {
     if (drag) {
-      previewMoving(drag.moving, drag.poses, () => new Matrix4());
+      undoPreview(drag);
       transformStateSig.value = 'idle';
       hoverSig.value = null;
     }
@@ -427,7 +465,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
           return;
         }
         const hit = id === 'move' && !pickPoint(e.ndc) ? pickPart(e.ndc) : null;
-        if (hit) press = { x: e.x, y: e.y, part: hit.part };
+        if (hit) press = { x: e.x, y: e.y, part: hit.part, body: hit.body };
         else inner.onPointer!(e);
         return;
       }
@@ -439,7 +477,10 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
       if (e.kind === 'move') {
         if (!drag && Math.hypot(e.x - press.x, e.y - press.y) > DRAG_PX) {
           if (!selectionSig.value.parts.has(press.part)) select([press.part], 'replace');
-          drag = beginReattach(press.part, e.ndc);
+          // On a multi-piece part, the body under the cursor moves alone, as in game.
+          const type = docSig.value.parts.get(press.part)!.type;
+          const pieces = catalogSig.value?.parts[type]?.bodies;
+          drag = beginReattach(press.part, e.ndc, pieces ? press.body : null);
         }
         if (drag) updateReattach(drag, e.ndc);
       } else if (e.kind === 'up') {

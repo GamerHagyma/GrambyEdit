@@ -149,6 +149,16 @@ export class PartsLayer {
     }
   }
 
+  /** Draws one body of a multi-piece part at `m` without touching the doc: a body drag preview. */
+  setBodyPreview(id: PartId, body: number, m: Matrix4): void {
+    const layer = this.owner.get(id);
+    const slot = layer?.slots.slotOf(id);
+    const mesh = layer?.meshes[body];
+    if (!mesh || slot === undefined) return;
+    mesh.setMatrixAt(slot, m);
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+
   /** Sets the selection, hover and active bits, touching only parts whose bits change. */
   highlight(selected: ReadonlySet<PartId>, hovered: PartId | null, active: PartId | null): void {
     const next = new Map<PartId, number>();

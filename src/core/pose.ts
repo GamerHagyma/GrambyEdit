@@ -161,19 +161,29 @@ export function poseConn(part: Part): PoseConn | undefined {
 
 /**
  * Where the given parts hang: the parent sockets (`part:socket`) and points (`host:uuid`) their pose
- * conns target. The viewport draws these purple for the selection.
+ * conns target, one per body for multi-piece parts. The viewport draws these purple for the selection.
  */
 export function poseTargets(
   doc: Doc,
+  cat: Catalog,
   ids: Iterable<PartId>,
 ): { sockets: Set<string>; points: Set<PointKey> } {
   const sockets = new Set<string>();
   const points = new Set<PointKey>();
   for (const id of ids) {
     const part = doc.parts.get(id);
-    const t = part && poseConn(part)?.target;
-    if (t?.kind === 'socket') sockets.add(`${t.part}:${t.socket}`);
-    else if (t?.kind === 'point') points.add(`${t.part}:${t.uuid}`);
+    if (!part) continue;
+    const def = Object.hasOwn(cat.parts, part.type) ? cat.parts[part.type] : undefined;
+    const posed = new Set<number>();
+    for (const c of part.conns) {
+      const t = c.target;
+      const body = bodyOfSocket(def, c.self);
+      if (t.kind === 'raw' || posed.has(body)) continue;
+      posed.add(body);
+      if (t.kind === 'socket') sockets.add(`${t.part}:${t.socket}`);
+      else points.add(`${t.part}:${t.uuid}`);
+      if (!def?.bodies) break;
+    }
   }
   return { sockets, points };
 }
