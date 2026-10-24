@@ -672,6 +672,14 @@ The Surfaces tab's tool while a parent is picked. A click on a corner's dot (wit
 
 ## 13. Panels and dialogs (`ui/`)
 
+**Reference images (2026-10-25):** the right dock's Reference tab accepts clipboard images,
+direct HTTP(S) image URLs, and local image files. A thumbnail strip selects among session-only
+references. Pop out pins a movable, resizable viewer over the editor, retaining it across tab
+changes; Dock returns it to the Reference tab. The window stays within the browser viewport.
+Reference state is separate from Doc, history, exports, and library data, and is discarded when
+the page closes. Reference controls isolate editing keys and blueprint clipboard operations;
+focus follows pop-out/dock and pointer handles. Local object URLs are revoked on removal.
+
 ### 13.1 Part browser (left dock; must-have: favourites)
 - Search with fuzzy match on type, tooltip and category.
 - Sections in this order: **★ Favourites**, **Recent**, the seven categories, **My creations**.
@@ -905,7 +913,7 @@ Docks are collapsible and resizable, and their sizes persist. Minimum supported 
   - Asset load failure blocks the viewport with a retry, while import/export of codes still works.
   - Unknown part types render as placeholders and round-trip intact.
 - **Accessibility:** every control is keyboard-reachable with visible focus rings, icon buttons have `aria-label`s, and contrast is ≥ 4.5:1 for text in both themes. The 3D view itself is not screen-reader accessible; the outliner is the accessible view of the build.
-- **Privacy:** no analytics, no network calls except loading the site's own assets.
+- **Privacy:** no analytics. Network calls load the site's own assets and image URLs explicitly supplied by the user as references.
 
 ---
 

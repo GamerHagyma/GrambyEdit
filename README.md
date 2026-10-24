@@ -4,6 +4,8 @@
 
 A browser-based 3D blueprint editor for [Road to Gramby's](https://www.roblox.com/games/5796917097/Road-to-Grambys), focused on precise editing and larger, more complex creations.
 
+**[Try it now →](https://gamerhagyma.github.io/GrambyEdit/)** — free in your browser, no installation needed.
+
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-222222?style=flat-square&logo=threedotjs&logoColor=white)
 ![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white)
@@ -28,6 +30,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
 | **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |
 | **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
+| **Reference images** | Paste images or direct image links into the Reference tab, or choose local files. Pop the viewer out into a pinned, movable, resizable window over the editor. |
 
 ## Compatibility and limitations
 
@@ -47,6 +50,8 @@ Keep a copy of the original share code before editing a creation.
 4. Use **File → Export code** and load the result in Road to Gramby's.
 
 The creation library and preferences are stored in your browser. Export a library backup before moving to another browser or computer.
+
+**Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and its bottom-right corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
 
 ## Controls
 

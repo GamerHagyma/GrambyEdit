@@ -4,7 +4,10 @@ import { addPart } from '../../src/core/ops/parts';
 import { App } from '../../src/ui/App';
 import { CREDITS } from '../../src/ui/credits';
 import { loadPref, savePref } from '../../src/storage/prefs';
-import { showLeftTab } from '../../src/state/ui';
+import { inspectorTabSig, showInspectorTab, showLeftTab } from '../../src/state/ui';
+import { clearReferences, referenceFloatingSig, referencesSig } from '../../src/state/references';
+import { select } from '../../src/state/selection';
+import { disarm, placeSig } from '../../src/state/place';
 import {
   baseCatalogSig,
   commit,
@@ -88,4 +91,64 @@ test('the left dock switches between Parts and Generators and remembers the choi
   expect(loadPref('leftTab', 'parts')).toBe('generators');
   fireEvent.click(screen.getByRole('tab', { name: 'Parts' }));
   expect(screen.queryByText('Generate')).toBeNull();
+});
+
+test.each(['image', 'url'])(
+  'pasting an %s over the editor opens Reference without changing the build',
+  (kind) => {
+    clearReferences();
+    showInspectorTab('properties');
+    URL.createObjectURL = vi.fn(() => 'blob:pasted-reference');
+    URL.revokeObjectURL = vi.fn();
+    render(<App />);
+    commit('Add Part', (d) => {
+      addPart(d, 'Part', {});
+    });
+    const doc = docSig.value,
+      history = historySig.value;
+    const event = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'clipboardData', {
+      value: {
+        files:
+          kind === 'image' ? [new File(['image'], 'clipboard.png', { type: 'image/png' })] : [],
+        getData: () => (kind === 'url' ? 'https://example.com/truck.png' : ''),
+      },
+    });
+    document.body.dispatchEvent(event);
+    expect(referencesSig.value).toHaveLength(1);
+    expect(inspectorTabSig.value).toBe('reference');
+    expect(docSig.value).toBe(doc);
+    expect(historySig.value).toBe(history);
+    expect(event.defaultPrevented).toBe(true);
+    clearReferences();
+  },
+);
+
+test('placeholder and floating header controls cannot delete, copy, or paste blueprint parts', () => {
+  clearReferences();
+  disarm();
+  showInspectorTab('reference');
+  referenceFloatingSig.value = true;
+  const { container } = render(<App />);
+  commit('Add Part', (d) => {
+    addPart(d, 'Part', {});
+  });
+  select(docSig.value.order, 'replace');
+  const doc = docSig.value,
+    history = historySig.value;
+  const placeholder = container.querySelector<HTMLButtonElement>(
+    '.reference-docked-placeholder button',
+  )!;
+  placeholder.focus();
+  fireEvent.keyDown(placeholder, { key: 'Delete', code: 'Delete', bubbles: true });
+  expect(docSig.value).toBe(doc);
+  expect(historySig.value).toBe(history);
+  const copy = vi.fn();
+  fireEvent.copy(placeholder, { clipboardData: { setData: copy } });
+  expect(copy).not.toHaveBeenCalled();
+  fireEvent.paste(screen.getByRole('button', { name: 'Move reference window' }), {
+    clipboardData: { files: [], getData: () => '[["Part",[],[]]]' },
+  });
+  expect(placeSig.value).toBeNull();
+  clearReferences();
 });

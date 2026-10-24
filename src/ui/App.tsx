@@ -3,6 +3,7 @@ import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
+import { pasteReference, referenceFloatingSig } from '../state/references';
 import { copyPayload, pasteText, rememberCopy } from '../state/clipboard';
 import { hasCommand, runCommand } from '../state/commands';
 import { creationsSig, refreshCreations, startAutosave } from '../state/library';
@@ -10,7 +11,14 @@ import { arm } from '../state/place';
 import { isTypingTarget, resolveKey } from '../state/keymap';
 import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
-import { closeDialog, contextMenuSig, dialogSig, leftTabSig, showLeftTab } from '../state/ui';
+import {
+  closeDialog,
+  contextMenuSig,
+  dialogSig,
+  leftTabSig,
+  showInspectorTab,
+  showLeftTab,
+} from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
 import { toolSig } from '../tools/manager';
@@ -36,6 +44,7 @@ import { Outliner } from './panels/Outliner';
 import { PaintPanel } from './panels/PaintPanel';
 import { PartBrowser } from './panels/PartBrowser';
 import { Properties } from './panels/Properties';
+import { ReferencePanel, ReferenceWindow } from './panels/ReferencePanel';
 import { StatsPanel } from './panels/StatsPanel';
 import { SurfacePanel } from './panels/SurfacePanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
@@ -136,6 +145,8 @@ const FOCUS_KEYS = new Set([
 const NATIVE = new Set(['edit.copy', 'edit.paste']);
 
 const dialogOpen = () => document.querySelector('.dialog-backdrop') !== null;
+const referenceTarget = (target: EventTarget | null) =>
+  target instanceof Element && target.closest('[data-reference-ui]') !== null;
 
 /**
  * The one key router: the viewport's own keys first (gizmo cancel, tool keys, camera fly keys), then the
@@ -143,7 +154,7 @@ const dialogOpen = () => document.querySelector('.dialog-backdrop') !== null;
  * `data-app-undo` panel (Properties): the field blurs first, which commits its pending value.
  */
 function onKey(e: KeyboardEvent): void {
-  if (e.defaultPrevented || dialogOpen()) return;
+  if (e.defaultPrevented || dialogOpen() || referenceTarget(e.target)) return;
   if (isTypingTarget(e.target)) {
     const field = e.target as HTMLElement;
     const id = resolveKey(e, settingsSig.value.cameraScheme);
@@ -170,6 +181,8 @@ function onKey(e: KeyboardEvent): void {
 /** Ctrl+C on the build: the selection's share code goes to the system clipboard. Selected text copies as usual. */
 function onCopy(e: ClipboardEvent): void {
   if (
+    e.defaultPrevented ||
+    referenceTarget(e.target) ||
     isTypingTarget(e.target) ||
     dialogOpen() ||
     (window.getSelection()?.toString() ?? '') !== ''
@@ -185,7 +198,19 @@ function onCopy(e: ClipboardEvent): void {
 
 /** Ctrl+V on the build: a share code from the clipboard, or the editor's own copy. */
 function onPaste(e: ClipboardEvent): void {
-  if (isTypingTarget(e.target) || dialogOpen()) return;
+  if (e.defaultPrevented || isTypingTarget(e.target) || dialogOpen()) return;
+  const data = e.clipboardData;
+  if (
+    data &&
+    ([...data.files].some((file) => file.type.startsWith('image/')) ||
+      /^https?:\/\/\S+$/i.test(data.getData('text/plain').trim()))
+  ) {
+    e.preventDefault();
+    pasteReference(data);
+    if (!referenceFloatingSig.value) showInspectorTab('reference');
+    return;
+  }
+  if (referenceTarget(e.target)) return;
   e.preventDefault();
   pasteText(e.clipboardData?.getData('text/plain') ?? null);
 }
@@ -232,6 +257,7 @@ export function App(): JSX.Element {
         parts={<LeftDock />}
         inspector={{
           properties: <Properties />,
+          reference: <ReferencePanel />,
           outliner: <Outliner />,
           stats: <StatsPanel />,
           issues: <IssuesPanel />,
@@ -239,6 +265,7 @@ export function App(): JSX.Element {
         }}
         status={<Meters />}
       />
+      <ReferenceWindow />
       <Dialogs />
     </>
   );

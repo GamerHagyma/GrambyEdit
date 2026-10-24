@@ -91,6 +91,7 @@ function IssueBadge(): JSX.Element {
 
 const RIGHT_TABS = [
   { id: 'properties', label: 'Properties' },
+  { id: 'reference', label: 'Reference' },
   { id: 'outliner', label: 'Outliner' },
   { id: 'stats', label: 'Stats' },
   { id: 'issues', label: 'Issues' },
