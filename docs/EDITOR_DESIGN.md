@@ -104,7 +104,7 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D5 | Move rule: **mirror the game.** Drop on a free socket makes a socket joint; drop on a surface makes an ephemeral point there; gizmo moves turn a socket-joined part into an ephemeral point on its current parent | user | §9.3 adds one safety rule: moves never silently break signal wiring. |
 | D6 | Socket data is captured in the editor's Socket Workbench (§12.7) as full frames relative to each part's pivot, stored **outward** (+Y points out of the part) | user + me | In-game extraction proved hard (user, 2026-10-22). Contract in Appendix B. |
 | D7 | "Part + children" = the part plus its **pose descendants** (parts whose position hangs off it through first connections) | me | It is what moves when the part moves, and it is defined even with cycles and multi-connection relays. Everything joint-connected is a separate command (`Ctrl+L`). |
-| D8 | Free-rotate gizmo converts like D5. **Native rotation** (Orientation props for socket-joined parts) is available through ±90° commands and numeric fields | me | Both are representable in the format; the gizmo needs arbitrary angles, while in-game style rotation uses Orientation props. |
+| D8 | **Native rotation everywhere** (revised 2026-10-23): R, the rotate gizmo, the ±90° commands and Properties edit `OrientationX/Y/Z` for socket-joined and point-mounted parts, about each part's own pivot (§10.2). Roots rotate their layout; a selected point rotates its `cframe`. Moves still convert like D5 | user + me | The game turns parts about their own centre through Orientation. The first D8 turned a rotated jointed part into a point mount, which lost the joint. |
 | D9 | Root positions are editor-only (stored in the library, never in the code) | format | The format has no field for a root's position. |
 | D10 | Deleting a part also deletes the ephemeral points its own joints used; points you created and never used survive until deleted | me | Mirrors the game, which appears to remove points when parts detach: 46 corpus parts carry an emptied `EphemeralAttachments: []` (**inferred**). |
 | D11 | Export writes sockets as strings, indices as ints, empty props as `[]` | spec | Matches the game and your generator. |
@@ -114,6 +114,9 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D15 | **Socket Workbench:** an in-editor tool generates per-part probe codes (a colored marker stick on every socket); you click each marker's spot on the part mesh; it exports `data/socket_geometry.json` | user ("use the visualizer to gather that data") + me | Turns the missing dataset into roughly 1–2 minutes per part, prioritised by corpus usage. Captured frames apply live from local storage before they are committed. |
 | D16 | v1 only: logic/live simulation and every tier-2 item are out of scope | user | |
 | D17 | Repo `GrambyEdit`; Mumble Games credited as owner of the game assets; mostly private use | user | Free GitHub Pages needs a public repo (§20). |
+| D18 | `Orientation` turns the posed part (or piece) about its own pivot **after** mating, composed `Ry · Rx · Rz` (Roblox's Orientation order) | user + me | In game a part turns about its centre (2026-10-23). The order: a `Part` tilted on X and turned 180° on Y showed its tilt mirrored while X was applied first (2026-10-24). The order is **inferred**; probes P2–P3 confirm it. |
+| D19 | **Multi-piece parts** (`Wire`, `Switch`, `Button`, `RemoteButton`, `TripWire`, the Splitters, `RubberBand`, `Rope`; `data/curation/bodies.json`): each piece is posed by its own first connection and can be dragged on its own | user | In game a Wire end or a Switch circle moves separately from its base (2026-10-23). |
+| D20 | Connect never arms a part type: every click on a free socket or point opens the picker, recent types first. Shift+click still gathers several targets | user | The armed type kept placing the same part (2026-10-23). |
 
 ---
 
@@ -412,21 +415,23 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 - Root: `World(p) = layout(p)`.
 - Socket joint, child c by socket a onto parent q at socket b:
 
-  `World(c) = World(q) · S(q, b) · R(c) · M · S(c, a)⁻¹`
+  `Base(c) = World(q) · S(q, b) · M · S(c, a)⁻¹`, and `World(c) = Base(c) · T(p) · R(c) · T(−p)`
 
 - Ephemeral mount, child c by socket a onto point u of host h:
 
-  `World(c) = World(h) · Sub(h, partName_u) · CF(u) · Re(c) · Me · S(c, a)⁻¹`
+  `Base(c) = World(h) · Sub(h, partName_u) · CF(u) · M · S(c, a)⁻¹`, and `World(c)` as above (with `Re(c) = R(c)`).
 
-- `R(c)` and `Re(c)` are built from the child's `OrientationX/Y/Z` props (degrees; values accumulate past 360 in real codes, e.g. 1080). They rotate about the parent socket's (or point's) own axes, where +Y is the outward normal, so `OrientationY = 90` turns the child +90° about that normal.
+- `R(c)` is built from the child's `OrientationX/Y/Z` props (degrees; values accumulate past 360 in real codes, e.g. 1080). It turns the child in its own frame, about its pivot `p` (D18): the part origin for one-piece parts, the piece's mesh-component centre for multi-piece parts. With `orientationPivot: 'socket'` the earlier formula applies instead: `World(q) · S(q, b) · R(c) · M · S(c, a)⁻¹`.
+- **Multi-piece parts** (D19) have one world matrix per piece. A piece is posed by the first conn on its own sockets. A piece without one keeps its place next to the lead piece (the piece of the part's first conn). Loops anchor per piece (§10.6).
 
 ### 10.3 Defaults until calibrated (`conventions.json`, swappable without code changes)
 
 | symbol | default | why |
 |---|---|---|
 | M, Me | `Rx(180°)`: every frame is stored outward, so the child's frame is turned to face the parent's | identical to the Workshop's "frames coincide" mating, whose ball frame points inward (§24.1); the roll (flip about X vs Z) is a **guess** that probe P1 settles |
-| R | `Rx(OrientationX) · Ry(OrientationY) · Rz(OrientationZ)` about the parent socket's frame (+Y = outward normal), i.e. three.js `Euler(x, y, z, 'XYZ')` | **guess**: the order and axes are unknown (spec §7 OPEN) |
-| Re | same as R | **guess** |
+| R | `Ry(OrientationY) · Rx(OrientationX) · Rz(OrientationZ)` in the child's own frame, about its pivot (§10.2), i.e. three.js `Euler(x, y, z, 'YXZ')` (`orientationOrder`) | Roblox's Orientation order; **inferred** from the user's `Part` report (D18). Probes P2–P3 confirm it |
+| Re | R, applied on points too (`orientationOnPoints: true`) | **guess** |
+| pivot | `orientationPivot: 'part'` | the user's in-game observation (D18) |
 | Sub | identity for every partName | until your capture supplies sub-piece frames |
 
 ### 10.4 Calibration
@@ -464,7 +469,7 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
 - **One `InstancedMesh` per part type.** Capacity doubles when full and slots are recycled. Baked vertex group colors plus the paintable mask let a small `onBeforeCompile` patch choose `instanceColor` (the `RGB` prop) for paintable vertices and the baked color elsewhere. That keeps draw calls to one per part type present.
 - Per-instance attributes: `instanceColor` (paint), `aFlags` (selected / hovered / approximate / hidden / glow).
 - **Selection outline:** selected instances render into a mask target, and a full-screen edge pass draws an orange outline (white for hover; the active part is brighter). This is the Blender look, and it works with 16K selected parts.
-- **Sockets layer:** instanced flat rings oriented by socket frame, at constant screen size.
+- **Sockets layer:** instanced shaded spheres with an arrow along the socket's outward +Y and a contrasting outline, at constant screen size, so a socket reads from every side.
 
   | socket state | look |
   |---|---|
@@ -474,10 +479,11 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
   | mount | amber |
   | generic | light blue |
   | used | 35% opacity |
-  | consumed by a mount piece | red ✕ |
+  | consumed by a mount piece | red with a white rim |
+  | a selected part's attach target | purple, drawn on top |
 
   Shown for hovered and selected parts, and in the Connect tool for every free socket within 80 studs of the camera. Either way, at most the 3,000 nearest are drawn.
-- **Points layer:** cyan diamonds with a small axis triad; free points pulse gently.
+- **Points layer:** diamonds with the same arrow, shading and outline, plus a dashed line to the host's centre. Free points are white, used ones grey, selected ones orange, and a selected part's attach target purple. Shown for selected and hovered hosts and for a hovered point.
 - **Ghosts:** translucent preview meshes for placement, prefabs and generators.
 - **Navigation gizmo:** an axis widget in the top-right corner; click an axis to snap the view (Blender style).
 
@@ -549,7 +555,7 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
    - else `defaultMount`.
 
    The popover shows "attach by socket N ▾" so you can change it. On a point, the part always mounts by its default mount socket.
-4. The placed part becomes selected. The picked type stays **armed**, so each further click on a socket places another (Esc disarms). Shift+click several sockets first to place on all of them at once.
+4. The placed part becomes selected. Nothing stays armed (D20): each further click on a free socket opens the picker again, with the recent types first. Shift+click several sockets first to place on all of them at once.
 5. **Wiring existing parts:** drag from one socket to another, or click one and then the other. The child side is whichever end is a child-side socket; ambiguous cases resolve by role, then corpus frequency. The preview line turns green or red with the §7.1 reason. The joint is appended, or becomes `conns[0]` if the child was a root; pose cycles are refused.
 
 ### 12.3 Point (must-have: free ephemeral connection points)
@@ -571,7 +577,7 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
 | Gizmo | three.js `TransformControls`, restyled | same |
 | Modal move | G | G |
 | Modal rotate | R | R |
-| Native rotate 90° about Y / X (Orientation props on socket joints, `cframe` on points, layout on roots) | Properties ±90 buttons; command palette | same |
+| Native rotate 90° about Y / X (Orientation props on jointed and point-mounted parts, `cframe` on a selected point, layout on roots) | Properties ±90 buttons; command palette | same |
 
 - Gizmo options: World/Local space; pivot = median, active, or individual origins.
 - Modal transforms take X/Y/Z axis constraints (again for the active part's local axis, again to unlock), typed numbers, Enter or LMB to confirm, Esc or RMB to cancel. With no axis, a move follows the mouse in the view plane and a rotation turns about the view axis with the mouse.
@@ -616,7 +622,8 @@ A separate mode, reached from the toolbar's **Sockets** button, for capturing wh
    - Copy a code, spawn it in-game, and look at where the colors land.
 3. **Capture.** The part's mesh fills the viewport. Select a socket in the list, then click the mesh where its marker was. The click sets the position and the outward direction from the surface normal.
    - Candidate dots help: bbox face centres, sub-part centroids, and named-face hints (`Top`, `Left`, …). Clicking a dot snaps exactly.
-   - A gizmo fine-tunes the frame; roll turns in 90° steps.
+   - Every socket shows an arrow along its facing (outward +Y). The selected socket's gizmo works along the socket's own axes, so its roll shows: G moves it, R turns it in quarter turns.
+   - The panel names the facing ("faces −X"), turns the socket by an exact step about its own X, Y or Z (Shift turns back), and takes an exact position.
 4. **Test mate** attaches a `Part` cube to the selected socket, so you see what the editor will do with it.
 5. **Storage.** Captured frames save to IndexedDB (store `sockets`) and immediately override the catalog everywhere in the editor (`frameSource: 'captured'`).
 6. **Export** writes `data/socket_geometry.json` (Appendix B). Commit it, and the asset build merges it so every visitor gets the data. **Import** loads a file back.
@@ -717,7 +724,7 @@ The §7.2 list, grouped by severity, with click-to-select and quick-fix buttons.
   - A prefab whose first root has no child sockets is inserted as a new root.
 
 ### 13.9 Generators (must-have; §15)
-A dock panel: shape list, parameter form, live ghost preview, cost preview, target (new root / selected socket / selected point), Generate, Save preset.
+The left dock's **Generators** tab, next to **Parts**: shape list, parameter form, fill and orientation, element and host pickers, colours, cost preview with threshold warnings, Generate and presets. Generate arms the Place tool (§12.6), whose ghost previews the shape and whose click picks where it goes.
 
 ### 13.10 Settings, shortcuts, command palette
 - **Settings:**
@@ -992,7 +999,7 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 | Duplicate | Shift+D (then the copies follow the mouse, as G) | Ctrl+D |
 | Copy / Paste | Ctrl+C / Ctrl+V | Ctrl+C / Ctrl+V |
 | Hide / unhide all / isolate | H / Alt+H / Shift+H | H / Alt+H / Shift+H |
-| Undo / Redo | Ctrl+Z / Ctrl+Shift+Z | Ctrl+Z / Ctrl+Y |
+| Undo / Redo | Ctrl+Z / Ctrl+Shift+Z or Ctrl+Y, or the top bar's buttons | same |
 | Frame selected / all | Numpad . / Home | F / Home |
 | Views front / right / top, opposite side, ortho | Numpad 1 / 3 / 7, 9, 5 | — (nav gizmo) |
 | X-ray | Alt+Z | Alt+Z |
@@ -1003,6 +1010,10 @@ Your socket data can land at any milestone. The pipeline for it exists from M0.
 | Camera | MMB orbit, Shift+MMB pan, wheel zoom | RMB look, WASD + QE, Shift slow, wheel |
 
 Esc always cancels the active operation first (modal transform, armed part, open popover). Only with nothing active does it clear the selection (Studio scheme).
+
+Ctrl+Z and Ctrl+Y are the one allowed exception to the no-Ctrl rule (§12.4; user decision, 2026-10-23): browsers do not reserve them. They also work while a Properties field has focus; the field commits its value first.
+
+In the Sockets tool, G and R switch the selected socket's gizmo between moving and turning it, and Esc deselects the socket.
 
 ## Appendix B — Socket geometry file (written by the Socket Workbench)
 

@@ -34,7 +34,7 @@
 
 ## Decisions (mine; each is reversible)
 
-- **D-F1** `Orientation` is applied **after** mating, about the posed piece's own pivot: `World = Base · T(c) · R · T(−c)`, `Base = World(q) · S(q,b) · M · S(c,a)⁻¹`, `c` = piece pivot in part space (origin for single-piece parts). `conventions.json` gains `orientationPivot: 'part' | 'socket'` (default `'part'`, the user's in-game observation); `'socket'` keeps today's formula. Euler order stays `XYZ` (still a guess; probes P2–P3).
+- **D-F1** `Orientation` is applied **after** mating, about the posed piece's own pivot: `World = Base · T(c) · R · T(−c)`, `Base = World(q) · S(q,b) · M · S(c,a)⁻¹`, `c` = piece pivot in part space (origin for single-piece parts). `conventions.json` gains `orientationPivot: 'part' | 'socket'` (default `'part'`, the user's in-game observation); `'socket'` keeps today's formula. Euler order: `YXZ` since 2026-10-24 (spec D18; inferred from the user's `Part` report, probes P2–P3 confirm).
 - **D-F2** R, the rotate gizmo and Properties all edit `OrientationX/Y/Z` for jointed and point-mounted parts, about each part's own pivot. Roots still rotate their layout about the chosen pivot. A selected point rotates its `cframe`. Moves keep D5 (a moved jointed part becomes a point mount). This replaces D8.
 - **D-F3** A multi-piece part has a lead piece (the piece of its pose conn) and other pieces. A piece with its own conn is posed by its first such conn. A piece without one keeps its default offset from the lead piece. `Orientation` applies to every piece about that piece's own pivot (its mesh-component centre). The wheel needs this: its flipped Wire ends must flip in place.
 - **D-F4** Connect no longer arms the picked type: every click opens the picker (recent types first). Shift+click still gathers several targets.
@@ -129,7 +129,7 @@
 ### Task 9: verification and spec
 
 - [ ] Browser: the wheel against the user's in-game picture (after their captures), multi-piece parts, markers, modal guide, orbit, Ctrl+Z after a property edit.
-- [ ] Spec amendments: §10.2–§10.3 (D-F1, D-F3), D8 → D-F2, §11.1 markers (D-F6), §12.2 arming (D-F4), keymap note on Ctrl+Z/Y.
+- [x] Spec amendments: §10.2–§10.3 (D-F1, D-F3), D8 → D-F2, §11.1 markers (D-F6), §12.2 arming (D-F4), keymap note on Ctrl+Z/Y.
 - [ ] Full suite, typecheck, commit per task.
 
 ## Needs the user
@@ -137,4 +137,4 @@
 1. Workbench captures: `Wire`, `Connector`, `ConnectorBall` (the wheel), then `Switch`, `RemoteButton`, `TripWire`, `PressurePlate`, `Splitter_1`–`Splitter_4`, `MatchingGyro`, `RubberBand`, `Rope`, `Joint`.
 2. Meshes (OBJ + MTL, like the existing ones) for the 12 parts that have none, if they can be exported.
 3. Calibration probes P2/P3 (Workbench → Calibration) with the SteeringGyro trick, to settle the Euler order.
-4. Exact steps for the leftover markers after undo.
+4. ~~Exact steps for the leftover markers after undo.~~ Likely cause found and fixed (a marker set that grew left its old meshes in the scene); report it if it still happens.
