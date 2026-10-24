@@ -1,50 +1,55 @@
 <div align="center">
 
-# 🛠️ GrambyEdit
+# GrambyEdit
 
-**Big ideas. Tiny parts. One very long road trip.**
-
-A browser-based 3D blueprint editor for [Road to Gramby's](https://www.roblox.com/games/5796917097/Road-to-Grambys).
-
-Import a share code, build something fun, and bring it back into the game.
+A browser-based 3D blueprint editor for [Road to Gramby's](https://www.roblox.com/games/5796917097/Road-to-Grambys), focused on precise editing and larger, more complex creations.
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-222222?style=flat-square&logo=threedotjs&logoColor=white)
 ![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
 
-[Get started](#get-started) · [Controls](#make-yourself-at-home) · [Run locally](#run-locally) · [Report a bug](https://github.com/GamerHagyma/GrambyEdit/issues)
+[Getting started](#getting-started) · [Controls](#controls) · [Compatibility and limitations](#compatibility-and-limitations) · [GitHub Pages](#github-pages) · [Report an issue](https://github.com/GamerHagyma/GrambyEdit/issues)
 
 </div>
 
-![A 426-part convertible in GrambyEdit, with the part browser and build statistics open](docs/images/editor-preview.png)
+![A truck build in GrambyEdit, with the Parts browser and expanded Outliner visible](docs/images/editor-preview.png)
 
-## A little more room to build
+GrambyEdit makes it easier to build and modify RTG creations outside the game. It provides precise positioning, assembly editing, reusable components, and tools for repetitive work, which become especially useful as a build gets larger. Import an existing share code or start a new creation, edit it in the browser, then export a code to load in game.
 
-GrambyEdit gives your creations a proper workspace: a 3D view, precise transforms, reusable assemblies, and tools that make repetitive building much quicker. Whether you're polishing a car or assembling an entirely unreasonable contraption, there's room to experiment.
+## Features
 
-| What you want to do | What you'll find |
+| Area | Tools |
 | --- | --- |
-| **Edit a creation** | Import share codes or JSON, work with native part meshes and textures, then export a fresh code. |
-| **Place things precisely** | Visible sockets, click-to-connect placement, editable ephemeral connection points, and local or world-grid snapping. |
-| **Work on a whole assembly** | Select parts or attached branches, move and rotate them together, and edit shared properties in one go. |
-| **Add some colour** | Paint selections and regions, auto-colour new parts, or give generated shapes gradients and seeded random palettes. |
-| **Skip the repetitive bits** | Twelve shape generators, picked hosts, live previews, and custom GasCap surfaces with four movable corners. |
-| **Keep your favourite pieces** | Favourite parts, a local creation library, reusable prefabs, and importable/exportable library backups. |
-| **Keep things manageable** | A searchable Outliner, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
+| **Import and export** | Read share codes or JSON, display native part meshes and textures, and export edited creations. |
+| **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
+| **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
+| **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
+| **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
+| **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |
+| **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
 
-## Get started
+## Compatibility and limitations
 
-1. Open the editor and choose **Start empty**, or use **File → Import code** to bring in a creation.
-2. Pick a part from the **Parts** tab, then click in the viewport to place it. Right-click when you're done to return to Select.
-3. Move, rotate, paint, or try the **Generators** and **Surfaces** tabs. The previews show what you're about to add.
-4. Use **File → Export code**, then load the result in Road to Gramby's.
+- **Working as of October 2026 (2026.10), with the "THE REMAKE UPDATE" version of Road to Gramby's.**
+- Joints and physics simulation are not implemented. The editor cannot verify how a creation will behave in game.
+- Some complex nested point mounts still differ from the game. Check those assemblies in game.
+- The tool will probably break with the next game update. I will probably update it for the next version, but there is no guarantee.
 
-Your library and preferences are stored in your browser. Export a backup when you want to move them to another browser or computer.
+Keep a copy of the original share code before editing a creation.
 
-## Make yourself at home
+## Getting started
 
-Choose **Blender** controls for orbiting around a build, or **Studio** controls for flying through it. You can switch from the toolbar.
+1. Open the editor and choose **Start empty**, or use **File → Import code** to load an existing creation.
+2. Select a part from the **Parts** tab and click in the viewport to place it. Right-click to return to the Select tool when finished.
+3. Use the transform and paint tools to edit parts, or the **Generators** and **Surfaces** tabs to create geometry. Live previews show the result before it is added.
+4. Use **File → Export code** and load the result in Road to Gramby's.
+
+The creation library and preferences are stored in your browser. Export a library backup before moving to another browser or computer.
+
+## Controls
+
+The editor supports **Blender** controls for orbiting around a build and **Studio** controls for flying through it. Switch between them in the toolbar.
 
 | Shortcut | Action |
 | --- | --- |
@@ -57,13 +62,21 @@ Choose **Blender** controls for orbiting around a build, or **Studio** controls 
 | `1` to `6` | Select, Move, Rotate, Connect, Point, Paint |
 | `?` | Open the full shortcut guide |
 
-**In the Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click lets you hide or show the selection. Hidden parts stay available in the tree, ready to bring back.
+**Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls for the selection. Hidden parts remain selectable in the Outliner and can be shown again from the same menu.
 
-**On a surface:** Shift-click its corner buttons or viewport dots to select several corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
+**Surfaces:** Shift-click corner buttons or viewport dots to select multiple corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
+
+## GitHub Pages
+
+GrambyEdit can be hosted on GitHub Pages so it is accessible from a browser without a local installation. The deployment URL for this repository is:
+
+**[gamerhagyma.github.io/GrambyEdit/](https://gamerhagyma.github.io/GrambyEdit/)**
+
+To enable deployment, open the repository's **Settings → Pages** and set **Source** to **GitHub Actions**. The included [Pages workflow](.github/workflows/pages.yml) builds the assets, runs the checks, and deploys the site when changes are pushed to `main`. The site base path is configured as `/GrambyEdit/`.
 
 ## Run locally
 
-You'll need **Node.js 24 or newer** and a browser with **WebGL 2** support.
+Requires **Node.js 24 or newer** and a browser with **WebGL 2** support.
 
 ```sh
 git clone https://github.com/GamerHagyma/GrambyEdit.git
@@ -73,20 +86,20 @@ npm run assets
 npm run dev
 ```
 
-Open the local URL printed by Vite. To build the static site:
+Open the local URL printed by Vite. To build and preview the static site:
 
 ```sh
 npm run build
 npm run preview
 ```
 
-The repository includes a [GitHub Pages workflow](.github/workflows/pages.yml) that builds and deploys pushes to `main`. Set the repository's Pages source to **GitHub Actions** to use it. The site base path is `/GrambyEdit/`.
+## Development
 
-## Want to help?
+I built this tool in three days with help from Claude and ChatGPT.
 
-Bug reports, screenshots, and small example share codes are especially useful. If a creation looks different in game, include both views and the code that reproduces it.
+For bug reports, include a short description, screenshots where relevant, and a small example share code. If a creation looks different in game, include both views and the code that reproduces the difference.
 
-Before sending a change, run:
+Before submitting a change, run:
 
 ```sh
 npm run assets
@@ -96,25 +109,15 @@ npm test
 npm run build
 ```
 
-The main pieces live in `src/core` for blueprint rules and geometry, `src/tools` for editing, `src/viewport` for rendering, and `src/ui` for panels. The asset pipeline lives in `scripts`.
+The source is organised into `src/core` for blueprint rules and geometry, `src/tools` for editing, `src/viewport` for rendering, and `src/ui` for panels. The asset pipeline is in `scripts`.
 
-For the deeper details, see the [blueprint format](docs/RTG_BLUEPRINT_FORMAT.md), [editor design](docs/EDITOR_DESIGN.md), and [asset sources](docs/SOURCES.md).
+Further documentation: [blueprint format](docs/RTG_BLUEPRINT_FORMAT.md), [editor design](docs/EDITOR_DESIGN.md), and [asset sources](docs/SOURCES.md).
 
-## Still growing
-
-GrambyEdit is under active development. Some complex nested point mounts still differ from the game. Check those assemblies in game, and keep a copy of your original share code while experimenting.
-
-## Made possible by
+## Credits
 
 - **Mumble Games**, creators of Road to Gramby's and its part artwork.
 - **[JuanCrakYT / RtG-Format](https://github.com/JuanCrakYT/RtG-Format)** for community format research and mesh exports.
 - **[jirrob / GrambysWorkshop](https://github.com/jirrob/GrambysWorkshop)** for reference tooling and exports.
-- Everyone testing builds and sharing the wonderfully specific bugs that help this editor improve.
+- Everyone who tested builds and reported issues.
 
 GrambyEdit is a community project, unaffiliated with Mumble Games or Roblox. Game artwork belongs to its respective owners; vendored projects retain their original licences.
-
-<div align="center">
-
-**Have fun building. See you down the road!**
-
-</div>
