@@ -114,7 +114,7 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D15 | **Socket Workbench:** an in-editor tool generates per-part probe codes (a colored marker stick on every socket); you click each marker's spot on the part mesh; it exports `data/socket_geometry.json` | user ("use the visualizer to gather that data") + me | Turns the missing dataset into roughly 1–2 minutes per part, prioritised by corpus usage. Captured frames apply live from local storage before they are committed. |
 | D16 | v1 only: logic/live simulation and every tier-2 item are out of scope | user | |
 | D17 | Repo `GrambyEdit`; Mumble Games credited as owner of the game assets; mostly private use | user | Free GitHub Pages needs a public repo (§20). |
-| D18 | `Orientation` turns the posed part (or piece) about its own axes and pivot **after** mating. A positive `OrientationY` turns it clockwise seen from above (against the right-hand rule); X and Z follow the right-hand rule; the order is `Ry · Rx · Rz` | user + me | In game a part turns about its centre (2026-10-23). The user's Part test (`tests/fixtures/part_test.txt`, 2026-10-24) put a Y = 90 column on the side opposite the right-hand rule. Bumpers and Wings are turned on Z = 90 hundreds of times in the corpus, which only makes sense about the part's own axes. The X and Z directions and the order are **unverified**; probe P7 settles them. |
+| D18 | `Orientation` turns the posed part (or piece) about its own axes and pivot **after** mating, by the inverse of Roblox's `CFrame.fromOrientation`: `Rz(−z) · Rx(−x) · Ry(−y)`. A positive X, Y or Z turns it against the right-hand rule (Y: clockwise seen from above), Z goes on before X, and X before Y | user + me | In game a part turns about its centre (2026-10-23). The user's Part test (`tests/fixtures/part_test.txt`, 2026-10-24) put a Y = 90 column on the side opposite the right-hand rule. The user's Cadillac (`tests/fixtures/cadillac.txt`, 2026-10-24) matches its game screenshot only with X turned that way too: its windshield (X 22.5), hood (an X 90 Servo) and trunk (X 90 Parts). Its grille rods (ShortSticks at X 90 with Z 270 and Z 90) lie in the slot between its headlights, as the user confirmed in game, only with Z reversed and on before X. Bumpers and Wings are turned on Z = 90 hundreds of times in the corpus, which only makes sense about the part's own axes. X before Y is **inferred** from the inverse; probe P7 checks it. |
 | D19 | **Multi-piece parts** (`Wire`, `Switch`, `Button`, `RemoteButton`, `TripWire`, the Splitters, `RubberBand`, `Rope`; `data/curation/bodies.json`): each piece is posed by its own first connection and can be dragged on its own | user | In game a Wire end or a Switch circle moves separately from its base (2026-10-23). |
 | D20 | Connect never arms a part type: every click on a free socket or point opens the picker, recent types first. Shift+click still gathers several targets | user | The armed type kept placing the same part (2026-10-23). |
 
@@ -429,7 +429,7 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 | symbol | default | why |
 |---|---|---|
 | M, Me | `Rx(180°)`: every frame is stored outward, so the child's frame is turned to face the parent's | identical to the Workshop's "frames coincide" mating, whose ball frame points inward (§24.1); the roll (flip about X vs Z) is a **guess** that probe P1 settles |
-| R | `Ry(−OrientationY) · Rx(OrientationX) · Rz(OrientationZ)` in the child's own frame, about its pivot (§10.2), i.e. three.js `Euler(x, −y, z, 'YXZ')` (`orientationOrder`, `orientationSigns: [1, −1, 1]`) | the Y direction is **verified** in game (D18); the X and Z directions and the order (Roblox's) are **guesses** until probe P7 |
+| R | `Rz(−OrientationZ) · Rx(−OrientationX) · Ry(−OrientationY)` in the child's own frame, about its pivot (§10.2): the inverse of Roblox's `CFrame.fromOrientation`, i.e. three.js `Euler(−x, −y, −z, 'ZXY')` (`orientationOrder`, `orientationSigns: [−1, −1, −1]`) | the three directions and Z before X are **verified** in game (D18); X before Y is **inferred** until probe P7 |
 | Re | R, applied on points too (`orientationOnPoints: true`) | **guess** |
 | pivot | `orientationPivot: 'part'` | the user's in-game observation (D18) |
 | Sub | identity for every partName | until your capture supplies sub-piece frames |
@@ -442,7 +442,7 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
    - P4 a `Gate-AND` on a `Base` point with a 90°-rotated `cframe`;
    - P5 a `Base` host with `OrientationY` = 90 hosting a point;
    - P6 a `Roof` host with `partName` `"Glass"` vs `"Roof"`;
-   - P7 turn directions and order: a red stick on +X and a blue one on +Z for reference, a yellow Part (X 90), a purple Part (Z 90) and a green Part (X 90, Y 90) with sticks showing where each turned. Every sign and order combination gives a different picture.
+   - P7 turn directions and order: a red stick on +X and a blue one on +Z for reference, a yellow Part (X 90), a purple Part (Z 90) and a green Part (X 90, Y 90) with sticks showing where each turned. Each sign combination, and X before or after Y, gives a different picture.
    You report what you see; the answers become `conventions.json` values.
 
 ### 10.5 Fallback frames (`frameSource: 'approx'`)

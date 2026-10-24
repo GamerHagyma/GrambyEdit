@@ -136,8 +136,8 @@ const BLUE = [33, 90, 230];
 /**
  * P7: which way `OrientationX/Y/Z` turn, and their order. A root Connector with a red stick on +X and a
  * blue one on +Z; a yellow Part (X 90) on the red arm, a purple Part (Z 90) on the blue arm, and a
- * green Part (X 90, Y 90) on top, each with sticks that point where it turned. Every sign and order
- * combination gives a different picture.
+ * green Part (X 90, Y 90) on top, each with sticks that point where it turned. Each sign combination,
+ * and X before or after Y, gives a different picture.
  */
 function turnProbe(): Json[] {
   const yellow = [255, 215, 0];

@@ -30,10 +30,10 @@ import { parseRuntimeParts, runtimeRawPart, type RuntimePart } from './lib/runti
 
 const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
-  orientationOrder: 'YXZ',
+  orientationOrder: 'ZXY',
   orientationOnPoints: true,
   orientationPivot: 'part',
-  orientationSigns: [1, -1, 1],
+  orientationSigns: [-1, -1, -1],
 };
 const UNPAINTABLE = /^(Input|Output|Glass|Screw|Light)/;
 const GREY: RGB = [128, 128, 128];

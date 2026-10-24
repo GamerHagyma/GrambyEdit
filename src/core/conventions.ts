@@ -6,10 +6,10 @@ import type { CFrame12, Json } from './types';
 
 export const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
-  orientationOrder: 'YXZ',
+  orientationOrder: 'ZXY',
   orientationOnPoints: true,
   orientationPivot: 'part',
-  orientationSigns: [1, -1, 1],
+  orientationSigns: [-1, -1, -1],
 };
 
 const RX180 = new Matrix4().set(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);

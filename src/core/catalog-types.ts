@@ -94,7 +94,8 @@ export interface Conventions {
   readonly orientationPivot: 'part' | 'socket';
   /**
    * Which way `OrientationX/Y/Z` turn: 1 by the right-hand rule about the part's own axis, -1 the other
-   * way. In game a positive `OrientationY` turns a part clockwise seen from above (2026-10-24).
+   * way. In game all three turn a part the other way: Y clockwise seen from above (the Part test), X and
+   * Z as the Cadillac shows (both 2026-10-24).
    */
   readonly orientationSigns: readonly [1 | -1, 1 | -1, 1 | -1];
 }
