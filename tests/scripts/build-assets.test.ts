@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { buildAssets, withOrientation } from '../../scripts/build-assets';
+import { workshopFrames } from '../../scripts/lib/catalog';
 
 const close = (a: readonly number[], b: readonly number[]) =>
   a.forEach((v, i) => expect(Math.abs(v - b[i])).toBeLessThan(1e-3));
@@ -27,11 +29,20 @@ test('builds the runtime catalog and mesh pack', async () => {
       expect.arrayContaining(['OrientationX', 'OrientationY', 'OrientationZ']),
     );
   }
+  // The Part's captures win over the Workshop's frames, and agree with them.
   const P = catalog.parts.Part;
-  expect(P.sockets['6'].frameSource).toBe('workshop');
-  close(P.sockets['6'].frame, [0, 0.5, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]);
-  close(P.sockets['1'].frame, [0, -0.5, 0, 1, 0, 0, 0, -1, 0, 0, 0, -1]);
-  close(P.sockets['2'].frame, [0.5, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]);
+  const workshop = workshopFrames(
+    readFileSync('vendor/grambys-workshop/Scripts/GrambyObjects/Part/Part.tscn', 'utf8'),
+  );
+  expect(P.sockets['6'].frameSource).toBe('captured');
+  for (const [id, frame] of [
+    ['6', [0, 0.5, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+    ['1', [0, -0.5, 0, 1, 0, 0, 0, -1, 0, 0, 0, -1]],
+    ['2', [0.5, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]],
+  ] as const) {
+    close(P.sockets[id].frame, frame);
+    close(workshop[id], frame);
+  }
   expect(catalog.parts.Switch.sockets['2'].role).toBe('output');
   expect(catalog.parts.Wire.sockets['3'].role).toBe('conductor');
   expect(catalog.parts.Base.sockets['5']).toMatchObject({ role: 'socket', name: 'Top' });
