@@ -68,11 +68,9 @@ The editor supports **Blender** controls for orbiting around a build and **Studi
 
 ## GitHub Pages
 
-GrambyEdit can be hosted on GitHub Pages so it is accessible from a browser without a local installation. The deployment URL for this repository is:
+Use GrambyEdit in your browser without a local installation:
 
 **[gamerhagyma.github.io/GrambyEdit/](https://gamerhagyma.github.io/GrambyEdit/)**
-
-To enable deployment, open the repository's **Settings → Pages** and set **Source** to **GitHub Actions**. The included [Pages workflow](.github/workflows/pages.yml) builds the assets, runs the checks, and deploys the site when changes are pushed to `main`. The site base path is configured as `/GrambyEdit/`.
 
 ## Run locally
 
