@@ -74,12 +74,14 @@ const CAMERA: Record<Scheme, Section> = {
 };
 
 const TOOL_KEYS: Section = {
-  title: 'Point and Connect tools',
+  title: 'Point, Connect and Sockets tools',
   rows: [
     { keys: ['G', 'R'], action: 'Point: switch the selected point’s gizmo to move or rotate' },
     { keys: ['Enter'], action: 'Point: mount a part on the selected point' },
     { keys: ['Delete'], action: 'Point: delete the selected point' },
     { keys: ['Esc'], action: 'Connect: cancel, then stop placing the armed part' },
+    { keys: ['G', 'R'], action: 'Sockets: switch the selected socket’s gizmo to move or rotate' },
+    { keys: ['Esc'], action: 'Sockets: deselect the socket' },
   ],
 };
 

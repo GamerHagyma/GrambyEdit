@@ -864,6 +864,45 @@ button.issue-row:hover {
 .wb-status.approx {
   color: var(--muted);
 }
+.wb-socket {
+  margin: 6px 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.wb-socket h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 0;
+}
+.wb-facing {
+  color: var(--muted);
+  font-weight: 400;
+}
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.wb-label {
+  flex: none;
+  width: 52px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.wb-row .button {
+  height: 22px;
+  padding: 0 8px;
+}
+.wb-row .number-scrub {
+  flex: 1;
+  width: 0;
+}
+.wb-unit {
+  color: var(--muted);
+}
 .wb-mate {
   display: flex;
   align-items: center;

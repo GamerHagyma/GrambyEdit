@@ -1,6 +1,13 @@
 // The Sockets tool (spec §12.7): in the workbench, a click on a ring selects that socket; with a
-// socket selected, a click on a candidate dot or on the mesh captures the socket's frame there.
-import { captureProgress, captureSocket, wbSocketSig, wbTypeSig } from '../state/workbench';
+// socket selected, a click on a candidate dot or on the mesh captures the socket's frame there, and G
+// or R switches its gizmo to moving or turning it.
+import {
+  captureProgress,
+  captureSocket,
+  wbGizmoModeSig,
+  wbSocketSig,
+  wbTypeSig,
+} from '../state/workbench';
 import { catalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { getViewport } from '../viewport/context';
@@ -50,8 +57,13 @@ export function createWorkbenchTool(): Tool {
       );
     },
     onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && wbSocketSig.value !== null) {
+      if (wbSocketSig.value === null) return false;
+      if (e.key === 'Escape') {
         wbSocketSig.value = null;
+        return true;
+      }
+      if ((e.code === 'KeyG' || e.code === 'KeyR') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        wbGizmoModeSig.value = e.code === 'KeyG' ? 'translate' : 'rotate';
         return true;
       }
       return false;

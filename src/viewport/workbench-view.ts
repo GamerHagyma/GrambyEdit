@@ -1,8 +1,11 @@
 // The Socket Workbench view (spec §12.7): one part at the origin, its socket rings (solid when
-// captured, hollow when approximate), candidate dots, a test-mate cube and a gizmo on the selected
-// socket. Part space equals world space here, so a hit on the mesh is already a part-space frame.
+// captured, hollow when approximate) with an arrow along each socket's facing, candidate dots, a
+// test-mate cube and a gizmo on the selected socket, along the socket's own axes. Part space equals
+// world space here, so a hit on the mesh is already a part-space frame.
 import {
   CircleGeometry,
+  ConeGeometry,
+  CylinderGeometry,
   DoubleSide,
   Group,
   Matrix4,
@@ -19,6 +22,7 @@ import {
   type Vector2,
 } from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { partGeometry, type Assets } from '../assets/geometry';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog, Conventions } from '../core/catalog-types';
@@ -35,6 +39,11 @@ export type WorkbenchPick =
 const RING = new RingGeometry(0.62, 1, 24).rotateX(-Math.PI / 2);
 const DISC = new CircleGeometry(1, 24).rotateX(-Math.PI / 2);
 const DOT = new SphereGeometry(1, 12, 8);
+/** The facing arrow in ring units: out of the ring along the socket's +Y, its outward normal. */
+const ARROW = mergeGeometries([
+  new CylinderGeometry(0.12, 0.12, 1.5, 8).translate(0, 0.75, 0),
+  new ConeGeometry(0.36, 0.7, 12).translate(0, 1.85, 0),
+])!;
 const flat = (color: number, opacity = 1) =>
   new MeshBasicMaterial({
     color,
@@ -67,11 +76,13 @@ export class WorkbenchView {
   private readonly partMat = partMaterial();
   private readonly mateMat = new MeshStandardMaterial({ color: 0x9a9da3, roughness: 0.7 });
   private mesh: Mesh | null = null;
-  private markers: { socket: SocketId; mesh: Mesh }[] = [];
+  private markers: { socket: SocketId; mesh: Mesh; arrow: Mesh }[] = [];
   private dots: { label: string; cframe: CFrame12; mesh: Mesh }[] = [];
   private shownKey = '';
   /** Marker size for the current part; also the depth tolerance when picking markers. */
   private markerRadius = 0.03;
+  /** The gizmo's frame when a drag starts: a click that moves nothing captures nothing. */
+  private readonly dragStart = new Matrix4();
   /** Called with the gizmo's frame when a drag ends. */
   onGizmoEnd: (cframe: CFrame12) => void = () => {};
 
@@ -81,9 +92,16 @@ export class WorkbenchView {
     this.gizmo.setSize(0.7);
     this.gizmo.setTranslationSnap(0.01);
     this.gizmo.setRotationSnap(Math.PI / 2);
+    // Along the socket's own axes, so the gizmo shows its roll and R turns it about its facing.
+    this.gizmo.setSpace('local');
     this.gizmo.addEventListener('change', request);
+    this.gizmo.addEventListener('mouseDown', () => {
+      this.proxy.updateMatrix();
+      this.dragStart.copy(this.proxy.matrix);
+    });
     this.gizmo.addEventListener('mouseUp', () => {
       this.proxy.updateMatrix();
+      if (this.proxy.matrix.equals(this.dragStart)) return;
       this.onGizmoEnd(matrix4ToCf(this.proxy.matrix));
     });
     this.group.add(this.gizmo.getHelper());
@@ -133,17 +151,20 @@ export class WorkbenchView {
     this.markers = Object.entries(def?.sockets ?? {}).map(([id, s]) => {
       const selected = id === socket;
       const captured = s.frameSource === 'captured';
-      const color = selected ? 0xffc46b : captured ? 0x3fb950 : 0x7cc4fa;
-      const mesh = new Mesh(captured || selected ? DISC : RING, flat(color));
+      const color = flat(selected ? 0xffc46b : captured ? 0x3fb950 : 0x7cc4fa);
+      const mesh = new Mesh(captured || selected ? DISC : RING, color);
+      const arrow = new Mesh(ARROW, color);
       const size = selected ? r * 1.35 : r;
-      mesh.matrixAutoUpdate = false;
-      mesh.matrix
-        .copy(cfToMatrix4(s.frame))
-        .multiply(new Matrix4().makeTranslation(0, r * 0.05, 0))
-        .multiply(new Matrix4().makeScale(size, size, size));
-      mesh.userData.socket = id;
-      this.content.add(mesh);
-      return { socket: id, mesh };
+      for (const m of [mesh, arrow]) {
+        m.matrixAutoUpdate = false;
+        m.matrix
+          .copy(cfToMatrix4(s.frame))
+          .multiply(new Matrix4().makeTranslation(0, r * 0.05, 0))
+          .multiply(new Matrix4().makeScale(size, size, size));
+        m.userData.socket = id;
+        this.content.add(m);
+      }
+      return { socket: id, mesh, arrow };
     });
 
     this.dots = spots.map((spot) => {
@@ -174,18 +195,20 @@ export class WorkbenchView {
       this.content.add(cube);
     }
 
-    const key = `${type}|${socket}`;
+    // The frame is part of the key: a turn or typed position re-seats the gizmo on the new frame.
+    const key = `${type}|${socket}|${frame ? frame.join(',') : ''}`;
     if (frame) {
-      // Re-seat the gizmo only when the selection changes, so a drag in progress is never reset.
-      if (key !== this.shownKey) {
+      // Re-seat the gizmo only when the socket or its frame changes, never in the middle of a drag.
+      if (key !== this.shownKey && !this.gizmo.dragging) {
         cfToMatrix4(frame).decompose(this.proxy.position, this.proxy.quaternion, this.proxy.scale);
         this.proxy.scale.set(1, 1, 1);
+        this.shownKey = key;
       }
       this.gizmo.attach(this.proxy);
     } else {
       this.gizmo.detach();
+      this.shownKey = key;
     }
-    this.shownKey = key;
   }
 
   /** What is under the cursor: a candidate dot, a socket ring, or the part surface. */
@@ -202,8 +225,9 @@ export class WorkbenchView {
       const d = this.dots.find((x) => x.mesh === dot.object)!;
       return { kind: 'dot', label: d.label, cframe: d.cframe };
     }
-    for (const m of this.markers) m.mesh.updateMatrixWorld();
-    const ring = first(this.markers.map((m) => m.mesh));
+    const marks = this.markers.flatMap((m) => [m.mesh, m.arrow]);
+    for (const m of marks) m.updateMatrixWorld();
+    const ring = first(marks);
     if (ring && ring.distance <= limit) {
       return { kind: 'socket', socket: ring.object.userData.socket as SocketId };
     }

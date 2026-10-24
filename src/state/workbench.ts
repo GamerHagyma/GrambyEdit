@@ -13,6 +13,8 @@ export const wbTypeSig = signal<string | null>(null);
 export const wbSocketSig = signal<SocketId | null>(null);
 /** Shows a grey Part cube mated to the selected socket. */
 export const wbMateSig = signal(false);
+/** What the selected socket's gizmo does: G moves it, R turns it about its own axes. */
+export const wbGizmoModeSig = signal<'translate' | 'rotate'>('translate');
 
 /** Applied before the save, so a failed save keeps the capture for this session; the caller reports it. */
 async function commitFile(file: SocketGeometryFile): Promise<void> {

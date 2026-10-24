@@ -1,17 +1,20 @@
 // The Socket Workbench panel (spec §12.7), the left dock in Sockets mode: pick a part, copy its probe
-// codes, capture or clear its sockets, and export or import the capture file.
-import type { JSX } from 'preact';
+// codes, capture, turn, place or clear its sockets, and export or import the capture file.
+import { Fragment, type JSX } from 'preact';
 import { useRef, useState } from 'preact/hooks';
 import type { PartDef } from '../../core/catalog-types';
+import { facingLabel, turnFrame } from '../../core/frames';
 import { calibrationProbes, socketProbes, type ProbeCode } from '../../core/probes';
-import type { SocketId } from '../../core/types';
+import type { CFrame12, SocketId } from '../../core/types';
 import { catalogSig, socketOverridesSig } from '../../state/store';
 import { toast } from '../../state/toasts';
 import {
   captureProgress,
+  captureSocket,
   clearSocket,
   exportSocketFile,
   importSocketFile,
+  wbGizmoModeSig,
   wbMateSig,
   wbSocketSig,
   wbTypeSig,
@@ -20,6 +23,7 @@ import { downloadText } from '../download';
 import { Icon } from '../icons';
 import { CopyButton } from '../widgets/CopyButton';
 import { fuzzyScore } from '../widgets/fuzzy';
+import { NumberScrub } from '../widgets/NumberScrub';
 
 const reportFailure = (what: string) => (e: unknown) =>
   toast(`${what}: ${(e as Error).message}`, 'error');
@@ -105,8 +109,14 @@ export function WorkbenchPanel(): JSX.Element {
         {def ? (
           <>
             <h3>{`${def.type} sockets`}</h3>
-            <p class="muted">Select a socket, then click where its marker sits on the mesh.</p>
+            <p class="muted">
+              Select a socket, then click where its marker sits on the mesh. Arrows show which way
+              each socket faces.
+            </p>
             <SocketTable type={def.type} def={def} selected={socket} />
+            {socket !== null && Object.hasOwn(def.sockets, socket) && (
+              <SocketControls type={def.type} socket={socket} frame={def.sockets[socket].frame} />
+            )}
             <label class="wb-mate">
               <input
                 type="checkbox"
@@ -227,6 +237,100 @@ function SocketTable({
         })}
       </tbody>
     </table>
+  );
+}
+
+const AXES = ['x', 'y', 'z'] as const;
+
+/** The selected socket: which way it faces, the gizmo mode, exact turns and an exact position. */
+function SocketControls({
+  type,
+  socket,
+  frame,
+}: {
+  type: string;
+  socket: SocketId;
+  frame: CFrame12;
+}): JSX.Element {
+  const [step, setStep] = useState(90);
+  const mode = wbGizmoModeSig.value;
+  const save = (cf: CFrame12) =>
+    void captureSocket(type, socket, cf).catch(reportFailure('Could not save the socket'));
+  const place = (i: number, v: number) => {
+    const next: readonly number[] = frame.map((x, k) => (k === i ? v : x));
+    save(next as CFrame12);
+  };
+  return (
+    <section class="wb-socket" aria-label={`Socket ${socket}`}>
+      <h3>
+        {`Socket ${socket}`}
+        <span class="wb-facing">{`faces ${facingLabel(frame)}`}</span>
+      </h3>
+      <div class="wb-row" role="group" aria-label="Gizmo">
+        <span class="wb-label">Gizmo</span>
+        <div class="segmented">
+          <button
+            aria-pressed={mode === 'translate'}
+            onClick={() => {
+              wbGizmoModeSig.value = 'translate';
+            }}
+          >
+            Move (G)
+          </button>
+          <button
+            aria-pressed={mode === 'rotate'}
+            onClick={() => {
+              wbGizmoModeSig.value = 'rotate';
+            }}
+          >
+            Rotate (R)
+          </button>
+        </div>
+      </div>
+      <div class="wb-row" role="group" aria-label="Turn">
+        <span class="wb-label">Turn</span>
+        {AXES.map((axis) => (
+          <button
+            key={axis}
+            class="button"
+            title={`Turn ${step}° about the socket’s own ${axis.toUpperCase()} axis (Shift: back)`}
+            onClick={(e) => save(turnFrame(frame, axis, e.shiftKey ? -step : step))}
+          >
+            {axis.toUpperCase()}
+          </button>
+        ))}
+        <label class="visually-hidden" for="wb-turn-step">
+          Turn step in degrees
+        </label>
+        <NumberScrub
+          id="wb-turn-step"
+          value={step}
+          placeholder="90"
+          step={1}
+          min={0.1}
+          max={360}
+          onCommit={setStep}
+        />
+        <span class="wb-unit">°</span>
+      </div>
+      <div class="wb-row" role="group" aria-label="Position">
+        <span class="wb-label">Position</span>
+        {AXES.map((axis, i) => (
+          <Fragment key={axis}>
+            <label class="visually-hidden" for={`wb-pos-${axis}`}>
+              {`Position ${axis.toUpperCase()}`}
+            </label>
+            <NumberScrub
+              id={`wb-pos-${axis}`}
+              value={Math.round(frame[i] * 1e4) / 1e4 + 0}
+              placeholder="0"
+              step={0.01}
+              onCommit={(v) => place(i, v)}
+            />
+          </Fragment>
+        ))}
+      </div>
+    </section>
   );
 }
 

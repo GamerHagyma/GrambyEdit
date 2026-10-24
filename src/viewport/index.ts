@@ -48,6 +48,7 @@ import { toolSig } from '../tools/manager';
 import {
   candidateSpots,
   captureSocket,
+  wbGizmoModeSig,
   wbMateSig,
   wbSocketSig,
   wbTypeSig,
@@ -528,6 +529,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const mate = wbMateSig.value;
     const assets = assetsSig.value;
     const cat = catalogSig.value;
+    workbench.setGizmoMode(wbGizmoModeSig.value);
     if (active && type && assets && cat) {
       workbench.show(assets, cat, type, socket, mate, cat.conventions, candidateSpots(cat, type));
       if (framedType !== type) {

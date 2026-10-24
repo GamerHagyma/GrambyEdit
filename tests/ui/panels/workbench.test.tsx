@@ -2,8 +2,14 @@
 import 'fake-indexeddb/auto';
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { WorkbenchPanel } from '../../../src/ui/panels/WorkbenchPanel';
-import { baseCatalogSig, resetStoreForTests } from '../../../src/state/store';
-import { captureSocket, wbMateSig, wbSocketSig, wbTypeSig } from '../../../src/state/workbench';
+import { baseCatalogSig, catalogSig, resetStoreForTests } from '../../../src/state/store';
+import {
+  captureSocket,
+  wbGizmoModeSig,
+  wbMateSig,
+  wbSocketSig,
+  wbTypeSig,
+} from '../../../src/state/workbench';
 import { MINI } from '../../helpers/catalog';
 
 beforeEach(() => {
@@ -83,4 +89,37 @@ test('Import file shows the error text of a rejected file', async () => {
   const file = new File(['not json'], 'socket_geometry.json', { type: 'application/json' });
   fireEvent.change(screen.getByLabelText('Socket file'), { target: { files: [file] } });
   expect((await screen.findByRole('alert')).textContent).toBe('not valid JSON');
+});
+
+test('the selected socket shows its facing; Turn and Position save a new frame', async () => {
+  await captureSocket('Part', '2', [0.5, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]);
+  wbTypeSig.value = 'Part';
+  wbSocketSig.value = '2';
+  render(<WorkbenchPanel />);
+  const frame = () => catalogSig.value!.parts.Part.sockets['2'].frame;
+  expect(screen.getByText('faces +X')).toBeTruthy();
+  // A quarter turn about its own X tips it from +X to +Y, in place.
+  fireEvent.click(screen.getByRole('button', { name: 'X' }));
+  await waitFor(() => expect(frame()).toEqual([0.5, 0, 0, 0, 0, -1, 0, 1, 0, 1, 0, 0]));
+  expect(screen.getByText('faces +Y')).toBeTruthy();
+  // Shift turns back.
+  fireEvent.click(screen.getByRole('button', { name: 'X' }), { shiftKey: true });
+  await waitFor(() => expect(frame()).toEqual([0.5, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]));
+  const y = screen.getByLabelText('Position Y');
+  fireEvent.input(y, { target: { value: '0.25' } });
+  fireEvent.blur(y);
+  await waitFor(() => expect(frame()).toEqual([0.5, 0.25, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]));
+  expect(catalogSig.value!.parts.Part.sockets['2'].frameSource).toBe('captured');
+});
+
+test('the gizmo buttons switch between moving and turning the socket', () => {
+  wbTypeSig.value = 'Part';
+  wbSocketSig.value = '2';
+  wbGizmoModeSig.value = 'translate';
+  render(<WorkbenchPanel />);
+  fireEvent.click(screen.getByText('Rotate (R)'));
+  expect(wbGizmoModeSig.value).toBe('rotate');
+  expect(screen.getByText('Rotate (R)').getAttribute('aria-pressed')).toBe('true');
+  fireEvent.click(screen.getByText('Move (G)'));
+  expect(wbGizmoModeSig.value).toBe('translate');
 });

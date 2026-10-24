@@ -1,4 +1,6 @@
+import { MathUtils, Matrix4 } from 'three';
 import type { Vec3 } from './catalog-types';
+import { cfToMatrix4, matrix4ToCf } from './cframe';
 import type { CFrame12 } from './types';
 
 /** Candidate roll axes, in priority order. */
@@ -44,4 +46,26 @@ export function frameFromNormal(pos: Vec3, normal: Vec3): CFrame12 {
     z[2],
   ].map((v) => v + 0);
   return out as CFrame12;
+}
+
+/** `cf` turned `degrees` about its own `axis`, in place: a socket rolls about Y and tips about X or Z. */
+export function turnFrame(cf: CFrame12, axis: 'x' | 'y' | 'z', degrees: number): CFrame12 {
+  const a = MathUtils.degToRad(degrees);
+  const turn = new Matrix4();
+  if (axis === 'x') turn.makeRotationX(a);
+  else if (axis === 'y') turn.makeRotationY(a);
+  else turn.makeRotationZ(a);
+  return matrix4ToCf(cfToMatrix4(cf).multiply(turn));
+}
+
+/** Where a frame's +Y (a socket's outward normal) points: an axis such as "+X" or "−Z", else its direction. */
+export function facingLabel(cf: CFrame12): string {
+  const y = [cf[4], cf[7], cf[10]];
+  const k = [1, 2].reduce((best, i) => (Math.abs(y[i]) > Math.abs(y[best]) ? i : best), 0);
+  if (Math.abs(y[k]) > 0.9998) return `${y[k] > 0 ? '+' : '−'}${'XYZ'[k]}`;
+  const text = (v: number) => {
+    const s = v.toFixed(2);
+    return s === '-0.00' ? '0.00' : s.replace('-', '−');
+  };
+  return `(${y.map(text).join(', ')})`;
 }
