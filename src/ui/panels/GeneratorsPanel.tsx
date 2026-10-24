@@ -1,34 +1,38 @@
 // The Generators panel (spec §13.9, §15): a shape with its parameters, the element and host parts, the spacing and
-// the colours, what the shape would add to the build, and Generate, which arms the Place tool with the shape.
+// the colours, what the shape would add to the build and a picture of it, and Generate: onto the part picked in
+// the build at once (D21), or through the Place tool.
 import type { JSX } from 'preact';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { eligibleForPoint } from '../../core/defaults';
 import {
-  buildGeneratedSubDoc,
   SHAPES,
   type GenFill,
   type GenOrient,
   type ShapeDef,
   type ShapeParam,
 } from '../../core/generators';
-import { hexToRgb, rgbToHex } from '../../core/palette';
-import type { RGB } from '../../core/types';
-import { arm } from '../../state/place';
 import {
-  costPreview,
+  clearGenHost,
+  genBuildSig,
+  genCostSig,
+  genHostSig,
+  generate,
   liveRequestSig,
   loadPreset,
+  pickGenHost,
   presetsSig,
   savePreset,
-  setColorMode,
   setParam,
   setShape,
   updateInput,
   updateRequest,
 } from '../../state/generators';
-import { settingsSig } from '../../state/settings';
-import { catalogSig, docSig } from '../../state/store';
+import { catalogSig } from '../../state/store';
+import { toolSig } from '../../tools/manager';
+import { cancelPick } from '../../tools/pick';
+import { ColorFields } from '../widgets/ColorFields';
 import { PartPicker, type PickChoice } from '../widgets/PartPicker';
+import { ShapePreview } from '../widgets/ShapePreview';
 
 const SHAPE_LIST: readonly ShapeDef[] = Object.values(SHAPES);
 const FILL_LABEL: Readonly<Record<GenFill, string>> = {
@@ -42,8 +46,6 @@ const ORIENTS: readonly { id: GenOrient; label: string }[] = [
   { id: 'outward', label: 'Outward' },
   { id: 'tangent', label: 'Tangent' },
 ];
-const WHITE: RGB = [255, 255, 255];
-
 /** The number a field holds, or null while it is empty. */
 function numberOf(text: string): number | null {
   if (text === '') return null;
@@ -92,19 +94,16 @@ type PickSlot = 'element' | 'host';
 
 export function GeneratorsPanel(): JSX.Element {
   const cat = catalogSig.value;
-  const doc = docSig.value;
   const req = liveRequestSig.value;
-  const { limits } = settingsSig.value;
+  const host = genHostSig.value;
+  const built = genBuildSig.value;
+  const cost = genCostSig.value;
   const presets = presetsSig.value;
   const [picker, setPicker] = useState<{
     slot: PickSlot;
     anchor: { x: number; y: number };
   } | null>(null);
   const [presetName, setPresetName] = useState('');
-  const preview = useMemo(
-    () => cat && costPreview(doc, cat, cat.conventions, req, limits),
-    [cat, doc, req, limits],
-  );
 
   useEffect(() => {
     if (picker === null) return;
@@ -115,8 +114,14 @@ export function GeneratorsPanel(): JSX.Element {
     document.addEventListener('pointerdown', close, true);
     return () => document.removeEventListener('pointerdown', close, true);
   }, [picker]);
+  // Leaving the panel mid-pick ends the pick, so no prompt waits on a panel that is gone.
+  useEffect(() => {
+    return () => {
+      if (toolSig.peek() === 'pick') cancelPick();
+    };
+  }, []);
 
-  if (!cat || !preview) {
+  if (!cat || !cost) {
     return (
       <div class="generators">
         <p class="empty">The part library is still loading.</p>
@@ -136,10 +141,6 @@ export function GeneratorsPanel(): JSX.Element {
     if (picker === null || choice.kind !== 'part') return;
     updateRequest(picker.slot === 'element' ? { element: choice.type } : { host: choice.type });
     setPicker(null);
-  };
-  const generate = () => {
-    const built = buildGeneratedSubDoc(req, cat, cat.conventions);
-    if (built.ok) arm({ kind: 'generated', sub: built.sub });
   };
 
   return (
@@ -222,151 +223,58 @@ export function GeneratorsPanel(): JSX.Element {
         </div>
         <div class="gen-field">
           <span class="gen-label">Host</span>
-          <button
-            class="button small gen-pick"
-            aria-haspopup="dialog"
-            title="The part the points sit on"
-            onClick={(e) => openPicker('host', e.currentTarget)}
-          >
-            {req.host}
-          </button>
-        </div>
-        <div class="gen-field">
-          <label for="gen-color-mode">Color mode</label>
-          <select
-            id="gen-color-mode"
-            value={c.mode}
-            onChange={(e) => {
-              const mode = e.currentTarget.value;
-              if (mode === 'single' || mode === 'gradient' || mode === 'random') setColorMode(mode);
-            }}
-          >
-            <option value="single">Single</option>
-            <option value="gradient">Gradient</option>
-            <option value="random">Random</option>
-          </select>
-        </div>
-        {c.mode === 'single' && (
-          <div class="gen-field">
-            <label for="gen-color">Color</label>
-            <input
-              id="gen-color"
-              type="color"
-              value={rgbToHex(c.rgb)}
-              onChange={(e) => {
-                const rgb = hexToRgb(e.currentTarget.value);
-                if (rgb) updateRequest({ color: { mode: 'single', rgb } });
-              }}
-            />
-          </div>
-        )}
-        {c.mode === 'gradient' && (
-          <>
-            <div class="gen-field">
-              <label for="gen-from">From</label>
-              <input
-                id="gen-from"
-                type="color"
-                value={rgbToHex(c.from)}
-                onChange={(e) => {
-                  const from = hexToRgb(e.currentTarget.value);
-                  if (from) updateRequest({ color: { ...c, from } });
-                }}
-              />
-            </div>
-            <div class="gen-field">
-              <label for="gen-to">To</label>
-              <input
-                id="gen-to"
-                type="color"
-                value={rgbToHex(c.to)}
-                onChange={(e) => {
-                  const to = hexToRgb(e.currentTarget.value);
-                  if (to) updateRequest({ color: { ...c, to } });
-                }}
-              />
-            </div>
-            <div class="gen-field">
-              <label for="gen-axis">Axis</label>
-              <select
-                id="gen-axis"
-                value={c.axis}
-                onChange={(e) => {
-                  const axis = e.currentTarget.value;
-                  if (axis === 'x' || axis === 'y' || axis === 'z') {
-                    updateRequest({ color: { ...c, axis } });
-                  }
-                }}
+          {host ? (
+            <>
+              <span class="gen-host-picked">
+                #{host.id} {host.type}
+              </span>
+              <button
+                class="button small"
+                aria-label="Stop using the picked host"
+                onClick={clearGenHost}
               >
-                <option value="x">X</option>
-                <option value="y">Y</option>
-                <option value="z">Z</option>
-              </select>
-            </div>
-          </>
-        )}
-        {c.mode === 'random' && (
-          <>
-            {c.palette.map((rgb, i) => (
-              <div class="gen-field" key={i}>
-                <input
-                  type="color"
-                  aria-label={`Palette color ${i + 1}`}
-                  value={rgbToHex(rgb)}
-                  onChange={(e) => {
-                    const next = hexToRgb(e.currentTarget.value);
-                    if (next) {
-                      updateRequest({
-                        color: { ...c, palette: c.palette.map((x, j) => (j === i ? next : x)) },
-                      });
-                    }
-                  }}
-                />
-                <button
-                  class="button small"
-                  aria-label={`Remove palette color ${i + 1}`}
-                  disabled={c.palette.length === 1}
-                  onClick={() =>
-                    updateRequest({
-                      color: { ...c, palette: c.palette.filter((_, j) => j !== i) },
-                    })
-                  }
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <button
-              class="button small"
-              onClick={() => updateRequest({ color: { ...c, palette: [...c.palette, WHITE] } })}
-            >
-              Add color
-            </button>
-            <div class="gen-field">
-              <label for="gen-seed">Seed</label>
-              <input
-                id="gen-seed"
-                type="number"
-                step={1}
-                value={c.seed}
-                onInput={(e) => {
-                  const seed = numberOf(e.currentTarget.value);
-                  if (seed !== null && Number.isInteger(seed)) {
-                    updateRequest({ color: { ...c, seed } });
-                  }
-                }}
-              />
-            </div>
-          </>
-        )}
+                Clear
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                class="button small gen-pick"
+                aria-haspopup="dialog"
+                title="The part the points sit on"
+                onClick={(e) => openPicker('host', e.currentTarget)}
+              >
+                {req.host}
+              </button>
+              <button
+                class="button small"
+                aria-pressed={toolSig.value === 'pick'}
+                title="Click a part in the build to generate the shape on it"
+                onClick={pickGenHost}
+              >
+                Pick in build
+              </button>
+            </>
+          )}
+        </div>
+        <ColorFields
+          idPrefix="gen"
+          color={c}
+          axes={[
+            { id: 'x', label: 'X' },
+            { id: 'y', label: 'Y' },
+            { id: 'z', label: 'Z' },
+          ]}
+          onChange={(color) => updateRequest({ color })}
+        />
       </div>
 
-      {preview.ok ? (
+      {cost.ok ? (
         <>
           <p class="gen-cost" role="status">
-            {preview.cost.text}
+            {cost.cost.text}
           </p>
-          {preview.cost.crossings.map((x) => (
+          {cost.cost.crossings.map((x) => (
             <p key={x} class="gen-warning">
               Crosses {x}
             </p>
@@ -374,10 +282,11 @@ export function GeneratorsPanel(): JSX.Element {
         </>
       ) : (
         <p class="gen-error" role="alert">
-          {preview.error}
+          {cost.error}
         </p>
       )}
-      <button class="button primary" disabled={!preview.ok} onClick={generate}>
+      <ShapePreview sub={built?.ok ? built.sub : null} />
+      <button class="button primary" disabled={!cost.ok} onClick={generate}>
         Generate
       </button>
 

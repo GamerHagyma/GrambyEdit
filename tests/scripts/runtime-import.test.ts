@@ -45,3 +45,25 @@ test('preserves soft texture alpha without making opaque textured meshes transpa
       .every((g) => !g.textureAlphaBlend),
   ).toBe(true);
 });
+
+test('flags the hinged child sockets and the door sockets the game turns them on', async () => {
+  const { catalog } = await buildAssets({ root: '.', outDir: null });
+  const flagged = (flag: 'hinge' | 'door') =>
+    Object.values(catalog.parts)
+      .flatMap((p) =>
+        Object.entries(p.sockets)
+          .filter(([, s]) => s[flag])
+          .map(([id]) => `${p.type}.${id}`),
+      )
+      .sort();
+  expect(flagged('hinge')).toEqual(['DoorA.1', 'DoorB.1', 'DoorC.1', 'DoorD.1', 'GasCap.1']);
+  expect(flagged('door')).toEqual([
+    'Chassis.12',
+    'Chassis.20',
+    'Chassis.3',
+    'Roof.2',
+    'Roof.3',
+    'Roof.4',
+    'Roof.5',
+  ]);
+}, 30_000);

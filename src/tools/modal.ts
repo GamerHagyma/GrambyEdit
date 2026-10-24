@@ -1,19 +1,24 @@
 // Modal transforms (spec §12.4), in both camera schemes: G moves and R rotates the selection (parts,
-// or one ephemeral point) with the mouse. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
+// or one ephemeral point) with the mouse; in the Surface tool G moves the chosen corners. X/Y/Z constrain to a world axis (press again for the active part's local axis, again to clear);
 // with no axis a move follows the mouse in the view plane and a rotation turns about the view axis.
-// Typed numbers set the amount, holding Ctrl snaps to the snap steps, Enter or a left click confirms,
+// Typed numbers set the amount, holding Ctrl snaps to the snap steps (moves onto the world grid, on
+// every axis, while World grid is on), Enter or a left click confirms,
 // Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them. While it runs the
 // transform gizmo hides, and a chosen axis is drawn through the pivot in its colour, as in Blender.
 import { signal } from '@preact/signals';
 import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
 import { settingsSig } from '../state/settings';
+import { surfaceSig } from '../state/surfaces';
 import { getViewport } from '../viewport/context';
+import { toolSig } from './manager';
 import { pointGizmoHandlers, pointGizmoPlacement } from './point';
+import { surfaceGizmoHandlers, surfaceGizmoPlacement } from './surface';
 import {
   beginSession,
   cancelSession,
   finishSession,
+  gridOffset,
   pivotModeSig,
   pivotOf,
   previewSession,
@@ -71,6 +76,19 @@ function pointTarget(): Target | null {
   };
 }
 
+function cornerTarget(): Target | null {
+  const at = surfaceGizmoPlacement();
+  if (!at) return null;
+  surfaceGizmoHandlers.start();
+  return {
+    pivot: at.position,
+    local: at.quaternion,
+    preview: (d) => surfaceGizmoHandlers.change(d),
+    finish: (d) => surfaceGizmoHandlers.end(d),
+    cancel: () => surfaceGizmoHandlers.cancel(),
+  };
+}
+
 interface Modal {
   readonly kind: 'move' | 'rotate';
   readonly target: Target;
@@ -116,6 +134,8 @@ function typedValue(m: Modal): number | null {
 
 /** Snapping is on while Ctrl (Cmd on a Mac) is held. */
 const snapping = (m: Modal) => m.ctrl;
+/** Snapped moves land on the world grid, on every axis, while World grid is on. */
+const onGrid = () => settingsSig.value.snapToGrid;
 
 /** A world point's position in client pixels. */
 function screenOf(p: Vector3): Vector2 {
@@ -153,17 +173,19 @@ function moveDelta(m: Modal): TransformDelta {
     const len2 = along.lengthSq();
     if (len2 > 1e-6) {
       const t = ((m.mouse.x - m.start.x) * along.x + (m.mouse.y - m.start.y) * along.y) / len2;
-      offset = axis.clone().multiplyScalar(snapping(m) ? snapValue(t, step) : t);
+      if (snapping(m) && onGrid()) offset = gridOffset(axis.multiplyScalar(t), m.pivot, step);
+      else offset = axis.clone().multiplyScalar(snapping(m) ? snapValue(t, step) : t);
     }
   } else {
     const a = planePoint(m.start, m.pivot);
     const b = planePoint(m.mouse, m.pivot);
     if (a && b) offset = b.sub(a);
-    if (snapping(m)) {
+    if (snapping(m) && onGrid()) offset = gridOffset(offset, m.pivot, step);
+    else if (snapping(m)) {
       offset.set(snapValue(offset.x, step), snapValue(offset.y, step), snapValue(offset.z, step));
     }
   }
-  return { kind: 'move', offset };
+  return snapping(m) && onGrid() ? { kind: 'move', offset, grid: step } : { kind: 'move', offset };
 }
 
 /** The rotation axis and angle: typed degrees, or the mouse's turn around the pivot on screen. */
@@ -194,9 +216,9 @@ function rotateDelta(m: Modal): TransformDelta {
 function hintText(m: Modal, d: TransformDelta): string {
   const space = m.space === 'local' ? ' (local)' : '';
   const { snapMove, snapRotate } = settingsSig.value;
-  const snap = m.ctrl
-    ? 'snapping'
-    : `hold Ctrl to snap (${d.kind === 'move' ? `${snapMove} studs` : `${snapRotate}°`})`;
+  const step =
+    d.kind === 'move' ? `${snapMove} studs${onGrid() ? ', world grid' : ''}` : `${snapRotate}°`;
+  const snap = m.ctrl ? 'snapping' : `hold Ctrl to snap (${step})`;
   const keys = `X/Y/Z axis · type a number · ${snap} · Enter confirms · Esc cancels`;
   if (d.kind === 'move') {
     const amount = m.typed || d.offset.toArray().map((v) => v.toFixed(3)).join(', ');
@@ -291,7 +313,15 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   if (modal) return true;
   const vp = getViewport();
   if (!vp || transformStateSig.value !== 'idle') return false;
-  const target = selectionSig.value.parts.size > 0 ? partsTarget() : pointTarget();
+  // In the Surface tool the chosen corners are what G moves; corners do not turn.
+  const corner = toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
+  const target = corner
+    ? kind === 'move'
+      ? cornerTarget()
+      : null
+    : selectionSig.value.parts.size > 0
+      ? partsTarget()
+      : pointTarget();
   if (!target) return false;
   const r = vp.canvas.getBoundingClientRect();
   const start = vp.pointer ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };

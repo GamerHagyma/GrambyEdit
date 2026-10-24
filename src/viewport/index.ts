@@ -26,6 +26,7 @@ import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/m
 import { createConnectTool } from '../tools/connect';
 import { cancelModal, modalActiveSig, modalGuideSig } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
+import { createPickTool } from '../tools/pick';
 import { createPlaceTool } from '../tools/place';
 import {
   createPointTool,
@@ -35,6 +36,12 @@ import {
   selectedPoint,
 } from '../tools/point';
 import { createSelectTool } from '../tools/select';
+import {
+  cornerWorlds,
+  createSurfaceTool,
+  surfaceGizmoHandlers,
+  surfaceGizmoPlacement,
+} from '../tools/surface';
 import {
   createTransformTool,
   gizmoHandlers,
@@ -54,14 +61,17 @@ import {
   wbTypeSig,
 } from '../state/workbench';
 import { toast } from '../state/toasts';
+import { genPreviewSig } from '../state/generators';
 import { arm, dragTypeSig, placeSig } from '../state/place';
-import { contextMenuSig } from '../state/ui';
+import { surfaceHostSig, surfacePreviewSig, surfaceSig } from '../state/surfaces';
+import { contextMenuSig, leftTabSig } from '../state/ui';
 import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
 import { AxisGuide } from './axis-guide';
 import { GhostLayer } from './ghost';
 import { TransformGizmo } from './gizmo';
 import './thumbs';
 import { PointsLayer } from './points-layer';
+import { SurfaceHandles } from './surface-handles';
 import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
@@ -113,6 +123,8 @@ const connectTool = createConnectTool();
 const placeTool = createPlaceTool();
 const pointTool = createPointTool();
 const workbenchTool = createWorkbenchTool();
+const pickTool = createPickTool();
+const surfaceTool = createSurfaceTool();
 
 /** Mounts the viewport into `el`; returns its disposer. Shows a message when WebGL2 is missing. */
 export function mountViewport(el: HTMLElement): () => void {
@@ -131,6 +143,8 @@ export function mountViewport(el: HTMLElement): () => void {
   registerTool(placeTool);
   registerTool(pointTool);
   registerTool(workbenchTool);
+  registerTool(pickTool);
+  registerTool(surfaceTool);
   let stop = () => {};
   const run = () => {
     stop();
@@ -154,6 +168,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   scene.add(sockets.group);
   const points = new PointsLayer();
   scene.add(points.group);
+  const handles = new SurfaceHandles();
+  scene.add(handles.group);
+  /** What Generate or Create would add to a picked part, drawn see-through; made with the assets. */
+  let preview: PartsLayer | null = null;
   const outline = new Outline();
   const guide = new AxisGuide();
   scene.add(guide.line);
@@ -256,6 +274,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     renderer.render(scene, rig.camera);
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
     for (const after of ctx.afterRender) after();
+    handles.placeBadges(rig.camera, canvas);
     // The load budget (spec §19.4) is measured to the first frame drawn with the part library loaded.
     if (ctx.layer && !markedReady) {
       markedReady = true;
@@ -373,7 +392,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const studio = new StudioControls(host);
   const controls = () => (settingsSig.value.cameraScheme === 'studio' ? studio : blender);
 
-  const toTool = (e: PointerEvent, kind: ToolPointer['kind'], button: number): ToolPointer => ({
+  const toTool = (e: MouseEvent, kind: ToolPointer['kind'], button: number): ToolPointer => ({
     kind,
     button,
     x: e.clientX,
@@ -438,12 +457,27 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     dragTypeSig.value = null;
     toolPointer(dragPointer(e, 'up'));
   };
-  /** A right-click without a drag (a drag is the Studio look) opens the part or view menu. */
+  /**
+   * A right-click without a drag (a drag is the Studio look) opens the part or view menu. A right press
+   * that began in the view opens no other menu, the browser's included, wherever the button comes up.
+   */
   const onContextMenu = (e: MouseEvent) => {
-    e.preventDefault();
     const at = rightDown;
+    if (e.target !== canvas) {
+      if (!at) return;
+      rightDown = null;
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    e.preventDefault();
     rightDown = null;
     if (!at || Math.hypot(e.clientX - at.x, e.clientY - at.y) > 4 || inWorkbench()) return;
+    if (settingsSig.value.cameraScheme === 'studio' && studio.rightDragged) return;
+    if (toolSig.value === 'place') {
+      toolPointer(toTool(e, 'up', 2));
+      return;
+    }
     const hit = pickPart(ndc(e))?.part ?? null;
     if (hit !== null && !selectionSig.value.parts.has(hit)) select([hit], 'replace');
     contextMenuSig.value = {
@@ -460,7 +494,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(false);
     studio.onKeyUp(e);
   };
-  const onBlur = () => studio.releaseAll();
+  const onBlur = () => {
+    rightDown = null;
+    studio.releaseAll();
+  };
   const onLost = (e: Event) => {
     e.preventDefault();
     cancelAnimationFrame(frame);
@@ -471,7 +508,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   canvas.addEventListener('pointermove', onHover);
   canvas.addEventListener('pointerleave', onLeave);
   canvas.addEventListener('wheel', onWheel, { passive: false });
-  canvas.addEventListener('contextmenu', onContextMenu);
+  // On the window, so the menu after a look that ends over a panel is caught too.
+  window.addEventListener('contextmenu', onContextMenu, true);
   canvas.addEventListener('dragover', onDragOver);
   canvas.addEventListener('drop', onDrop);
   canvas.addEventListener('webglcontextlost', onLost);
@@ -555,38 +593,89 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     guide.set(modalGuideSig.value);
     request();
   });
+  /** The tab whose preview and corners show: none while Paint or Sockets replace the tabs. */
+  const shownTab = () => {
+    const tool = toolSig.value;
+    return tool === 'paint' || tool === 'sockets' ? null : leftTabSig.value;
+  };
+  const stopPreview = effect(() => {
+    const assets = assetsSig.value;
+    const tab = shownTab();
+    const shown =
+      tab === 'generators'
+        ? genPreviewSig.value
+        : tab === 'surfaces'
+          ? surfacePreviewSig.value
+          : null;
+    if (assets && preview?.assets !== assets) {
+      if (preview) {
+        scene.remove(preview.group);
+        preview.dispose();
+      }
+      // Its labels stay out of the scene: a preview shows the parts alone.
+      preview = new PartsLayer(assets, 0.5);
+      scene.add(preview.group);
+    }
+    if (preview) {
+      preview.group.visible = shown !== null;
+      if (shown) preview.sync(shown.doc, shown.poses, new Set(), false);
+    }
+    request();
+  });
+  const stopHandles = effect(() => {
+    handles.update(shownTab() === 'surfaces' ? cornerWorlds() : null, surfaceSig.value.selected);
+    request();
+  });
   const stopGizmo = effect(() => {
     const tool = toolSig.value;
     const s = settingsSig.value;
     // Move and Rotate serve one selected point too, in its host's axes, like the Point tool.
     const forPoint =
       tool === 'point' || ((tool === 'move' || tool === 'rotate') && selectedPoint() !== null);
+    // The Surface tool moves its chosen corners, in the parent's axes.
+    const forCorner =
+      tool === 'surface' && surfaceSig.value.selected.length > 0 && surfaceHostSig.value !== null;
     // A modal G or R moves the selection away from the gizmo, so it hides until the modal ends.
     // A drag re-attach moves the part away from the gizmo too.
     const on =
-      (tool === 'move' || tool === 'rotate' || forPoint) &&
+      (tool === 'move' || tool === 'rotate' || forPoint || forCorner) &&
       assetsSig.value !== null &&
       !modalActiveSig.value &&
       transformStateSig.value !== 'reattach';
-    transformGizmo.handlers = forPoint ? pointGizmoHandlers : gizmoHandlers;
+    transformGizmo.handlers = forCorner
+      ? surfaceGizmoHandlers
+      : forPoint
+        ? pointGizmoHandlers
+        : gizmoHandlers;
+    const mode =
+      tool === 'point' ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate';
     transformGizmo.configure({
-      mode: tool === 'point' ? pointGizmoModeSig.value : tool === 'rotate' ? 'rotate' : 'translate',
-      space: forPoint ? 'local' : spaceSig.value,
+      mode,
+      // Moves on the world grid follow the world axes, so each handle lands on its grid lines.
+      space:
+        mode === 'translate' && s.snapToGrid
+          ? 'world'
+          : forPoint || forCorner
+            ? 'local'
+            : spaceSig.value,
       steps: { move: s.snapMove, rotate: s.snapRotate },
-      individual: !forPoint && pivotModeSig.value === 'individual',
+      individual: !forPoint && !forCorner && pivotModeSig.value === 'individual',
+      grid: s.snapToGrid,
     });
     transformGizmo.setEnabled(on);
     const at = !on
       ? null
-      : forPoint
-        ? pointGizmoPlacement()
-        : gizmoPlacement(
-            docSig.value,
-            posesSig.value,
-            selectionSig.value,
-            pivotModeSig.value,
-            spaceSig.value,
-          );
+      : forCorner
+        ? surfaceGizmoPlacement()
+        : forPoint
+          ? pointGizmoPlacement()
+          : gizmoPlacement(
+              docSig.value,
+              posesSig.value,
+              selectionSig.value,
+              pivotModeSig.value,
+              spaceSig.value,
+            );
     transformGizmo.place(at);
     request();
   });
@@ -643,7 +732,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.removeEventListener('pointermove', onHover);
     canvas.removeEventListener('pointerleave', onLeave);
     canvas.removeEventListener('wheel', onWheel);
-    canvas.removeEventListener('contextmenu', onContextMenu);
+    window.removeEventListener('contextmenu', onContextMenu, true);
     canvas.removeEventListener('dragover', onDragOver);
     canvas.removeEventListener('drop', onDrop);
     canvas.removeEventListener('webglcontextlost', onLost);
@@ -654,6 +743,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     stopSync();
     stopHighlight();
     stopGizmo();
+    stopPreview();
+    stopHandles();
     cancelModal();
     stopGuide();
     guide.dispose();
@@ -664,8 +755,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     blender.dispose();
     gizmo.dispose();
     ctx.layer?.dispose();
+    preview?.dispose();
     sockets.dispose();
     points.dispose();
+    handles.dispose();
     workbench.dispose();
     outline.dispose();
     grid.mesh.geometry.dispose();

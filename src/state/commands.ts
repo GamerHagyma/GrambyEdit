@@ -7,7 +7,7 @@ import { makeFreeMovable, nativeRotate, topmost } from '../core/ops/move';
 import { deleteParts } from '../core/ops/parts';
 import type { PartId } from '../core/types';
 import { closePicker, pickerSig } from '../tools/connect';
-import { setTool, type ToolId } from '../tools/manager';
+import { setTool, toolSig, type ToolId } from '../tools/manager';
 import { startModal } from '../tools/modal';
 import { requestPointDelete } from '../tools/point';
 import { boxNextSig } from '../tools/select';
@@ -17,6 +17,7 @@ import { copySelection, pasteFromClipboard } from './clipboard';
 import { posesSig } from './derived';
 import { clearSelection, hiddenSig, select, selectionSig, selectModeSig } from './selection';
 import { settingsSig, updateSettings } from './settings';
+import { surfaceSig } from './surfaces';
 import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
 import { toast } from './toasts';
 import { openDialog } from './ui';
@@ -59,6 +60,8 @@ const selected = (): PartId[] => {
 const anySelected = () => selectionSig.value.parts.size > 0;
 /** One ephemeral point and no part: G and R move or turn the point. */
 const onePoint = () => selectionSig.value.parts.size === 0 && selectionSig.value.points.size === 1;
+/** The Surface tool's chosen corners, which G moves. */
+const cornersChosen = () => toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
 const anyParts = () => docSig.value.order.length > 0;
 
 /** The part under the pointer in the viewport, for L and Ctrl+L. */
@@ -242,6 +245,21 @@ registerCommand({
 
 // View
 registerCommand({
+  id: 'view.toggleVisibility',
+  label: 'Toggle selected visibility',
+  enabled: anySelected,
+  run: () => {
+    const ids = selected();
+    const hidden = new Set(hiddenSig.value);
+    const show = ids.some((id) => hidden.has(id));
+    for (const id of ids) {
+      if (show) hidden.delete(id);
+      else hidden.add(id);
+    }
+    hiddenSig.value = hidden;
+  },
+});
+registerCommand({
   id: 'view.hide',
   label: 'Hide selected',
   enabled: anySelected,
@@ -308,7 +326,7 @@ registerCommand({
 registerCommand({
   id: 'transform.grab',
   label: 'Move (G)',
-  enabled: () => anySelected() || onePoint(),
+  enabled: () => anySelected() || onePoint() || cornersChosen(),
   run: () => void startModal('move'),
 });
 registerCommand({

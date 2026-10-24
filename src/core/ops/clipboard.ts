@@ -6,9 +6,9 @@ import { cfToMatrix4, IDENTITY_CF, matrix4ToCf } from '../cframe';
 import { pointFrameFor } from '../conventions';
 import {
   bodyPivot,
+  childSocketMatrix,
   computePoses,
   poseConn,
-  socketMatrix,
   subPartMatrix,
   type Poses,
 } from '../pose';
@@ -116,7 +116,10 @@ function remap(
 /**
  * Inserts `sub` into the draft (spec §9.2): fresh ids appended in sub order, fresh uuids, joints remapped.
  * `{ root }` places every sub root at `root · layout`. `{ target }` attaches the first sub root to the
- * target, then places the other roots relative to where it landed. Returns the new id of each sub part.
+ * target, then places the other roots relative to where it landed. `{ onto }` makes the existing part
+ * the first sub root: that root's points join it with fresh uuids, its own props and conns are dropped,
+ * and joints to it go to the existing part (a shape generated onto a picked host). Returns the new id of
+ * each sub part.
  */
 export function insertSubDoc(
   d: Draft,
@@ -124,9 +127,25 @@ export function insertSubDoc(
   conv: Conventions,
   poses: Poses,
   sub: Doc,
-  at: { target: PoseTarget } | { root: CFrame12 },
+  at: { target: PoseTarget } | { root: CFrame12 } | { onto: PartId },
 ): Map<PartId, PartId> {
-  const ids = new Map<PartId, PartId>(sub.order.map((id): [PartId, PartId] => [id, d.allocId()]));
+  const roots = sub.order.filter((id) => poseConn(sub.parts.get(id)!) === undefined);
+  const onto = 'onto' in at ? at.onto : null;
+  const merged = onto === null ? undefined : roots[0];
+  if (onto !== null) {
+    const host = d.get(onto);
+    if (!host) throw new Error(`insertSubDoc: there is no part ${onto}`);
+    if (merged === undefined) {
+      throw new Error('Every part in this selection hangs from another, so none can be attached.');
+    }
+    const type = sub.parts.get(merged)!.type;
+    if (host.type !== type) {
+      throw new Error(`insertSubDoc: part ${onto} is a ${host.type}, not a ${type}`);
+    }
+  }
+  const ids = new Map<PartId, PartId>(
+    sub.order.map((id): [PartId, PartId] => [id, id === merged ? onto! : d.allocId()]),
+  );
   const uuids = new Map<PartId, Map<Uuid, Uuid>>();
   for (const id of sub.order) {
     const points = sub.parts.get(id)!.points;
@@ -136,6 +155,12 @@ export function insertSubDoc(
   }
   for (const id of sub.order) {
     const part = sub.parts.get(id)!;
+    if (id === merged) {
+      for (const [uuid, p] of part.points ?? []) {
+        addPoint(d, onto!, p.cframe, p.partName, uuids.get(id)!.get(uuid)!);
+      }
+      continue;
+    }
     const points =
       part.points &&
       new Map(
@@ -153,8 +178,14 @@ export function insertSubDoc(
     });
   }
 
-  const roots = sub.order.filter((id) => poseConn(sub.parts.get(id)!) === undefined);
   const placed = (id: PartId): Matrix4 => cfToMatrix4(sub.layout.get(id) ?? IDENTITY_CF);
+  if ('onto' in at) {
+    const hostWorld = poses.world.get(at.onto) ?? new Matrix4();
+    for (const id of roots.slice(1)) {
+      d.setLayout(ids.get(id)!, matrix4ToCf(hostWorld.clone().multiply(placed(id))));
+    }
+    return ids;
+  }
   if ('root' in at) {
     const root = cfToMatrix4(at.root);
     for (const id of roots) {
@@ -195,7 +226,7 @@ function attachCopy(
     poses.world.get(host.id)!,
     subPartMatrix(cat, host.type, partName).m,
     world,
-    socketMatrix(cat, type, self).m,
+    childSocketMatrix(cat, type, self, 'point').m,
     props,
     conv,
     bodyPivot(cat, type, self),

@@ -37,6 +37,7 @@ import { PaintPanel } from './panels/PaintPanel';
 import { PartBrowser } from './panels/PartBrowser';
 import { Properties } from './panels/Properties';
 import { StatsPanel } from './panels/StatsPanel';
+import { SurfacePanel } from './panels/SurfacePanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
 import { ContextMenu } from './widgets/ContextMenu';
 import { PickerHost } from './widgets/PickerHost';
@@ -87,6 +88,7 @@ function ContextMenuHost(): JSX.Element | null {
 const LEFT_TABS = [
   { id: 'parts', label: 'Parts' },
   { id: 'generators', label: 'Generators' },
+  { id: 'surfaces', label: 'Surfaces' },
 ] as const;
 
 /** The left dock: the Socket Workbench or the Paint panel for their tools, else Parts or Generators. */
@@ -103,6 +105,8 @@ function LeftDock(): JSX.Element {
       <div role="tabpanel" aria-label={tab.label}>
         {tab.id === 'generators' ? (
           <GeneratorsPanel />
+        ) : tab.id === 'surfaces' ? (
+          <SurfacePanel />
         ) : (
           <PartBrowser
             onArm={(c) =>

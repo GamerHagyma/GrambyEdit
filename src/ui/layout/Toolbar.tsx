@@ -170,6 +170,17 @@ export function Toolbar(): JSX.Element {
           range={NUMBER_RANGES.snapRotate}
           onCommit={(v) => updateSettings({ snapRotate: v })}
         />
+        <label
+          class="snap-grid"
+          title="Snapped moves land on the world grid, on every axis. Off: they go whole steps from where they start"
+        >
+          <input
+            type="checkbox"
+            checked={s.snapToGrid}
+            onChange={(e) => updateSettings({ snapToGrid: e.currentTarget.checked })}
+          />
+          World grid
+        </label>
       </div>
       <span class="sep" />
       <button

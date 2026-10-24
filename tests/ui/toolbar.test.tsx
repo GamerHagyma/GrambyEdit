@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from '@testing-library/preact';
 import { addPart } from '../../src/core/ops/parts';
+import { settingsSig, updateSettings } from '../../src/state/settings';
 import { commit, docSig, resetStoreForTests } from '../../src/state/store';
 import { Toolbar } from '../../src/ui/layout/Toolbar';
 
@@ -44,4 +45,17 @@ test('Undo removes an added part and Redo brings it back', () => {
   expect(docSig.value.order).toHaveLength(1);
   expect(redo.disabled).toBe(true);
   expect(undo.disabled).toBe(false);
+});
+
+test('the World grid box switches move snapping between the world grid and whole steps', () => {
+  render(<Toolbar />);
+  const box = screen.getByRole('checkbox', { name: 'World grid' }) as HTMLInputElement;
+  expect(box.checked).toBe(false);
+  try {
+    fireEvent.click(box);
+    expect(settingsSig.value.snapToGrid).toBe(true);
+    expect(box.checked).toBe(true);
+  } finally {
+    updateSettings({ snapToGrid: false });
+  }
 });

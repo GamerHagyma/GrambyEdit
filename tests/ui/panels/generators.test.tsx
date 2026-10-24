@@ -1,17 +1,29 @@
 // @vitest-environment jsdom
+vi.mock('../../../src/viewport/shape-preview', () => ({
+  START_VIEW: { yaw: 0, pitch: 0 },
+  loadShapePreview: vi.fn(),
+  drawShapePreview: vi.fn(),
+}));
+
 import { fireEvent, render, screen, within } from '@testing-library/preact';
-import { genRequestSig, resetGeneratorsForTests } from '../../../src/state/generators';
+import {
+  genHostPickSig,
+  genRequestSig,
+  resetGeneratorsForTests,
+} from '../../../src/state/generators';
 import { placeSig } from '../../../src/state/place';
-import { baseCatalogSig, loadDoc, resetStoreForTests } from '../../../src/state/store';
+import { baseCatalogSig, docSig, loadDoc, resetStoreForTests } from '../../../src/state/store';
+import { pickSig } from '../../../src/tools/pick';
 import { GeneratorsPanel } from '../../../src/ui/panels/GeneratorsPanel';
 import { MINI } from '../../helpers/catalog';
-import { chainDoc } from '../../helpers/doc';
+import { chainDoc, docOf, part } from '../../helpers/doc';
 
 beforeEach(() => {
   resetStoreForTests();
   localStorage.clear();
   resetGeneratorsForTests();
   placeSig.value = null;
+  pickSig.value = null;
 });
 
 test('form follows the chosen shape and Generate arms place mode', () => {
@@ -155,4 +167,33 @@ test('without the part library the panel says so and offers no Generate', () => 
   render(<GeneratorsPanel />);
   expect(screen.getByText(/still loading/)).toBeTruthy();
   expect(screen.queryByText('Generate')).toBeNull();
+});
+
+test('Pick in build starts a pick for the host', () => {
+  baseCatalogSig.value = MINI;
+  render(<GeneratorsPanel />);
+  fireEvent.click(screen.getByText('Pick in build'));
+  expect(pickSig.value?.prompt).toMatch(/generate the shape on/);
+});
+
+test('a picked host shows its id and type, and Clear forgets it', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(docOf(part(1, 'Connector')));
+  genHostPickSig.value = { part: 1, type: 'Connector' };
+  render(<GeneratorsPanel />);
+  expect(screen.getByText('#1 Connector')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Connector' })).toBeNull();
+  fireEvent.click(screen.getByText('Clear'));
+  expect(genHostPickSig.value).toBeNull();
+});
+
+test('Generate onto a picked host adds the shape at once', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(docOf(part(1, 'Connector')));
+  genHostPickSig.value = { part: 1, type: 'Connector' };
+  render(<GeneratorsPanel />);
+  expect(screen.getByText(/^\+31 parts/)).toBeTruthy();
+  fireEvent.click(screen.getByText('Generate'));
+  expect(docSig.value.order.length).toBe(32);
+  expect(placeSig.value).toBeNull();
 });

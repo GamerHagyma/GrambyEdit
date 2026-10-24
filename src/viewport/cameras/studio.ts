@@ -11,14 +11,21 @@ export class StudioControls {
   private slow = false;
   private frame = 0;
   private last = 0;
+  private looked = false;
 
   constructor(private readonly host: NavHost) {}
+
+  /** Whether the latest right press ever became a look drag, even if it returned to its start. */
+  get rightDragged(): boolean {
+    return this.looked;
+  }
 
   onPointerDown(e: PointerEvent): boolean {
     if (e.button !== 2 && e.button !== 1) return false;
     const { rig, dom } = this.host;
     const s = this.host.settings();
     const look = e.button === 2;
+    if (look) this.looked = false;
     const invert = s.invertY ? -1 : 1;
     const x0 = e.clientX;
     const y0 = e.clientY;
@@ -33,6 +40,7 @@ export class StudioControls {
       y = ev.clientY;
       if (!dragged && Math.hypot(x - x0, y - y0) < CLICK_SLOP) return;
       dragged = true;
+      if (look) this.looked = true;
       if (look) rig.look(dx * LOOK_SPEED * s.orbitSensitivity, dy * LOOK_SPEED * invert);
       else rig.pan(dx, dy);
       this.host.request();

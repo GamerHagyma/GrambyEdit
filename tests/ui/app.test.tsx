@@ -14,6 +14,13 @@ import {
 } from '../../src/state/store';
 import { MINI } from '../helpers/catalog';
 
+// jsdom has no canvas; the Generators tab's shape picture needs one.
+vi.mock('../../src/viewport/shape-preview', () => ({
+  START_VIEW: { yaw: 0, pitch: 0 },
+  loadShapePreview: vi.fn(),
+  drawShapePreview: vi.fn(),
+}));
+
 beforeEach(() => {
   resetStoreForTests();
   baseCatalogSig.value = MINI;

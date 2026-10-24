@@ -9,7 +9,16 @@ export interface RuntimePart {
   primaryPart: string;
   subParts: Record<string, CFrame12>;
   groups: Record<string, string>;
-  sockets: Record<string, { side: 'child' | 'parent'; cframe: CFrame12; parentPath: string }>;
+  sockets: Record<
+    string,
+    {
+      side: 'child' | 'parent';
+      cframe: CFrame12;
+      parentPath: string;
+      /** The attachment's attributes, as captured (HingeType, MountType, Angle, ...). */
+      attributes?: Record<string, unknown>;
+    }
+  >;
   blockedSockets: string[];
   textureAlphaBlend?: Record<string, boolean>;
 }
@@ -69,7 +78,8 @@ export function parseRuntimeParts(value: unknown): RuntimeParts {
         !['child', 'parent'].includes(String(socket.side)) ||
         !isCFrame12(socket.cframe) ||
         typeof socket.parentPath !== 'string' ||
-        !part.subParts[socket.parentPath]
+        !part.subParts[socket.parentPath] ||
+        (socket.attributes !== undefined && !object(socket.attributes))
       )
         return fail();
     }

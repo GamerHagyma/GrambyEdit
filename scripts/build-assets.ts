@@ -324,7 +324,16 @@ export async function buildAssets(opts: {
     );
     if (native) {
       for (const [id, socket] of Object.entries(native.sockets)) {
-        s.sockets[id] = { ...s.sockets[id], frame: socket.cframe, frameSource: 'captured' };
+        const attributes = socket.attributes ?? {};
+        s.sockets[id] = {
+          ...s.sockets[id],
+          frame: socket.cframe,
+          frameSource: 'captured',
+          ...(socket.side === 'child' && Object.hasOwn(attributes, 'HingeType')
+            ? { hinge: true }
+            : {}),
+          ...(socket.side === 'parent' && attributes.MountType === 'Door' ? { door: true } : {}),
+        };
       }
       subParts = Object.fromEntries(
         Object.entries(native.subParts).map(([name, cframe]) => [name, { cframe, approx: false }]),

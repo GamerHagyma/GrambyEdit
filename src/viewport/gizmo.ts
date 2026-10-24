@@ -2,7 +2,7 @@
 // A drag reports world-space deltas; the tool previews them and commits once, when the drag ends.
 import { MathUtils, Object3D, Quaternion, Vector3, type Camera } from 'three';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
-import { snapValue, type Space, type TransformDelta } from '../tools/transform';
+import { gridOffset, snapValue, type Space, type TransformDelta } from '../tools/transform';
 
 export interface GizmoHandlers {
   start(): void;
@@ -18,6 +18,8 @@ export interface GizmoOptions {
   readonly steps: { readonly move: number; readonly rotate: number };
   /** Rotate each part about its own origin instead of about the pivot. */
   readonly individual: boolean;
+  /** Snapped moves land on the world grid, on every axis, instead of going whole steps. */
+  readonly grid: boolean;
 }
 
 export class TransformGizmo {
@@ -30,6 +32,7 @@ export class TransformGizmo {
   private steps = { move: 0.25, rotate: 15 };
   private snapping = false;
   private individual = false;
+  private grid = false;
   handlers: GizmoHandlers | null = null;
 
   constructor(
@@ -78,6 +81,7 @@ export class TransformGizmo {
     this.controls.setTranslationSnap(null);
     this.steps = o.steps;
     this.individual = o.individual;
+    this.grid = o.grid;
     this.setSnapping(this.snapping);
   }
 
@@ -130,11 +134,16 @@ export class TransformGizmo {
         pivot: this.individual ? 'individual' : this.startPosition.clone(),
       };
     }
-    const offset = this.proxy.position.clone().sub(this.startPosition);
+    let offset = this.proxy.position.clone().sub(this.startPosition);
     const step = this.moveSnap;
-    if (step !== null) {
+    const local = this.controls.space === 'local';
+    if (step !== null && this.grid) {
+      // Onto the world grid on every axis, whichever handle is dragged.
+      offset = gridOffset(offset, this.startPosition, step);
+      this.proxy.position.copy(this.startPosition).add(offset);
+      return { kind: 'move', offset, grid: step };
+    } else if (step !== null) {
       // Snapped along the gizmo's own axes: world axes, or the start orientation in local space.
-      const local = this.controls.space === 'local';
       const back = this.startQuaternion.clone().invert();
       if (local) offset.applyQuaternion(back);
       offset.set(snapValue(offset.x, step), snapValue(offset.y, step), snapValue(offset.z, step));

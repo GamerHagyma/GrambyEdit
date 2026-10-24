@@ -1318,6 +1318,13 @@ button.swatch:hover {
   background: var(--panel-2);
   font-variant-numeric: tabular-nums;
 }
+.snap-grid {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
 
 /* Keyboard shortcuts guide */
 .shortcuts {
@@ -1565,6 +1572,100 @@ kbd {
 }
 .gen-error {
   color: var(--bad);
+}
+.gen-host-picked {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The shape preview turns by itself; Spin, in its corner, stops it, and a drag turns it by hand. */
+.gen-preview-box {
+  position: relative;
+}
+.gen-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 240 / 150;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: grab;
+  touch-action: none;
+}
+.gen-preview:active {
+  cursor: grabbing;
+}
+.gen-preview-spin {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px 1px 4px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Surfaces panel (spec §13.11) */
+.surfaces {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+}
+.surface-corners {
+  /* A fieldset is never narrower than its content unless told so. */
+  min-width: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.surface-corners legend {
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+/* The corner the gizmo moves: orange in the list, as its dot and badge are in the view. */
+.surface-corners .button[aria-pressed='true'] {
+  border-color: var(--select);
+  background: var(--select);
+  color: #1b1d21;
+}
+.surface-corners .gen-field.active input {
+  border-color: var(--select);
+}
+/* The badge the viewport draws beside each corner of the parent's surface. */
+.surface-corner {
+  position: absolute;
+  z-index: 5;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: var(--accent);
+  color: #fff;
+}
+.surface-corner.active {
+  background: var(--select);
+  color: #1b1d21;
+}
+.hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 /* Part browser (spec §13.1) */
@@ -1886,4 +1987,12 @@ kbd {
 }
 .issue-badge.ok::before {
   background: var(--ok);
+}
+
+/* While a panel waits for a part to be picked: an eyedropper, its tip on the spot. */
+.viewport canvas.picking {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg transform='translate(3 21) rotate(-45)' fill='%23fff' stroke='%23000' stroke-width='1.4' stroke-linejoin='round'%3E%3Cpath d='M0 0L3-1.3H13V1.3H3Z'/%3E%3Crect x='14.5' y='-2.6' width='9' height='5.2' rx='2.6'/%3E%3Crect x='12' y='-3.4' width='3' height='6.8' rx='1'/%3E%3C/g%3E%3C/svg%3E")
+      3 21,
+    crosshair;
 }

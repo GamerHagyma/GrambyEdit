@@ -1,5 +1,6 @@
-// The Generators panel's state (spec §13.9, §15): the request being built, its cost preview, and the presets
-// kept in localStorage. The generators themselves are pure and live in core/generators.
+// The Generators panel's state (spec §13.9, §15): the request being built, the part picked to carry it,
+// its cost and preview, and the presets kept in localStorage. The generators themselves are pure and
+// live in core/generators.
 import { computed, signal } from '@preact/signals';
 import type { Catalog, Conventions } from '../core/catalog-types';
 import { IDENTITY_CF, isCFrame12 } from '../core/cframe';
@@ -19,14 +20,20 @@ import { transact } from '../core/ops/transact';
 import { isRgb } from '../core/palette';
 import { EMPTY_POSES } from '../core/pose';
 import { codeSize, formatPercent } from '../core/size';
-import type { Doc, Limits, RGB } from '../core/types';
+import type { Doc, Limits, Part, PartId } from '../core/types';
 import { loadPref, savePref } from '../storage/prefs';
+import { startPick } from '../tools/pick';
+import { posesSig } from './derived';
+import { arm } from './place';
+import { previewOnHost, type PartsPreview } from './preview';
+import { select } from './selection';
 import { settingsSig } from './settings';
+import { catalogSig, commit, docSig } from './store';
+import { toast } from './toasts';
 
 const GEN_ORIENTS: readonly GenOrient[] = ['fixed', 'outward', 'tangent'];
 const GEN_AXES: readonly ('x' | 'y' | 'z')[] = ['x', 'y', 'z'];
 const PRESETS_KEY = 'genPresets';
-const WHITE: RGB = [255, 255, 255];
 
 const defaultParams = (def: ShapeDef): Record<string, number | string> =>
   Object.fromEntries(def.params.map((p): [string, number | string] => [p.key, p.default]));
@@ -77,11 +84,13 @@ export interface CostPreview {
 }
 
 const en = (n: number): string => n.toLocaleString('en-US');
+const NO_ELEMENTS = 'This shape has no elements at this spacing.';
+
+export type CostResult = { ok: true; cost: CostPreview } | { ok: false; error: string };
 
 /**
- * What `req` adds to `doc`. The sub-doc goes in at the origin inside a scratch transaction and both builds are
- * measured. Poses are not computed: `insertSubDoc` does not read them for a root placement, and a 16K-part build
- * must keep each preview cheap.
+ * What `req` adds to `doc`, placed at the origin, or onto the existing part `onto` (spec §15). See
+ * `subDocCost`.
  */
 export function costPreview(
   doc: Doc,
@@ -89,15 +98,37 @@ export function costPreview(
   conv: Conventions,
   req: GenRequest,
   limits: Limits,
-): { ok: true; cost: CostPreview } | { ok: false; error: string } {
+  onto?: PartId,
+): CostResult {
   const built = buildGeneratedSubDoc(req, cat, conv);
   if (!built.ok) return { ok: false, error: built.error };
-  if (built.elements === 0) {
-    return { ok: false, error: 'This shape has no elements at this spacing.' };
-  }
+  if (built.elements === 0) return { ok: false, error: NO_ELEMENTS };
+  return { ok: true, cost: subDocCost(doc, cat, conv, built.sub, limits, onto) };
+}
+
+/**
+ * What `sub` adds to `doc`. It goes in at the origin, or onto the existing part `onto`, inside a scratch
+ * transaction, and both builds are measured. Poses are not computed: `insertSubDoc` reads none for these
+ * placements, and a 16K-part build must keep each preview cheap.
+ */
+export function subDocCost(
+  doc: Doc,
+  cat: Catalog,
+  conv: Conventions,
+  sub: Doc,
+  limits: Limits,
+  onto?: PartId,
+): CostPreview {
   const before = codeSize(doc);
   const { doc: after } = transact(doc, 'Preview generated shape', (d) =>
-    insertSubDoc(d, cat, conv, EMPTY_POSES, built.sub, { root: IDENTITY_CF }),
+    insertSubDoc(
+      d,
+      cat,
+      conv,
+      EMPTY_POSES,
+      sub,
+      onto === undefined ? { root: IDENTITY_CF } : { onto },
+    ),
   );
   const sized = codeSize(after);
   const c0 = before.base64Chars;
@@ -112,22 +143,19 @@ export function costPreview(
   if (partsBefore <= partSoftCap && partSoftCap < partsAfter) crossings.push('part soft cap');
   if (partsBefore <= partWarn && partWarn < partsAfter) crossings.push('part warning');
 
-  const addParts = built.sub.order.length;
+  const addParts = partsAfter - partsBefore;
   const addChars = c1 - c0;
   const codeBefore = formatPercent(c0, codeChars);
   const codeAfter = formatPercent(c1, codeChars);
   return {
-    ok: true,
-    cost: {
-      addParts,
-      addChars,
-      codeBefore,
-      codeAfter,
-      partsBefore,
-      partsAfter,
-      crossings,
-      text: `+${en(addParts)} parts · +${en(addChars)} chars · code ${codeBefore}% → ${codeAfter}% · parts ${en(partsBefore)} → ${en(partsAfter)}`,
-    },
+    addParts,
+    addChars,
+    codeBefore,
+    codeAfter,
+    partsBefore,
+    partsAfter,
+    crossings,
+    text: `+${en(addParts)} parts · +${en(addChars)} chars · code ${codeBefore}% → ${codeAfter}% · parts ${en(partsBefore)} → ${en(partsAfter)}`,
   };
 }
 
@@ -267,22 +295,101 @@ export function updateInput(patch: Partial<ShapeInput>): void {
   genRequestSig.value = { ...cur, input: { ...cur.input, ...patch } };
 }
 
-/** Switches the colour mode. The request's first colour carries over; the other colours start white. */
-export function setColorMode(mode: GenColor['mode']): void {
-  const cur = genRequestSig.value.color;
-  const first =
-    cur.mode === 'single' ? cur.rgb : cur.mode === 'gradient' ? cur.from : cur.palette[0];
-  const color: GenColor =
-    mode === 'single'
-      ? { mode: 'single', rgb: first }
-      : mode === 'gradient'
-        ? { mode: 'gradient', from: first, to: WHITE, axis: 'x' }
-        : { mode: 'random', palette: [first, WHITE], seed: 1 };
-  updateRequest({ color });
+/** The part picked in the build to carry the shape (D21), with its type, which guards a reused id. */
+export const genHostPickSig = signal<{ readonly part: PartId; readonly type: string } | null>(null);
+
+/** The picked host while it is in the build as the type it was picked as; null otherwise. */
+export const genHostSig = computed<Part | null>(() => {
+  const pick = genHostPickSig.value;
+  const part = pick ? docSig.value.parts.get(pick.part) : undefined;
+  return part && part.type === pick!.type ? part : null;
+});
+
+/** Starts a pick: the clicked part carries the shape, centred on it in its own axes (D21). */
+export function pickGenHost(): void {
+  startPick({
+    prompt: 'Click the part to generate the shape on. Esc cancels.',
+    onPick: (hit) => {
+      const part = docSig.value.parts.get(hit.part);
+      if (part) genHostPickSig.value = { part: part.id, type: part.type };
+    },
+  });
+}
+
+export function clearGenHost(): void {
+  genHostPickSig.value = null;
+}
+
+/** The request as built: a picked host's type stands in for the host type. */
+const builtRequestSig = computed<GenRequest>(() => {
+  const host = genHostSig.value;
+  const req = liveRequestSig.value;
+  return host ? { ...req, host: host.type } : req;
+});
+
+/** The shape as a sub-doc, or why it cannot be made; null until the part library loads. */
+export const genBuildSig = computed(() => {
+  const cat = catalogSig.value;
+  return cat ? buildGeneratedSubDoc(builtRequestSig.value, cat, cat.conventions) : null;
+});
+
+/** What Generate would add to the build; null until the part library loads. */
+export const genCostSig = computed<CostResult | null>(() => {
+  const cat = catalogSig.value;
+  const built = genBuildSig.value;
+  if (!cat || !built) return null;
+  if (!built.ok) return { ok: false, error: built.error };
+  if (built.elements === 0) return { ok: false, error: NO_ELEMENTS };
+  const { limits } = settingsSig.value;
+  const onto = genHostSig.value?.id;
+  return {
+    ok: true,
+    cost: subDocCost(docSig.value, cat, cat.conventions, built.sub, limits, onto),
+  };
+});
+
+/** The shape drawn on the picked host, for the viewport; null without a host or a shape. */
+export const genPreviewSig = computed<PartsPreview | null>(() => {
+  const cat = catalogSig.value;
+  const host = genHostSig.value;
+  if (!cat || !host) return null;
+  const built = genBuildSig.value;
+  const world = posesSig.value.world.get(host.id);
+  return world && built?.ok && built.elements > 0 ? previewOnHost(built.sub, cat, world) : null;
+});
+
+/**
+ * Generate: onto the picked host at once, in one history entry, selecting the new parts (D21); without
+ * a host, the Place tool takes the shape and its new host part, as before.
+ */
+export function generate(): void {
+  const cat = catalogSig.value;
+  const built = genBuildSig.value;
+  if (!cat || !built?.ok || built.elements === 0) return;
+  const host = genHostSig.value;
+  if (!host) {
+    arm({ kind: 'generated', sub: built.sub });
+    return;
+  }
+  let ids: PartId[] = [];
+  try {
+    commit(`Generate ${SHAPES[genRequestSig.value.shape].label}`, (d) => {
+      const made = insertSubDoc(d, cat, cat.conventions, posesSig.value, built.sub, {
+        onto: host.id,
+      });
+      ids = [...made.values()].filter((id) => id !== host.id);
+    });
+  } catch (e) {
+    toast((e as Error).message, 'warn');
+    return;
+  }
+  select(ids, 'replace');
+  genHostPickSig.value = null;
 }
 
 /** Test helper: the request back to its starting values, and the presets read again from storage. */
 export function resetGeneratorsForTests(): void {
   genRequestSig.value = startRequest();
   presetsSig.value = loadPresets();
+  genHostPickSig.value = null;
 }

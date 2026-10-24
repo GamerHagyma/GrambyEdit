@@ -137,6 +137,63 @@ export function socketMatrix(
   return { m: m.clone(), approx };
 }
 
+/** What a child socket mounts onto: another part's socket, or a point. */
+export type MountOnto = { readonly type: string; readonly socket: SocketId } | 'point';
+
+/** Ry(+90°), exact: how the game turns a hinged socket on a door socket or a point (D23). */
+const HINGE_TURN = new Matrix4().set(0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1);
+
+type HingeTurn = 'door' | 'point' | 'gascap-point';
+
+/** How a hinged socket mounting `onto` something turns (D23): on a door socket, on a point, or not. */
+function hingeTurn(
+  cat: Catalog,
+  type: string,
+  socket: SocketId,
+  onto: MountOnto,
+): HingeTurn | null {
+  if (!Object.hasOwn(cat.parts, type) || cat.parts[type].sockets[socket]?.hinge !== true) {
+    return null;
+  }
+  if (onto === 'point') return type === 'GasCap' ? 'gascap-point' : 'point';
+  const door =
+    Object.hasOwn(cat.parts, onto.type) && cat.parts[onto.type].sockets[onto.socket]?.door === true;
+  return door ? 'door' : null;
+}
+
+/**
+ * Turns the child socket frame `m` (mutated) a quarter about its +Y. On a door socket the part swings
+ * about the socket, as the game's hinge does; on a point it turns about its own origin, as
+ * Orientation turns parts. A GasCap on a point retains its measured hinge distance along local Y:
+ * the user confirmed all three compensated comparison plates centred in game (2026-10-24).
+ */
+function turnHinge(m: Matrix4, on: HingeTurn): Matrix4 {
+  if (on === 'door') return m.multiply(HINGE_TURN);
+  if (on === 'gascap-point') {
+    const edge = -m.elements[14];
+    return m.multiply(HINGE_TURN).setPosition(0, edge, 0);
+  }
+  const r = new Matrix4().extractRotation(m);
+  return m.premultiply(r.clone().multiply(HINGE_TURN).multiply(r.invert()));
+}
+
+/**
+ * The frame `type` mates by when its `socket` mounts `onto` something: the socket's frame, turned a
+ * quarter about its +Y for a hinged socket (DoorA–D, GasCap) on a door socket or a point, as the game
+ * seats them (D23).
+ */
+export function childSocketMatrix(
+  cat: Catalog,
+  type: string,
+  socket: SocketId,
+  onto: MountOnto,
+): { m: Matrix4; approx: boolean } {
+  const s = socketMatrix(cat, type, socket);
+  const turn = hingeTurn(cat, type, socket, onto);
+  if (turn) turnHinge(s.m, turn);
+  return s;
+}
+
 /**
  * The frame of a host's sub-piece. A captured frame wins; otherwise the identity (spec §10.3, until
  * probe P6 settles it), approximate for any partName other than the host's main piece.
@@ -351,7 +408,7 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
   }
 
   const mating = matingMatrix(conv);
-  // M · S(c, a)⁻¹ per child socket, shared by every body mated through it.
+  // M · S(c, a)⁻¹ per child socket (and hinge turn), shared by every body mated through it.
   const tail = new Map<string, Matrix4>();
   const nodeWorld = new Map<number, Matrix4>();
   const nodeFlag = new Map<number, number>();
@@ -390,9 +447,15 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
       const child = socketFrame(cat, part.type, conn.self, 'child');
       if (child.approx) flag |= POSE_APPROX;
       if (child.unknown) flag |= POSE_UNKNOWN_TYPE;
-      const tailKey = `${part.type}\u0000${conn.self}`;
+      const onto = t.kind === 'socket' ? { type: parent.type, socket: t.socket } : 'point';
+      const turn = hingeTurn(cat, part.type, conn.self, onto);
+      const tailKey = `${part.type}\u0000${conn.self}\u0000${turn ?? ''}`;
       let after = tail.get(tailKey);
-      if (!after) tail.set(tailKey, (after = mating.clone().multiply(child.m.clone().invert())));
+      if (!after) {
+        const s = child.m.clone();
+        if (turn) turnHinge(s, turn);
+        tail.set(tailKey, (after = mating.clone().multiply(s.invert())));
+      }
       m = parentWorld.clone();
       if (t.kind === 'socket') {
         const ps = socketFrame(cat, parent.type, t.socket, 'parent');

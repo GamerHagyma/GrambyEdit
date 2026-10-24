@@ -41,3 +41,24 @@ test('a disabled command does not run', () => {
   expect(runCommand('edit.delete')).toBe(false);
   expect(docSig.value.order).toEqual([1]);
 });
+
+test('visibility toggle keeps selection, shows a mixed selection, then hides it together', () => {
+  loadDoc(docOf(part(1, 'Part'), part(2, 'Part'), part(3, 'Part')));
+  hiddenSig.value = new Set([1, 3]);
+  select([1, 2], 'replace');
+  expect(runCommand('view.toggleVisibility')).toBe(true);
+  expect([...hiddenSig.value]).toEqual([3]);
+  expect([...selectionSig.value.parts]).toEqual([1, 2]);
+  runCommand('view.toggleVisibility');
+  expect([...hiddenSig.value]).toEqual([3, 1, 2]);
+  expect([...selectionSig.value.parts]).toEqual([1, 2]);
+  runCommand('view.toggleVisibility');
+  expect([...hiddenSig.value]).toEqual([3]);
+});
+
+test('visibility toggle is disabled with no selected parts', () => {
+  loadDoc(docOf(part(1, 'Part')));
+  hiddenSig.value = new Set([1]);
+  expect(runCommand('view.toggleVisibility')).toBe(false);
+  expect([...hiddenSig.value]).toEqual([1]);
+});

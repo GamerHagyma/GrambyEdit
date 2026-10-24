@@ -6,6 +6,7 @@ import {
   applyTransform,
   constrainDelta,
   deltaMatrix,
+  gridOffset,
   pivotOf,
   snapValue,
 } from '../../src/tools/transform';
@@ -104,4 +105,14 @@ test('turning a socket-joined part keeps its joint and writes its Orientation, a
   after.elements.forEach((v, i) =>
     expect(v).toBeCloseTo(delta.clone().multiply(world).elements[i], 4),
   );
+});
+
+test('grid snapping lands the moved point on the world grid on every axis (user, 2026-10-24)', () => {
+  const from = new Vector3(0.3, 1.1, -0.2);
+  const close = (v: Vector3, x: number, y: number, z: number) =>
+    [v.x, v.y, v.z].forEach((c, i) => expect(c).toBeCloseTo([x, y, z][i], 9));
+  // Along X: 0.9 lands on 1, and Y and Z join the grid too, at 1 and -0.25.
+  close(gridOffset(new Vector3(0.6, 0, 0), from, 0.25), 0.7, -0.1, -0.05);
+  // Without moving, the point still lands on the grid.
+  close(gridOffset(new Vector3(), from, 0.25), -0.05, -0.1, -0.05);
 });

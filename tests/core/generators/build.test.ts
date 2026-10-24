@@ -1,5 +1,13 @@
+import { Matrix4 } from 'three';
 import { DEFAULT_CONVENTIONS as C } from '../../../src/core/conventions';
-import { buildGeneratedSubDoc, SHAPES, type GenRequest } from '../../../src/core/generators/index';
+import {
+  buildGeneratedSubDoc,
+  mountSubDoc,
+  SHAPES,
+  tintColors,
+  withTintMode,
+  type GenRequest,
+} from '../../../src/core/generators/index';
 import { computePoses } from '../../../src/core/pose';
 import { validate } from '../../../src/core/rules';
 import { DEFAULT_LIMITS } from '../../../src/core/types';
@@ -71,6 +79,59 @@ test('gradient endpoints and errors', () => {
   expect(buildGeneratedSubDoc(req({ maxElements: 50 }), MINI, C)).toEqual({
     ok: false,
     error: 'This shape would create 100 parts; the limit is 50.',
+  });
+});
+
+test('a tint spreads a gradient from end to end and switches mode keeping its first colour', () => {
+  const g = tintColors(
+    { mode: 'gradient', from: [0, 0, 0], to: [255, 255, 255], axis: 'u' },
+    3,
+    (_, i) => i,
+  );
+  expect(g).toEqual([
+    [0, 0, 0],
+    [128, 128, 128],
+    [255, 255, 255],
+  ]);
+  expect(tintColors({ mode: 'single', rgb: [1, 2, 3] }, 2, () => 0)).toEqual([
+    [1, 2, 3],
+    [1, 2, 3],
+  ]);
+  expect(withTintMode({ mode: 'single', rgb: [9, 9, 9] }, 'gradient', 'v')).toEqual({
+    mode: 'gradient',
+    from: [9, 9, 9],
+    to: [255, 255, 255],
+    axis: 'v',
+  });
+  expect(
+    withTintMode({ mode: 'gradient', from: [4, 4, 4], to: [1, 1, 1], axis: 'x' }, 'random', 'x'),
+  ).toEqual({
+    mode: 'random',
+    palette: [
+      [4, 4, 4],
+      [255, 255, 255],
+    ],
+    seed: 1,
+  });
+});
+
+test('mounted elements land on the frames they were given, in the host part space', () => {
+  const frames = [0, 1, 2].map((x) => new Matrix4().makeTranslation(x, 0.5, 0));
+  const sub = mountSubDoc(
+    MINI,
+    C,
+    { type: 'Connector', partName: 'Connector' },
+    { type: 'Part', mount: '1' },
+    frames,
+    null,
+    { pos: 4, rot: 5 },
+  );
+  expect(sub.order).toEqual([1, 2, 3, 4]);
+  expect(sub.parts.get(1)!.points!.size).toBe(3);
+  const w = computePoses(sub, MINI, C).world;
+  [0, 1, 2].forEach((x, i) => {
+    expect(w.get(i + 2)!.elements[12]).toBeCloseTo(x, 4);
+    expect(w.get(i + 2)!.elements[13]).toBeCloseTo(0.5, 4);
   });
 });
 

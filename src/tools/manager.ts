@@ -2,7 +2,17 @@
 import { signal } from '@preact/signals';
 import type { Vector2 } from 'three';
 
-export type ToolId = 'select' | 'move' | 'rotate' | 'connect' | 'point' | 'paint' | 'place' | 'sockets';
+export type ToolId =
+  | 'select'
+  | 'move'
+  | 'rotate'
+  | 'connect'
+  | 'point'
+  | 'paint'
+  | 'place'
+  | 'sockets'
+  | 'pick'
+  | 'surface';
 
 export interface ToolPointer {
   kind: 'down' | 'move' | 'up';

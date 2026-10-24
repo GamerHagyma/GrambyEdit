@@ -6,25 +6,37 @@ import { transact } from '../../src/core/ops/transact';
 import { buildGeneratedSubDoc, type GenRequest } from '../../src/core/generators';
 import { EMPTY_POSES } from '../../src/core/pose';
 import { codeSize } from '../../src/core/size';
-import { DEFAULT_LIMITS, EMPTY_DOC } from '../../src/core/types';
+import { Matrix4, Vector3 } from 'three';
+import { matrix4ToCf } from '../../src/core/cframe';
+import { DEFAULT_LIMITS, EMPTY_DOC, type Doc } from '../../src/core/types';
+import { posesSig } from '../../src/state/derived';
 import {
+  clearGenHost,
   costPreview,
+  generate,
+  genCostSig,
+  genHostPickSig,
+  genHostSig,
+  genPreviewSig,
   genRequestSig,
   liveRequestSig,
   loadPreset,
   loadPresets,
+  pickGenHost,
   presetsSig,
   resetGeneratorsForTests,
   savePreset,
-  setColorMode,
   setParam,
   setShape,
   updateInput,
 } from '../../src/state/generators';
+import { placeSig } from '../../src/state/place';
+import { selectionSig } from '../../src/state/selection';
 import { updateSettings } from '../../src/state/settings';
-import { resetStoreForTests } from '../../src/state/store';
+import { baseCatalogSig, docSig, loadDoc, resetStoreForTests } from '../../src/state/store';
+import { pickSig } from '../../src/tools/pick';
 import { MINI } from '../helpers/catalog';
-import { chainDoc } from '../helpers/doc';
+import { chainDoc, docOf, part } from '../helpers/doc';
 
 beforeEach(resetStoreForTests);
 beforeEach(() => {
@@ -150,27 +162,6 @@ test('the live request takes its precision from Settings as it is now', () => {
   updateSettings({ genPosDecimals: 4, genRotDecimals: 5 });
 });
 
-test('switching the colour mode starts from the colour the request had', () => {
-  setColorMode('gradient');
-  expect(genRequestSig.value.color).toEqual({
-    mode: 'gradient',
-    from: [163, 162, 165],
-    to: [255, 255, 255],
-    axis: 'x',
-  });
-  setColorMode('random');
-  expect(genRequestSig.value.color).toEqual({
-    mode: 'random',
-    palette: [
-      [163, 162, 165],
-      [255, 255, 255],
-    ],
-    seed: 1,
-  });
-  setColorMode('single');
-  expect(genRequestSig.value.color).toEqual({ mode: 'single', rgb: [163, 162, 165] });
-});
-
 test('a saved preset loads back as the same request', () => {
   setShape('torus');
   savePreset('Donut', genRequestSig.value);
@@ -199,4 +190,71 @@ test('stored presets with a bad shape, colour, parameter or fill are dropped', (
 test('stored presets that are not an object read as none', () => {
   localStorage.setItem('grambyedit:genPresets', '[1, 2]');
   expect(loadPresets()).toEqual({});
+});
+
+/** A Connector at (2, 3, 4): the part the shape is generated onto. */
+const hostDoc = (type = 'Connector'): Doc => ({
+  ...docOf(part(1, type)),
+  layout: new Map([[1, matrix4ToCf(new Matrix4().makeTranslation(2, 3, 4))]]),
+});
+
+test('a pick in the build chooses the host', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(hostDoc());
+  pickGenHost();
+  pickSig.value!.onPick({
+    part: 1,
+    body: 0,
+    point: new Vector3(),
+    normal: new Vector3(0, 1, 0),
+    subPart: 'Connector',
+    distance: 1,
+  });
+  expect(genHostPickSig.value).toEqual({ part: 1, type: 'Connector' });
+  clearGenHost();
+  expect(genHostSig.value).toBeNull();
+});
+
+test('a shape generated onto a picked part adds no host and hangs from new points on it', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(hostDoc());
+  genHostPickSig.value = { part: 1, type: 'Connector' };
+  // The default ring: 31 elements, without the extra Connector a placed shape brings.
+  const cost = genCostSig.value;
+  if (!cost?.ok) throw new Error('no cost');
+  expect(cost.cost.addParts).toBe(31);
+  const preview = genPreviewSig.value!;
+  generate();
+  expect(placeSig.value).toBeNull();
+  const doc = docSig.value;
+  expect(doc.order).toHaveLength(32);
+  expect(doc.parts.get(1)!.points!.size).toBe(31);
+  expect([...selectionSig.value.parts]).toEqual(doc.order.slice(1));
+  expect(genHostPickSig.value).toBeNull();
+  // The preview showed each element where Generate put it.
+  preview.doc.order.forEach((id, k) => {
+    const shown = preview.poses.world.get(id)!.elements;
+    const placed = posesSig.value.world.get(doc.order[k + 1])!.elements;
+    shown.forEach((v, i) => expect(v).toBeCloseTo(placed[i], 6));
+  });
+});
+
+test('without a picked host, Generate hands the shape to the Place tool', () => {
+  baseCatalogSig.value = MINI;
+  generate();
+  expect(placeSig.value?.kind).toBe('generated');
+});
+
+test('a picked host that is gone, or is now another type, is ignored', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(hostDoc());
+  genHostPickSig.value = { part: 1, type: 'Connector' };
+  expect(genHostSig.value?.id).toBe(1);
+  expect(genPreviewSig.value).not.toBeNull();
+  loadDoc(hostDoc('Part'));
+  expect(genHostSig.value).toBeNull();
+  expect(genPreviewSig.value).toBeNull();
+  loadDoc(EMPTY_DOC);
+  expect(genHostSig.value).toBeNull();
+  expect(genCostSig.value?.ok && genCostSig.value.cost.addParts).toBe(32);
 });

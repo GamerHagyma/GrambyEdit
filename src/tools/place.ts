@@ -1,7 +1,7 @@
 // The Place tool (spec §12.6): a ghost of the armed part, creation, paste or shape follows the cursor
 // and snaps to free sockets, free points and part surfaces; a click places it. Over empty space it lands
 // on the ground as a new root (with a hint that share codes do not keep root positions). It stays armed
-// until Esc.
+// until Esc or a right click.
 import { effect } from '@preact/signals';
 import { Matrix4, Plane, Vector3, type Vector2 } from 'three';
 import type { Catalog } from '../core/catalog-types';
@@ -15,6 +15,7 @@ import {
   bodyOfSocket,
   bodyPivot,
   bodyWorld,
+  childSocketMatrix,
   computePoses,
   poseConn,
   socketMatrix,
@@ -31,7 +32,7 @@ import { toast } from '../state/toasts';
 import { statusHintSig } from '../state/ui';
 import { getViewport } from '../viewport/context';
 import { cursorRay, pickPart, pickPoint, pickSocket } from '../viewport/raycast';
-import type { Tool, ToolPointer } from './manager';
+import { setTool, type Tool, type ToolPointer } from './manager';
 
 export const PLACE_HINT = 'Root positions are not stored in share codes.';
 
@@ -66,7 +67,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
     const world = childWorldViaSocket(
       bodyWorld(poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
       socketMatrix(cat, host.type, sock.socket).m,
-      socketMatrix(cat, type, self).m,
+      childSocketMatrix(cat, type, self, { type: host.type, socket: sock.socket }).m,
       props,
       conv,
       bodyPivot(cat, type, self),
@@ -83,7 +84,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
         poses.world.get(p.host)!,
         subPartMatrix(cat, host.type, point.partName).m,
         cfToMatrix4(point.cframe),
-        socketMatrix(cat, type, mount).m,
+        childSocketMatrix(cat, type, mount, 'point').m,
         props,
         conv,
         bodyPivot(cat, type, mount),
@@ -97,7 +98,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
         frame,
         new Matrix4(),
         new Matrix4(),
-        socketMatrix(cat, type, mount).m,
+        childSocketMatrix(cat, type, mount, 'point').m,
         props,
         conv,
         bodyPivot(cat, type, mount),
@@ -208,6 +209,10 @@ export function createPlaceTool(): Tool {
       placeSig.value = null;
     },
     onPointer(e: ToolPointer) {
+      if (e.button === 2 && e.kind === 'up') {
+        setTool('select');
+        return;
+      }
       if (e.kind === 'move') return aim(e.ndc);
       if (e.button === 0 && e.kind === 'up') {
         aim(e.ndc);

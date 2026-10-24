@@ -21,7 +21,7 @@ interface Section {
 
 const MODAL: Section = {
   title: 'While moving or rotating (G, R)',
-  note: 'Works with parts selected, in any tool but Sockets.',
+  note: 'Works with parts selected, in any tool but Sockets. In the Surfaces tab, G moves the selected corner.',
   rows: [
     { keys: ['Mouse'], action: 'Move: the parts follow it; rotate: they turn around the pivot' },
     {
@@ -29,7 +29,10 @@ const MODAL: Section = {
       action: 'Lock to that axis; press again for the part’s own axis, again to unlock',
     },
     { keys: ['0–9', '.', '-'], action: 'Type an exact distance (studs) or angle (degrees)' },
-    { keys: ['Ctrl'], action: 'Hold to snap to the snap steps (Snap in the toolbar)' },
+    {
+      keys: ['Ctrl'],
+      action: 'Hold to snap to the snap steps; with World grid ticked, moves land on the grid',
+    },
     { keys: ['Enter', 'Left click'], action: 'Confirm' },
     { keys: ['Esc', 'Right click'], action: 'Cancel' },
   ],

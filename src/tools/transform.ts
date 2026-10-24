@@ -27,6 +27,7 @@ import {
   bodyOfSocket,
   bodyPivot,
   bodyWorld,
+  childSocketMatrix,
   poseConn,
   socketMatrix,
   type Poses,
@@ -48,7 +49,8 @@ export type Axis = 'X' | 'Y' | 'Z';
 export type Space = 'world' | 'local';
 /** A world-space transform: a move, or a rotation about a pivot (or about each part's own origin). */
 export type TransformDelta =
-  | { kind: 'move'; offset: Vector3 }
+  /** `grid`: while snapping onto the world grid, its step, so each moved item can land on its own point. */
+  | { kind: 'move'; offset: Vector3; grid?: number }
   | { kind: 'rotate'; rotation: Quaternion; pivot: Vector3 | 'individual' };
 
 const PIVOTS: readonly PivotMode[] = ['median', 'active', 'individual'];
@@ -101,6 +103,13 @@ export function snapValue(v: number, step: number): number {
   if (!(step > 0)) return v;
   const n = Math.round(Math.abs(v) / step);
   return Number((Math.sign(v) * n * step).toFixed(10)) + 0;
+}
+
+/** `offset` changed so that `from + offset` lands on the world grid of `step`, on every axis. */
+export function gridOffset(offset: Vector3, from: Vector3, step: number): Vector3 {
+  const out = offset.clone();
+  for (const k of ['x', 'y', 'z'] as const) out[k] = snapValue(from[k] + offset[k], step) - from[k];
+  return out;
 }
 
 /** Keeps only the component along a world axis; null keeps all three. */
@@ -348,7 +357,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       const world = childWorldViaSocket(
         bodyWorld(r.poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
         socketMatrix(cat, host.type, sock.socket).m,
-        socketMatrix(cat, part.type, self).m,
+        childSocketMatrix(cat, part.type, self, { type: host.type, socket: sock.socket }).m,
         part.props,
         conv,
         bodyPivot(cat, part.type, self),
@@ -372,7 +381,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       frame,
       new Matrix4(),
       new Matrix4(),
-      socketMatrix(cat, part.type, mount).m,
+      childSocketMatrix(cat, part.type, mount, 'point').m,
       part.props,
       conv,
       bodyPivot(cat, part.type, mount),

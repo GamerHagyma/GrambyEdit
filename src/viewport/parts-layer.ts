@@ -92,8 +92,14 @@ export class PartsLayer {
   private readonly color = new Color();
   /** The poses last synced, so a preview can move every body of a part with its lead. */
   private poses: Poses | null = null;
+  /** Materials already made see-through, so none fades twice. */
+  private readonly faded = new WeakSet<MeshStandardMaterial>();
 
-  constructor(readonly assets: Assets) {
+  /** Below 1, `opacity` draws every part see-through: the previews of parts not built yet. */
+  constructor(
+    readonly assets: Assets,
+    private readonly opacity = 1,
+  ) {
     this.materials = new PartMaterialCache(
       assets,
       () => createPartMaterial(this.desaturate),
@@ -269,7 +275,17 @@ export class PartsLayer {
   }
 
   private createMesh(geometry: BufferGeometry, capacity: number, type: string): InstancedMesh {
-    const mesh = new InstancedMesh(geometry, this.materials.forType(type), capacity);
+    const material = this.materials.forType(type);
+    if (this.opacity < 1) {
+      for (const m of Array.isArray(material) ? material : [material]) {
+        if (this.faded.has(m)) continue;
+        this.faded.add(m);
+        m.transparent = true;
+        m.opacity *= this.opacity;
+        m.depthWrite = false;
+      }
+    }
+    const mesh = new InstancedMesh(geometry, material, capacity);
     mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3).fill(1), 3);
     mesh.instanceColor.setUsage(DynamicDrawUsage);

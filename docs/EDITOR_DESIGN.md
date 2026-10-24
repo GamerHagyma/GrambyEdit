@@ -117,6 +117,9 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D18 | `Orientation` turns the posed part (or piece) about its own axes and pivot **after** mating, by the inverse of Roblox's `CFrame.Angles`: `Rz(−z) · Ry(−y) · Rx(−x)`. A positive X, Y or Z turns it against the right-hand rule (Y: clockwise seen from above), Z goes on before Y, and Y before X | user + me | In game a part turns about its centre (2026-10-23). The user's Part test (`tests/fixtures/part_test.txt`, 2026-10-24) put a Y = 90 column on the side opposite the right-hand rule. The user's Cadillac (`tests/fixtures/cadillac.txt`, 2026-10-24) matches its game screenshot only with X turned that way too: its windshield (X 22.5), hood (an X 90 Servo) and trunk (X 90 Parts). Its grille rods (ShortSticks at X 90 with Z 270 and Z 90) lie in the slot between its headlights, as the user confirmed in game, only with Z reversed and on before X. The five keys on the user's Kamaz (`tests/fixtures/kamaz_truck.txt`, 2026-10-24), turned X with Y and Y with Z, all face out of the grille with upright letters, as in game, only in this order; `fromOrientation`'s order turns three of them face up. Bumpers and Wings are turned on Z = 90 hundreds of times in the corpus, which only makes sense about the part's own axes. **Verified** in game. |
 | D19 | **Multi-piece parts** (`Wire`, `Switch`, `Button`, `RemoteButton`, `TripWire`, the Splitters, `RubberBand`, `Rope`; `data/curation/bodies.json`): each piece is posed by its own first connection and can be dragged on its own | user | In game a Wire end or a Switch circle moves separately from its base (2026-10-23). |
 | D20 | Connect never arms a part type: every click on a free socket or point opens the picker, recent types first. Shift+click still gathers several targets | user | The armed type kept placing the same part (2026-10-23). |
+| D21 | **Generator host picker:** the Generators tab can pick a part in the build as the host. The shape is centred on that part in its own axes, its points go onto that part (no extra host part), it previews live in the view, and Generate adds it at once. Without a picked part, Generate arms Place as before. The panel always shows a small picture of the shape, turning slowly; Spin stops it and a drag turns it by hand (user, 2026-10-24) | user (2026-10-24) | "Point at a part and it will generate the shape on top of it, instead of having to drag it onto it." The centre was the user's choice over the clicked spot. |
+| D22 | **GasCap surfaces:** a Surfaces tab fills four corners, relative to a picked parent part, with rows of GasCaps on points of that part. The corners span a bilinear patch, so a corner lifted out of plane twists the surface. Caps (fixed 0.645-stud squares) overlap just enough to leave no gaps, are flush at square edges, and stick out slightly at slanted ones. With more than one colour they are lifted 0–0.015 studs by row and by place in the row (odd or even), so overlaps never flicker. Creating is one-shot: the caps are ordinary points and parts, and the corners are editor state, outside undo | user (2026-10-24) | "It would be very important that it would fill the bounds of the 4 points without visible gaps." Sticking out over leaving slivers, and one-shot over re-editable, were the user's choices. Five or more corners come later. |
+| D23 | **Hinged parts turn on door sockets and points:** door sockets use `S(c, a) · Ry(90°)`; ordinary sockets stay unturned. On points, non-GasCap hinged parts keep the inferred centre-turn rule. GasCaps use the calibrated rotation and hinge-distance translation in §10.2, superseding the earlier centre-turn-only and zero-translation guesses | user + me (2026-10-24) | The quarter turn fits the Chassis fuel door and Roof openings; Kamaz doors on Connectors remain unturned. The user confirmed all three compensated green plates centred in the six-case in-game comparison, covering normal, rotated-host and rotated-point cases. This establishes the GasCap point translation; the nested probe's global orientation still differs between game and editor. |
 
 ---
 
@@ -421,6 +424,9 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 
   `Base(c) = World(h) · Sub(h, partName_u) · CF(u) · M · S(c, a)⁻¹`, and `World(c)` as above (with `Re(c) = R(c)`).
 
+- A hinged child socket mates by `S(c, a) · Ry(90°)` on a door socket, and by `Q · S(c, a)` on a point, `Q` being that quarter turn about the part's origin (D23), with the GasCap exception below.
+- **Calibrated GasCap point mount:** its effective socket has rotation `Rotation(S(c, a)) · Ry(90°)` and translation `(0, e, 0)`, where `e = -Position(S(c, a)).z` is the captured hinge distance (0.322 studs). In the flat probe this moves the cap −Z by 0.322; inverse placement adds the compensation along the point plane, so newly generated caps land where previewed. The user confirmed centring in all three green comparison cases (normal, rotated host, rotated points). This supersedes the zero-translation hypothesis. Both pose computation and inverse point placement use the same frame. Ordinary sockets and other hinged types are unchanged. The nested comparison probe also shows a separate global orientation discrepancy, not resolved by this translation calibration.
+
 - `R(c)` is built from the child's `OrientationX/Y/Z` props (degrees; values accumulate past 360 in real codes, e.g. 1080). It turns the child in its own frame, about its pivot `p` (D18): the part origin for one-piece parts, the piece's mesh-component centre for multi-piece parts. With `orientationPivot: 'socket'` the earlier formula applies instead: `World(q) · S(q, b) · R(c) · M · S(c, a)⁻¹`.
 - **Multi-piece parts** (D19) have one world matrix per piece. A piece is posed by the first conn on its own sockets. A piece without one keeps its place next to the lead piece (the piece of the part's first conn). Loops anchor per piece (§10.6).
 
@@ -487,6 +493,7 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
 - **Points layer:** diamonds with the same arrow, shading and outline, plus a dashed line to the host's centre. Free points are white, used ones grey, selected ones orange, and a selected part's attach target purple. Shown for selected and hovered hosts and for a hovered point.
 - **Labels:** text the game draws on parts when it spawns them (`viewport/labels-layer.ts`): white, unlit, shrunk to fit like Roblox's TextScaled. The InputSensor's `ActivationKey`, the AltitudeSensor's `ActivationHeight` and the VelocitySensor's `ActivationSpeed` go on the keycap's +Z face, letters up; the EntitySensor's buttons read UP, FRONT, DOWN, LEFT, BACK and RIGHT in a pixel font. A sensor with no value shows nothing, and the EntitySensor's buttons stay red: in game one turns purple only while it senses something (user, 2026-10-24). Labels follow their part's pose and previews, hide with it, and live outside the parts group, so picking, the ID pass and the outline never see them.
 - **Ghosts:** translucent preview meshes for placement, prefabs and generators.
+- **Previews:** a second, half-transparent parts layer (`PartsLayer` at opacity 0.5) draws what Generate or Create would add to a picked part (D21, D22), in its real colours. It follows the visible left tab and is never picked.
 - **Navigation gizmo:** an axis widget in the top-right corner; click an axis to snap the view (Blender style).
 
 ### 11.2 Picking
@@ -521,7 +528,7 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
   | MMB | pan |
 
   Tool keys stay 1–6, as in the Blender scheme: browsers take Ctrl+digits for switching tabs (user decision, 2026-10-23).
-- One keymap table per scheme (`state/keymap.ts`, data only). Hotkeys never fire while a text field has focus. A right-click without drag opens the context menu in both schemes.
+- One keymap table per scheme (`state/keymap.ts`, data only). Hotkeys never fire while a text field has focus. A right-click without drag opens the context menu in both schemes. A right press that starts in the view opens no menu wherever it ends, so a Studio look that ends over a panel shows no browser menu (user, 2026-10-24).
 
 ---
 
@@ -583,7 +590,7 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
 
 - Gizmo options: World/Local space; pivot = median, active, or individual origins.
 - Modal transforms take X/Y/Z axis constraints (again for the active part's local axis, again to unlock), typed numbers, Enter or LMB to confirm, Esc or RMB to cancel. With no axis, a move follows the mouse in the view plane and a rotation turns about the view axis with the mouse.
-- **Snapping happens only while Ctrl is held**, for the gizmo and the modal alike, to the snap steps (move in studs, rotate in degrees), which the toolbar's Snap fields and Settings edit (user decision, 2026-10-23).
+- **Snapping happens only while Ctrl is held**, for the gizmo and the modal alike, to the snap steps (move in studs, rotate in degrees), which the toolbar's Snap fields and Settings edit (user decision, 2026-10-23). By default a move goes whole steps from where it started. With the toolbar's **World grid** ticked, a snapped move lands on the world grid instead, on all three axes whichever axis is dragged; moves then use world axes, for points and surface corners too (user, 2026-10-24).
 - **No shortcut uses a Ctrl combination that browsers reserve or that reloads the page** (Ctrl+T/N/W/Tab, Ctrl+1–9, Ctrl+R; user decision, 2026-10-23).
 - The Move tool also drags parts with **snap-to-socket / snap-to-surface re-attach** (§9.3).
 - All conversions follow §9.3. One transaction per completed transform.
@@ -612,7 +619,7 @@ Other paint behaviour:
 - One transaction per stroke or fill.
 
 ### 12.6 Place (shared by armed parts, prefabs, paste, generators)
-A ghost follows the cursor and snaps to sockets, points and surfaces using the same targets as §9.3. Click commits; Esc cancels. For **new** parts, prefabs and pastes, empty space makes a new root at the cursor's ground-plane position, and a status-bar hint says root positions are not stored in codes. Moving an **existing** part into empty space cancels instead (§9.3).
+A ghost follows the cursor and snaps to sockets, points and surfaces using the same targets as §9.3. Click commits; Esc cancels. A plain right-click in the viewport ends placement and chooses Select, without opening a context menu; a right-drag still navigates the camera (user, 2026-10-24). For **new** parts, prefabs and pastes, empty space makes a new root at the cursor's ground-plane position, and a status-bar hint says root positions are not stored in codes. Moving an **existing** part into empty space cancels instead (§9.3).
 
 ### 12.7 Socket Workbench (D15: gathering the connection-point data)
 A separate mode, reached from the toolbar's **Sockets** button, for capturing where every socket sits.
@@ -629,6 +636,12 @@ A separate mode, reached from the toolbar's **Sockets** button, for capturing wh
 4. **Test mate** attaches a `Part` cube to the selected socket, so you see what the editor will do with it.
 5. **Storage.** Captured frames save to IndexedDB (store `sockets`) and immediately override the catalog everywhere in the editor (`frameSource: 'captured'`).
 6. **Export** writes `data/socket_geometry.json` (Appendix B). Commit it, and the asset build merges it so every visitor gets the data. **Import** loads a file back.
+
+### 12.8 Pick (`tools/pick.ts`)
+A one-shot tool a panel starts to ask for a part in the build: the Generators tab's host (D21) and the Surfaces tab's parent (D22). The question shows in the status bar, the view's cursor turns into an eyedropper (user, 2026-10-24), and the part under the cursor is outlined. A click on a part answers it (a drag past 4 px picks nothing), then the tool goes back to the one from before, or to the tool the panel names. Esc cancels and goes back; choosing another tool drops the question and keeps that tool.
+
+### 12.9 Surface (`tools/surface.ts`, D22)
+The Surfaces tab's tool while a parent is picked. A click on a corner's dot (within 12 px) chooses that corner alone; **Shift+click** adds or takes out corners, in the view or on the tab's Corner buttons (user, 2026-10-24); a click elsewhere, or Esc, lets them go. The transform gizmo sits amid the chosen corners in the parent's axes (translate only; Ctrl snaps to the move step; world axes with World grid), **G** moves them as a modal move (§12.4), and the preview follows every move. They move together; with World grid, each lands on its own grid point. Chosen corners are orange: their dots, their badges and their rows in the tab. The dots and outline draw over everything, the see-through preview included. Corners are stored in the parent's part space, so the surface moves with its parent.
 
 ---
 
@@ -647,6 +660,8 @@ A separate mode, reached from the toolbar's **Sockets** button, for capturing wh
 - Each row: disclosure, mini icon, type, `#index`, color dot, issue badge, eye toggle (editor-only hide).
 - Search filters by type or `#index`. "Group by type" view toggle.
 - Selection follows the selection mode. Double-click frames the part.
+- Shift-click selects a range from the last plain or Ctrl/Cmd-clicked row in the displayed order, skipping headings and collapsed children; Ctrl/Cmd-click toggles a row, and Ctrl/Cmd+Shift-click adds a range. Ranges include rows outside the currently rendered virtual window.
+- Right-click on a selected row keeps the whole selection; on an unselected row it selects that row first. Its part menu offers Hide selected, or Show selected if any selected part is hidden. This action retains the selection so hidden parts can immediately be restored from their Outliner rows; unrelated hidden parts stay hidden.
 
 ### 13.3 Properties (right dock tab; must-have: multi-selection property changes)
 - **Header:** "3 parts — 2 Mag, 1 Stick". The type chips are clickable and narrow the selection to that type.
@@ -726,7 +741,10 @@ The §7.2 list, grouped by severity, with click-to-select and quick-fix buttons.
   - A prefab whose first root has no child sockets is inserted as a new root.
 
 ### 13.9 Generators (must-have; §15)
-The left dock's **Generators** tab, next to **Parts**: shape list, parameter form, fill and orientation, element and host pickers, colours, cost preview with threshold warnings, Generate and presets. Generate arms the Place tool (§12.6), whose ghost previews the shape and whose click picks where it goes.
+The left dock's **Generators** tab, next to **Parts**: shape list, parameter form, fill and orientation, element and host pickers, colours, cost preview with threshold warnings, a small picture of the shape, Generate and presets.
+- The picture turns once round every 12 s. **Spin** (in its corner, remembered) stops it; dragging it turns it with the cursor and tilts it up to 80° above or below.
+- **Pick in build** (D21, §12.8) makes a part in the build the host: the shape previews on it live, see-through, and Generate adds it there at once and selects it. **Clear** goes back to a host type.
+- Without a picked part, Generate arms the Place tool (§12.6), whose ghost previews the shape and whose click picks where it goes.
 
 ### 13.10 Settings, shortcuts, command palette
 - **Settings:**
@@ -737,6 +755,15 @@ The left dock's **Generators** tab, next to **Parts**: shape list, parameter for
   - numbers: generator number precision (default 4 decimals for positions, 5 for rotations).
 - `?` opens the shortcut overlay (generated from the keymap tables).
 - `F3` (Blender) / `Ctrl+Shift+P` (both schemes) opens the command palette with every command and its key.
+
+### 13.11 Surfaces (D22)
+The left dock's **Surfaces** tab, after **Generators** (`ui/panels/SurfacePanel.tsx`, `state/surfaces.ts`, `core/surfaces/`).
+- **Pick parent** (§12.8): click the face the surface starts on. Four corners start as a square two caps wide, centred on the click and lifted half a cap so the caps rest on the face.
+- Corners: drag the active one with the gizmo (§12.9), or type X/Y/Z in the parent's axes. **Reset corners** returns to the starting square.
+- The status line shows the count ("48 GasCaps in 6 rows") and the cost line, as for generators. Errors (corners too close, crossed or dented, more than 20,000 caps) disable Create.
+- Colours: single, gradient along corner 1 → 2 or 1 → 4, or random from a palette.
+- **Create** adds the caps onto the parent in one history entry and selects them. The preview hides until the surface changes or Undo takes the caps out.
+- Tiling (`core/surfaces/tiling.ts`): rows of caps along corner 1 → 2, or along 2 → 3 when that takes fewer. Each row (the band between two lines of constant v) is sliced square to its middle line into cells, like bricks, with as many cells as its length needs; each cap holds the row's direction and covers its cell's outline (the slices' ends and the band's corners between them). That is gap-free: seen along the cap's normal, a slice runs straight across the row, and the band's lines of constant v are straight pieces between slices. The fewest caps are searched over a few row counts, both ways. Before this (user, 2026-10-24), every cell followed the slant of a uniform grid, and one corner raised 6 studs on a 4-stud square took 350 caps; a 4 × 2 parallelogram leaning 4 studs took 385. Now they take 105 and 27, within about 1–2 times their area in caps; a sharp point (20° or less) costs up to about 2 times.
 
 ---
 

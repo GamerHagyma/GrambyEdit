@@ -12,6 +12,8 @@ export interface Settings {
   limits: Limits;
   snapMove: number;
   snapRotate: number;
+  /** Snapped moves land on the world grid instead of going whole steps from where they start. */
+  snapToGrid: boolean;
   autoColor: boolean;
   activeColor: RGB;
   maxSockets: number;
@@ -31,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   limits: DEFAULT_LIMITS,
   snapMove: 0.25,
   snapRotate: 15,
+  snapToGrid: false,
   autoColor: false,
   activeColor: [163, 162, 165],
   maxSockets: 3000,

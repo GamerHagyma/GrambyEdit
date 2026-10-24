@@ -25,6 +25,13 @@ export interface SocketDef {
   /** Outward: local +Y points out of the part. */
   readonly frame: CFrame12;
   readonly frameSource: FrameSource;
+  /**
+   * A hinged child socket (the game's HingeType: DoorA–D, GasCap): it mounts turned on door sockets
+   * and points (D23).
+   */
+  readonly hinge?: true;
+  /** A door socket (the game's MountType Door): hinged children mount on it turned (D23). */
+  readonly door?: true;
 }
 
 /**

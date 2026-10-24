@@ -7,6 +7,7 @@ import type { Doc, Issue, Part, PartId, Severity } from '../../core/types';
 import { issuesSig } from '../../state/derived';
 import { hiddenSig, select, selectionSig } from '../../state/selection';
 import { docSig, viewBus } from '../../state/store';
+import { contextMenuSig } from '../../state/ui';
 import { Icon } from '../icons';
 import { VirtualList } from '../widgets/VirtualList';
 
@@ -122,6 +123,7 @@ export function Outliner(): JSX.Element {
   const [collapsed, setCollapsed] = useState<ReadonlySet<PartId>>(() => new Set());
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const body = useRef<HTMLDivElement>(null);
+  const anchor = useRef<PartId | null>(null);
   const text = query.trim();
 
   const items = useMemo(() => {
@@ -130,6 +132,39 @@ export function Outliner(): JSX.Element {
   }, [doc, text, grouped, collapsed]);
   const badges = useMemo(() => badgesOf(issues), [issues]);
   const position = orderIndex(doc);
+
+  /** Ranges use the displayed order, including rows outside the virtual list's current window. */
+  const pick = (id: PartId, e: Pick<MouseEvent, 'shiftKey' | 'ctrlKey' | 'metaKey'>) => {
+    const add = e.ctrlKey || e.metaKey;
+    const from = items.findIndex((item) => item.kind === 'part' && item.id === anchor.current);
+    const to = items.findIndex((item) => item.kind === 'part' && item.id === id);
+    if (e.shiftKey && from >= 0) {
+      const ids = items
+        .slice(Math.min(from, to), Math.max(from, to) + 1)
+        .flatMap((item) => (item.kind === 'part' ? [item.id] : []));
+      select(ids, add ? 'add' : 'replace');
+    } else {
+      anchor.current = id;
+      select([id], add ? 'toggle' : 'replace');
+    }
+  };
+
+  const openMenu = (id: PartId, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!selectionSig.value.parts.has(id)) {
+      anchor.current = id;
+      select([id], 'replace');
+    }
+    const show = [...selectionSig.value.parts].some((part) => hiddenSig.value.has(part));
+    contextMenuSig.value = {
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { command: 'view.toggleVisibility', label: show ? 'Show selected' : 'Hide selected' },
+      ],
+    };
+  };
 
   // The list takes its container's height, or the default when the container cannot be measured.
   useLayoutEffect(() => {
@@ -168,14 +203,18 @@ export function Outliner(): JSX.Element {
         aria-expanded={open ?? undefined}
         tabIndex={0}
         style={{ paddingLeft: `${Math.min(depth, MAX_INDENT_LEVEL) * INDENT_PX}px` }}
-        onClick={(e) => select([id], e.shiftKey ? 'add' : 'replace')}
+        onClick={(e) => pick(id, e)}
+        onContextMenu={(e) => openMenu(id, e)}
         onDblClick={() => {
           select([id], 'replace');
           viewBus.emit({ kind: 'frame-selection' });
         }}
         onKeyDown={(e) => {
           // Enter on a button inside the row acts on that button only.
-          if (e.key === 'Enter' && e.target === e.currentTarget) select([id], 'replace');
+          if (e.key === 'Enter' && e.target === e.currentTarget) {
+            e.preventDefault();
+            pick(id, e);
+          }
         }}
       >
         {open === null ? (
