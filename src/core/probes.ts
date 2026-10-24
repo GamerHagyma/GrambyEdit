@@ -130,7 +130,36 @@ function gateOnCube(gateProps: Json): Json[] {
   ];
 }
 
-/** The six calibration probes (§10.4). They name no catalog data, so `_cat` is unused. */
+const RED = [220, 50, 47];
+const BLUE = [33, 90, 230];
+
+/**
+ * P7: which way `OrientationX/Y/Z` turn, and their order. A root Connector with a red stick on +X and a
+ * blue one on +Z; a yellow Part (X 90) on the red arm, a purple Part (Z 90) on the blue arm, and a
+ * green Part (X 90, Y 90) on top, each with sticks that point where it turned. Every sign and order
+ * combination gives a different picture.
+ */
+function turnProbe(): Json[] {
+  const yellow = [255, 215, 0];
+  const purple = [142, 68, 173];
+  const green = [46, 160, 67];
+  return [
+    ['Connector', [], []],
+    ['ShortStick', [['2', '1', 1]], { RGB: RED }],
+    ['ShortStick', [['2', '6', 1]], { RGB: BLUE }],
+    ['Connector', [['5', '1', 2]], []],
+    ['Part', [['1', '6', 4]], { OrientationX: 90, RGB: yellow }],
+    ['ShortStick', [['2', '6', 5]], { RGB: yellow }],
+    ['Connector', [['5', '1', 3]], []],
+    ['Part', [['1', '6', 7]], { OrientationZ: 90, RGB: purple }],
+    ['ShortStick', [['2', '6', 8]], { RGB: purple }],
+    ['Part', [['1', '4', 1]], { OrientationX: 90, OrientationY: 90, RGB: green }],
+    ['ShortStick', [['2', '6', 10]], { RGB: green }],
+    ['ShortStick', [['2', '4', 10]], { RGB: [240, 240, 240] }],
+  ];
+}
+
+/** The calibration probes (§10.4). They name no catalog data, so `_cat` is unused. */
 export function calibrationProbes(_cat: Catalog): ProbeCode[] {
   const identity = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
   return [
@@ -207,10 +236,16 @@ export function calibrationProbes(_cat: Catalog): ProbeCode[] {
             },
           },
         ],
-        ['Part', [['1', probeUuid(1), 1]], { RGB: [220, 50, 47] }],
-        ['Part', [['1', probeUuid(2), 1]], { RGB: [33, 90, 230] }],
+        ['Part', [['1', probeUuid(1), 1]], { RGB: RED }],
+        ['Part', [['1', probeUuid(2), 1]], { RGB: BLUE }],
       ],
       'Where do the red (Glass) and blue (Roof) cubes sit?',
+    ),
+    calibration(
+      'P7',
+      'P7 turn directions and order',
+      turnProbe(),
+      'Screenshot it from above. Compared with the red and blue sticks, where do the yellow, purple, green and white sticks point?',
     ),
   ];
 }

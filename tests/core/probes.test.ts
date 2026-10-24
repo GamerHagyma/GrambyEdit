@@ -64,7 +64,7 @@ test('every probe imports and validates without errors', async () => {
         ).toEqual([]);
     }
 });
-test('calibration probes P1–P6', async () =>
+test('calibration probes P1–P7', async () =>
   expect(calibrationProbes(await realCatalog()).map((p) => p.id)).toEqual([
     'P1',
     'P2',
@@ -72,4 +72,5 @@ test('calibration probes P1–P6', async () =>
     'P4',
     'P5',
     'P6',
+    'P7',
   ]));
