@@ -68,13 +68,18 @@ test('orientationFromRotation recovers angles that orientationMatrix turns into 
     [1080, 45, 0],
   ]) {
     const m = orientationMatrix({ OrientationX: x, OrientationY: y, OrientationZ: z }, C);
-    const back = orientationFromRotation(m, C.orientationOrder);
+    const back = orientationFromRotation(m, C);
     for (const v of [back.x, back.y, back.z]) expect(Number.isFinite(v)).toBe(true);
     const again = { OrientationX: back.x, OrientationY: back.y, OrientationZ: back.z };
     same(orientationMatrix(again, C), m, 6);
   }
 });
-test('Orientation composes like Roblox Orientation: Y, then X, then Z (a Y turn of 180 mirrors an X tilt)', () => {
+test('a positive OrientationY turns a part clockwise seen from above, as in game', () => {
+  // The user's Part test (tests/core/in-game.test.ts): Y = 90 in game is -90 by the right-hand rule.
+  same(orientationMatrix({ OrientationY: 90 }, C), new Matrix4().makeRotationY(-Math.PI / 2), 12);
+  expect(orientationFromRotation(new Matrix4().makeRotationY(-Math.PI / 2), C).y).toBe(90);
+});
+test('Orientation composes Y, then X, then Z (Roblox order; not yet checked in game)', () => {
   // With X applied first, X = 30 and Y = 180 would tilt the part the other way (Rx(30)·Ry(180) = Ry(180)·Rx(-30)).
   const m = orientationMatrix({ OrientationX: 30, OrientationY: 180 }, C);
   const want = new Matrix4()

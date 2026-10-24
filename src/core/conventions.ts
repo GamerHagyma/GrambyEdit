@@ -9,6 +9,7 @@ export const DEFAULT_CONVENTIONS: Conventions = {
   orientationOrder: 'YXZ',
   orientationOnPoints: true,
   orientationPivot: 'part',
+  orientationSigns: [1, -1, 1],
 };
 
 const RX180 = new Matrix4().set(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1);
@@ -21,25 +22,32 @@ export function matingMatrix(c: Conventions): Matrix4 {
 }
 
 const angle = (v: Json | undefined) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+/** A catalog built before `orientationSigns` existed gets today's default. */
+const signs = (c: Conventions) => c.orientationSigns ?? DEFAULT_CONVENTIONS.orientationSigns;
 
-/** `R`: the child's `OrientationX/Y/Z` (degrees) in the convention's order; missing keys are 0. */
+/**
+ * `R`: the child's `OrientationX/Y/Z` (degrees), each turned the convention's way, in its order; missing
+ * keys are 0.
+ */
 export function orientationMatrix(props: Readonly<Record<string, Json>>, c: Conventions): Matrix4 {
-  const x = angle(props.OrientationX);
-  const y = angle(props.OrientationY);
-  const z = angle(props.OrientationZ);
+  const [sx, sy, sz] = signs(c);
+  const x = angle(props.OrientationX) * sx;
+  const y = angle(props.OrientationY) * sy;
+  const z = angle(props.OrientationZ) * sz;
   const m = new Matrix4();
   if (x === 0 && y === 0 && z === 0) return m;
   return m.makeRotationFromEuler(new Euler(x * DEG, y * DEG, z * DEG, c.orientationOrder));
 }
 
-/** The `Orientation` angles of a rotation matrix: degrees in `order`, 4 decimals, no −0. */
+/** The `Orientation` props that `orientationMatrix` turns into `m`: degrees, 4 decimals, no −0. */
 export function orientationFromRotation(
   m: Matrix4,
-  order: Conventions['orientationOrder'],
+  c: Conventions,
 ): { x: number; y: number; z: number } {
-  const e = new Euler().setFromRotationMatrix(m, order);
-  const deg = (r: number) => Number((r / DEG).toFixed(4)) + 0;
-  return { x: deg(e.x), y: deg(e.y), z: deg(e.z) };
+  const e = new Euler().setFromRotationMatrix(m, c.orientationOrder);
+  const [sx, sy, sz] = signs(c);
+  const deg = (r: number, s: number) => Number(((r / DEG) * s).toFixed(4)) + 0;
+  return { x: deg(e.x, sx), y: deg(e.y, sy), z: deg(e.z, sz) };
 }
 
 /** `R` turning about `pivot` (part space): `T(p) · R · T(−p)`. */

@@ -92,6 +92,11 @@ export interface Conventions {
    * tool turns parts about their centre), or the parent socket before mating (`'socket'`, the v1 guess).
    */
   readonly orientationPivot: 'part' | 'socket';
+  /**
+   * Which way `OrientationX/Y/Z` turn: 1 by the right-hand rule about the part's own axis, -1 the other
+   * way. In game a positive `OrientationY` turns a part clockwise seen from above (2026-10-24).
+   */
+  readonly orientationSigns: readonly [1 | -1, 1 | -1, 1 | -1];
 }
 
 export interface Catalog {

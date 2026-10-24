@@ -33,7 +33,7 @@ test('a point mount seats the child socket on the point', () => {
   );
   expect(pos(computePoses(d, MINI, C).world.get(2)!)).toEqual([2, 0.75, 0]);
 });
-test('OrientationY = 90 turns the child +90° about the parent socket normal', () => {
+test('OrientationY = 90 turns the child clockwise about the parent socket normal, as in game', () => {
   const p = computePoses(
     docOf(part(1, 'Part'), part(2, 'Part', [sock('1', 1, '6')], { OrientationY: 90 })),
     MINI,
@@ -41,7 +41,7 @@ test('OrientationY = 90 turns the child +90° about the parent socket normal', (
   );
   const q = new Quaternion().setFromRotationMatrix(p.world.get(2)!);
   expect(
-    q.angleTo(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2)),
+    q.angleTo(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), -Math.PI / 2)),
   ).toBeLessThan(1e-9);
   expect(pos(p.world.get(2)!)).toEqual([0, 1, 0]);
 });

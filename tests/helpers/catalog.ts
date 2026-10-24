@@ -292,5 +292,6 @@ export const MINI: Catalog = {
     orientationOrder: 'YXZ',
     orientationOnPoints: true,
     orientationPivot: 'part',
+    orientationSigns: [1, -1, 1],
   },
 };

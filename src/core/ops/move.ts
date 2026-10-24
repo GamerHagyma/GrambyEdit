@@ -412,7 +412,7 @@ export function rotateInPlace(
   const local = base.clone().invert().multiply(turn).multiply(base);
   const o = orientationFromRotation(
     new Matrix4().makeRotationFromQuaternion(local).multiply(r),
-    conv.orientationOrder,
+    conv,
   );
   const props = { ...part.props };
   for (const [key, v] of [

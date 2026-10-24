@@ -32,6 +32,7 @@ const DEFAULT_CONVENTIONS: Conventions = {
   orientationOrder: 'YXZ',
   orientationOnPoints: true,
   orientationPivot: 'part',
+  orientationSigns: [1, -1, 1],
 };
 const UNPAINTABLE = /^(Input|Output|Glass|Screw|Light)/;
 const GREY: RGB = [128, 128, 128];
@@ -135,13 +136,18 @@ function readConventions(path: string): Conventions {
   if (!existsSync(path)) return DEFAULT_CONVENTIONS;
   const c = {
     orientationPivot: DEFAULT_CONVENTIONS.orientationPivot,
+    orientationSigns: DEFAULT_CONVENTIONS.orientationSigns,
     ...(JSON.parse(readFileSync(path, 'utf8')) as Partial<Conventions>),
   };
+  const signs: unknown = c.orientationSigns;
   const ok =
     (c.mating === 'rx180' || c.mating === 'rz180') &&
     ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX'].includes(String(c.orientationOrder)) &&
     typeof c.orientationOnPoints === 'boolean' &&
-    (c.orientationPivot === 'part' || c.orientationPivot === 'socket');
+    (c.orientationPivot === 'part' || c.orientationPivot === 'socket') &&
+    Array.isArray(signs) &&
+    signs.length === 3 &&
+    signs.every((s) => s === 1 || s === -1);
   if (!ok) throw new Error(`${path}: malformed conventions`);
   return c as Conventions;
 }
