@@ -245,7 +245,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     follow(rig.camera);
     gizmo.update(rig.camera);
     const wb = inWorkbench();
-    if (ctx.layer) ctx.layer.group.visible = !wb;
+    if (ctx.layer) ctx.layer.group.visible = ctx.layer.labels.group.visible = !wb;
     sockets.group.visible = !wb;
     points.group.visible = !wb;
     workbench.group.visible = wb;
@@ -506,7 +506,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     grid.setTheme(s.theme);
     if (assets && ctx.layer?.assets !== assets) {
       if (ctx.layer) {
-        scene.remove(ctx.layer.group);
+        scene.remove(ctx.layer.group, ctx.layer.labels.group);
         ctx.layer.dispose();
       }
       if (ctx.ghost) {
@@ -514,7 +514,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
         ctx.ghost.dispose();
       }
       ctx.layer = new PartsLayer(assets);
-      scene.add(ctx.layer.group);
+      scene.add(ctx.layer.group, ctx.layer.labels.group);
       ctx.ghost = new GhostLayer(assets);
       scene.add(ctx.ghost.group);
     }

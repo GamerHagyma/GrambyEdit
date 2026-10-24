@@ -289,7 +289,7 @@ export const MINI: Catalog = {
   },
   conventions: {
     mating: 'rx180',
-    orientationOrder: 'ZXY',
+    orientationOrder: 'ZYX',
     orientationOnPoints: true,
     orientationPivot: 'part',
     orientationSigns: [-1, -1, -1],

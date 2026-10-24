@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { buildAssets, withOrientation } from '../../scripts/build-assets';
+import { buildAssets, paintedGroups, withOrientation } from '../../scripts/build-assets';
 import { workshopFrames } from '../../scripts/lib/catalog';
+
+let built: ReturnType<typeof buildAssets> | null = null;
+const build = () => (built ??= buildAssets({ root: '.', outDir: null }));
 
 const close = (a: readonly number[], b: readonly number[]) =>
   a.forEach((v, i) => expect(Math.abs(v - b[i])).toBeLessThan(1e-3));
@@ -21,7 +24,7 @@ test('withOrientation adds the missing orientation props after the corpus keys',
 });
 
 test('builds the runtime catalog and mesh pack', async () => {
-  const { catalog, manifest, bin } = await buildAssets({ root: '.', outDir: null });
+  const { catalog, manifest, bin } = await build();
   expect(Object.keys(catalog.parts)).toHaveLength(162);
   expect(manifest.meshes).toHaveLength(162);
   for (const def of Object.values(catalog.parts)) {
@@ -56,3 +59,32 @@ test('builds the runtime catalog and mesh pack', async () => {
   expect(manifest.meshes[P.mesh!.id]).toMatchObject({ type: 'Part', indexCount: 36 });
   expect(bin.byteLength).toBe(manifest.sections.indices[0] + manifest.sections.indices[1]);
 }, 30_000);
+
+test('paint recolours the pieces the game paints, on parts that keep paint', async () => {
+  const { catalog, manifest } = await build();
+  const painted = (type: string) =>
+    manifest.meshes[catalog.parts[type].mesh!.id].groups
+      .filter((g) => g.paintable)
+      .map((g) => g.subPart)
+      .sort();
+  // In game (2026-10-24): both Wire ends, a Splitter's base and every output disc, and a RemoteButton's
+  // push button and disc take the colour. Buttons, Switches and EntitySensors go back to their own.
+  expect(painted('Wire')).toEqual(['InputA', 'InputB']);
+  expect(painted('Splitter_4')).toEqual(['Handle', 'Output1', 'Output2', 'Output3', 'Output4']);
+  expect(painted('RemoteButton')).toEqual(['Button', 'Output']);
+  for (const type of ['Button', 'Switch', 'EntitySensor']) {
+    expect(catalog.parts[type].paintable).toBe(false);
+    expect(painted(type)).toEqual([]);
+  }
+  expect(painted('Part')).toEqual(['Part']);
+}, 30_000);
+
+test('paintedGroups refuses a curated piece the mesh lacks', () => {
+  const groups = [
+    { subPart: 'Handle', triangles: 12 },
+    { subPart: 'Output1', triangles: 4 },
+  ];
+  expect([...paintedGroups(groups, 'Splitter_1', ['Handle', 'Output1'])]).toEqual([0, 1]);
+  expect([...paintedGroups(groups, 'Splitter_1', undefined)]).toEqual([0]);
+  expect(() => paintedGroups(groups, 'Splitter_1', ['Output2'])).toThrow(/Splitter_1.*Output2/);
+});

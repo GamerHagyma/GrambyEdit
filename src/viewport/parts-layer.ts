@@ -13,6 +13,7 @@ import {
 import { bodyGeometries, partGeometry, type Assets } from '../assets/geometry';
 import { POSE_APPROX, type Poses } from '../core/pose';
 import type { Doc, Json, PartId } from '../core/types';
+import { LabelsLayer } from './labels-layer';
 import { SlotAllocator } from './slots';
 import { PartMaterialCache } from './part-materials';
 
@@ -78,6 +79,8 @@ const isRgb = (v: Json | undefined): v is [number, number, number] =>
 
 export class PartsLayer {
   readonly group = new Group();
+  /** The text parts show in game; its group goes in the scene next to `group`. */
+  readonly labels = new LabelsLayer();
   private readonly layers = new Map<string, Layer>();
   private readonly owner = new Map<PartId, Layer>();
   /** Per part: the sync-owned bits (approx, hidden, painted) and the highlight bits. */
@@ -136,6 +139,7 @@ export class PartsLayer {
       }
       layer.flags.needsUpdate = true;
     }
+    this.labels.sync(doc, poses, hidden);
   }
 
   /**
@@ -155,6 +159,7 @@ export class PartsLayer {
         mesh.instanceMatrix.needsUpdate = true;
       });
     }
+    this.labels.setPreview(world);
   }
 
   /** Draws one body of a multi-piece part at `m` without touching the doc: a body drag preview. */
@@ -217,6 +222,7 @@ export class PartsLayer {
       }
     }
     this.materials.dispose();
+    this.labels.dispose();
     this.layers.clear();
     this.owner.clear();
   }

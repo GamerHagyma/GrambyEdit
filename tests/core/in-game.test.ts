@@ -50,6 +50,20 @@ test('Part test: OrientationY 90 turns the second column to +X, as in game', asy
   }
 });
 
+test('Kamaz: the five front InputSensors face forward with upright keys, as in game', async () => {
+  // К, а, м, А and З across the grille (the truck's front is +X), turned X 90 with Y 270, X 90 with
+  // Y 270, X 90 alone, X 90 with Y 90, and Y 90 with Z 90. м's lone X turn means the same in every
+  // order: its +Z face points out of the grille (+X), letter up. In game the other four match it.
+  const cat = await realCatalog();
+  const doc: Doc = importCode(readFileSync('tests/fixtures/kamaz_truck.txt', 'utf8'));
+  const poses = computePoses(doc, cat, cat.conventions);
+  for (const id of [894, 431, 1264, 174, 130]) {
+    const m = poses.world.get(id)!;
+    expectNear(new Vector3().setFromMatrixColumn(m, 2), 1, 0, 0);
+    expectNear(new Vector3().setFromMatrixColumn(m, 1), 0, 1, 0);
+  }
+});
+
 test('Cadillac: OrientationX tips the windshield back, closes the hood and folds the trunk in, as in game', async () => {
   // The car points to -X (its headlights). In game the windshield leans back, the hood lies over the
   // engine, and nothing sticks out of the body.

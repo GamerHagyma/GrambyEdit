@@ -85,19 +85,20 @@ test('a positive OrientationX turns a part against the right-hand rule, as in ga
   same(orientationMatrix({ OrientationX: 90 }, C), want, 12);
   expect(orientationFromRotation(want, C).x).toBe(90);
 });
-test("Orientation turns a part by the inverse of Roblox's CFrame.fromOrientation, as in game", () => {
-  // fromOrientation(x, y, z) = Ry(y)·Rx(x)·Rz(z). X, Y and Z all turn against the right-hand rule and Z
-  // goes on before X: only so do the Cadillac's grille rods (X 90 with Z 270 and Z 90) lie in their slot
-  // (tests/core/in-game.test.ts). X before Y follows from the inverse; probe P7 checks it.
+test("Orientation turns a part by the inverse of Roblox's CFrame.Angles, as in game", () => {
+  // CFrame.Angles(x, y, z) = Rx(x)·Ry(y)·Rz(z). All three turn against the right-hand rule, Z goes on
+  // before Y and Y before X: only so do the Cadillac's grille rods (X 90 with Z 270 and Z 90) and all five
+  // of the Kamaz's front keys (X with Y, Y with Z) sit as in game (tests/core/in-game.test.ts).
   const DEG = Math.PI / 180;
   for (const [x, y, z] of [
     [90, 0, 270],
-    [30, 180, 0],
+    [90, 270, 0],
+    [0, 90, 90],
     [22.5, 45, -67.5],
   ]) {
     const roblox = new Matrix4()
-      .makeRotationY(y * DEG)
-      .multiply(new Matrix4().makeRotationX(x * DEG))
+      .makeRotationX(x * DEG)
+      .multiply(new Matrix4().makeRotationY(y * DEG))
       .multiply(new Matrix4().makeRotationZ(z * DEG));
     const props = { OrientationX: x, OrientationY: y, OrientationZ: z };
     same(orientationMatrix(props, C), roblox.invert(), 12);

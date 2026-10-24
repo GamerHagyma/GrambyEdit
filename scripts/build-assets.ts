@@ -30,7 +30,7 @@ import { parseRuntimeParts, runtimeRawPart, type RuntimePart } from './lib/runti
 
 const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
-  orientationOrder: 'ZXY',
+  orientationOrder: 'ZYX',
   orientationOnPoints: true,
   orientationPivot: 'part',
   orientationSigns: [-1, -1, -1],
@@ -135,14 +135,28 @@ function groupInfo(
   });
 }
 
-/** Index of the group the `RGB` prop recolors (rule 6), or -1 for unpaintable parts. */
-function paintableGroup(groups: readonly MeshGroupInfo[], override: string | undefined): number {
-  if (override !== undefined) return groups.findIndex((g) => g.subPart === override);
-  const largest = (pool: readonly MeshGroupInfo[]) =>
-    pool.reduce<MeshGroupInfo | null>((a, g) => (!a || g.triangles > a.triangles ? g : a), null);
+type PaintPiece = Pick<MeshGroupInfo, 'subPart' | 'triangles'>;
+
+/**
+ * Indices of the groups the `RGB` prop recolors (rule 6): the pieces `paint-groups.json` lists for the
+ * type, else its largest group outside UNPAINTABLE.
+ */
+export function paintedGroups(
+  groups: readonly PaintPiece[],
+  type: string,
+  curated: readonly string[] | undefined,
+): Set<number> {
+  if (curated) {
+    for (const name of curated)
+      if (!groups.some((g) => g.subPart === name))
+        throw new Error(`data/curation/paint-groups.json: ${type} has no piece ${name}`);
+    return new Set(groups.flatMap((g, i) => (curated.includes(g.subPart) ? [i] : [])));
+  }
+  const largest = (pool: readonly PaintPiece[]) =>
+    pool.reduce<PaintPiece | null>((a, g) => (!a || g.triangles > a.triangles ? g : a), null);
   // Parts whose every group is excluded (e.g. a lamp made only of "Light") paint their largest group.
   const pick = largest(groups.filter((g) => !UNPAINTABLE.test(g.subPart))) ?? largest(groups);
-  return pick ? groups.indexOf(pick) : -1;
+  return new Set(pick ? [groups.indexOf(pick)] : []);
 }
 
 function outsideBy(p: CFrame12, min: Vec3, max: Vec3): number {
@@ -218,7 +232,11 @@ export async function buildAssets(opts: {
     'data/curation/roles-fix.json',
   );
   const propMeta = readJson<Record<string, PropMeta>>('data/curation/prop-meta.json');
-  const paintGroups = readJson<Record<string, string>>('data/curation/paint-groups.json');
+  // The pieces each listed type paints; [] for parts the game does not keep paint on.
+  const paintGroups = readJson<Record<string, string[]>>('data/curation/paint-groups.json');
+  for (const [type, names] of Object.entries(paintGroups))
+    if (!Array.isArray(names) || !names.every((n) => typeof n === 'string'))
+      throw new Error(`data/curation/paint-groups.json: ${type} must list piece names`);
   const bodyCuration = readJson<Record<string, BodyCuration>>('data/curation/bodies.json');
   const partNames = readJson<Record<string, string>>('data/curation/part-names.json');
   const frequency = readJson<{ part_frequency: Record<string, number> }>(
@@ -234,7 +252,8 @@ export async function buildAssets(opts: {
   for (const type of Object.keys(raw)) {
     const r = raw[type];
     const native = runtime?.parts[type];
-    const paintable = Object.hasOwn(r.props ?? {}, 'RGB');
+    const curatedPaint = Object.hasOwn(paintGroups, type) ? paintGroups[type] : undefined;
+    const paintable = Object.hasOwn(r.props ?? {}, 'RGB') && curatedPaint?.length !== 0;
     let mesh: PartDef['mesh'] = null;
     let objMesh: ObjMesh | null = null;
     let subParts: Record<string, { cframe: CFrame12; approx: boolean }> = {};
@@ -252,7 +271,7 @@ export async function buildAssets(opts: {
       const textures = native ? parseMtlTextures(mtl) : {};
       const opacities = parseMtlOpacities(mtl);
       const groups = groupInfo(obj, type, kd, native);
-      const paint = paintable ? paintableGroup(groups, paintGroups[type]) : -1;
+      const paint = paintable ? paintedGroups(groups, type, curatedPaint) : new Set<number>();
       for (const g of groups) {
         if (subParts[g.subPart]) continue;
         const same = groups.filter((x) => x.subPart === g.subPart);
@@ -286,7 +305,7 @@ export async function buildAssets(opts: {
           return {
             subPart: g.subPart,
             color: g.color,
-            paintable: i === paint,
+            paintable: paint.has(i),
             ...(texture ? { texture } : {}),
             ...(native?.textureAlphaBlend?.[material] ? { textureAlphaBlend: true } : {}),
             ...(opacities[material] !== undefined ? { opacity: opacities[material] } : {}),

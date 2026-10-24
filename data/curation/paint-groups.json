@@ -1,1 +1,11 @@
-{}
+{
+  "Button": [],
+  "EntitySensor": [],
+  "RemoteButton": ["Button", "Output"],
+  "Splitter_1": ["Handle", "Output1"],
+  "Splitter_2": ["Handle", "Output1", "Output2"],
+  "Splitter_3": ["Handle", "Output1", "Output2", "Output3"],
+  "Splitter_4": ["Handle", "Output1", "Output2", "Output3", "Output4"],
+  "Switch": [],
+  "Wire": ["InputA", "InputB"]
+}
