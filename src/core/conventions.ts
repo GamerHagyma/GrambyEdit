@@ -6,7 +6,7 @@ import type { CFrame12, Json } from './types';
 
 export const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
-  orientationOrder: 'XYZ',
+  orientationOrder: 'YXZ',
   orientationOnPoints: true,
   orientationPivot: 'part',
 };

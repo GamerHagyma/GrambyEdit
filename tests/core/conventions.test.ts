@@ -74,7 +74,15 @@ test('orientationFromRotation recovers angles that orientationMatrix turns into 
     same(orientationMatrix(again, C), m, 6);
   }
 });
-test('orientation is degrees in XYZ order, and missing or non-numeric keys count as 0', () => {
+test('Orientation composes like Roblox Orientation: Y, then X, then Z (a Y turn of 180 mirrors an X tilt)', () => {
+  // With X applied first, X = 30 and Y = 180 would tilt the part the other way (Rx(30)·Ry(180) = Ry(180)·Rx(-30)).
+  const m = orientationMatrix({ OrientationX: 30, OrientationY: 180 }, C);
+  const want = new Matrix4()
+    .makeRotationY(Math.PI)
+    .multiply(new Matrix4().makeRotationX(Math.PI / 6));
+  m.elements.forEach((v, i) => expect(v).toBeCloseTo(want.elements[i], 12));
+});
+test('orientation is degrees, and missing or non-numeric keys count as 0', () => {
   const m = orientationMatrix({ OrientationX: 90, OrientationY: 'x', Other: 5 }, C);
   const want = new Matrix4().makeRotationX(Math.PI / 2);
   m.elements.forEach((v, i) => expect(v).toBeCloseTo(want.elements[i], 12));

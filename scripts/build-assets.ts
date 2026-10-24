@@ -29,7 +29,7 @@ import { averageColor } from './lib/png';
 
 const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
-  orientationOrder: 'XYZ',
+  orientationOrder: 'YXZ',
   orientationOnPoints: true,
   orientationPivot: 'part',
 };
