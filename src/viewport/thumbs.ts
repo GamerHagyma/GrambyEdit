@@ -5,7 +5,6 @@ import {
   HemisphereLight,
   MathUtils,
   Mesh,
-  MeshStandardMaterial,
   PerspectiveCamera,
   Scene,
   Vector3,
@@ -15,10 +14,13 @@ import { partGeometry } from '../assets/geometry';
 import { setThumbnailRenderer } from '../assets/thumbnails';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { assetsSig } from '../state/store';
+import { PartMaterialCache } from './part-materials';
+import type { Assets } from '../assets/geometry';
 
 const SIZE = 128;
 let renderer: WebGLRenderer | null = null;
-let material: MeshStandardMaterial | null = null;
+let materials: PartMaterialCache | null = null;
+let materialAssets: Assets | null = null;
 /** One thumbnail at a time on the shared canvas. */
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -31,15 +33,6 @@ function setup(): WebGLRenderer {
   });
   r.setPixelRatio(1);
   r.setSize(SIZE, SIZE, false);
-  // Baked part colors; the color attribute's alpha is the paint flag, so it is forced to 1.
-  material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.6 });
-  material.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <color_vertex>',
-      '#include <color_vertex>\nvColor.a = 1.0;',
-    );
-  };
-  material.customProgramCacheKey = () => 'grambyedit-thumbnail';
   return r;
 }
 
@@ -47,12 +40,17 @@ function draw(type: string): Promise<Blob> {
   const assets = assetsSig.peek();
   if (!assets) return Promise.reject(new Error('The part library is still loading.'));
   renderer ??= setup();
+  if (materialAssets !== assets) {
+    materials?.dispose();
+    materials = new PartMaterialCache(assets);
+    materialAssets = assets;
+  }
   const scene = new Scene();
   scene.add(new HemisphereLight(0xffffff, 0x3a3f47, 2.4));
   const sun = new DirectionalLight(0xffffff, 1.8);
   sun.position.set(3, 5, 4);
   scene.add(sun);
-  scene.add(new Mesh(partGeometry(assets, type), material!));
+  scene.add(new Mesh(partGeometry(assets, type), materials!.forType(type)));
   const box = assets.catalog.parts[type]?.mesh ?? PLACEHOLDER_BOX;
   const center = new Vector3(
     (box.min[0] + box.max[0]) / 2,

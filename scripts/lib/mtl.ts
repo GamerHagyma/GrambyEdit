@@ -37,3 +37,24 @@ export function parseMtlTextures(text: string): Record<string, string> {
   }
   return out;
 }
+
+/** Opacity per material: `d` is opaque coverage, while `Tr` is its inverse. Last declaration wins. */
+export function parseMtlOpacities(text: string): Record<string, number> {
+  const out: Record<string, number> = Object.create(null);
+  let current: string | undefined;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line === '' || line.startsWith('#')) continue;
+    const kind = line.split(/\s+/, 1)[0];
+    const rest = line.slice(kind.length).trim();
+    if (kind === 'newmtl') current = rest;
+    else if ((kind === 'd' || kind === 'Tr') && current !== undefined) {
+      const value = Number(rest);
+      if (!rest || !Number.isFinite(value) || value < 0 || value > 1) {
+        throw new Error(`bad opacity for ${current}: ${line}`);
+      }
+      out[current] = kind === 'Tr' ? 1 - value : value;
+    }
+  }
+  return out;
+}

@@ -14,6 +14,7 @@ import { bodyGeometries, partGeometry, type Assets } from '../assets/geometry';
 import { POSE_APPROX, type Poses } from '../core/pose';
 import type { Doc, Json, PartId } from '../core/types';
 import { SlotAllocator } from './slots';
+import { PartMaterialCache } from './part-materials';
 
 /** Bits of the per-instance `aFlags` attribute. */
 export const FLAG_SELECTED = 1;
@@ -84,11 +85,18 @@ export class PartsLayer {
   private highlights = new Map<PartId, number>();
   private readonly desaturate = { value: 1 };
   readonly material = createPartMaterial(this.desaturate);
+  private readonly materials: PartMaterialCache;
   private readonly color = new Color();
   /** The poses last synced, so a preview can move every body of a part with its lead. */
   private poses: Poses | null = null;
 
-  constructor(readonly assets: Assets) {}
+  constructor(readonly assets: Assets) {
+    this.materials = new PartMaterialCache(
+      assets,
+      () => createPartMaterial(this.desaturate),
+      this.material,
+    );
+  }
 
   /** Writes every part's matrix, color and base flags. Parts gone from the doc free their slots. */
   sync(doc: Doc, poses: Poses, hidden: ReadonlySet<PartId>, desaturateApprox: boolean): void {
@@ -208,7 +216,7 @@ export class PartsLayer {
         mesh.dispose();
       }
     }
-    this.material.dispose();
+    this.materials.dispose();
     this.layers.clear();
     this.owner.clear();
   }
@@ -245,6 +253,9 @@ export class PartsLayer {
       const geometry = new BufferGeometry();
       for (const [name, attr] of Object.entries(base.attributes)) geometry.setAttribute(name, attr);
       geometry.setIndex(base.index);
+      for (const group of base.groups)
+        geometry.addGroup(group.start, group.count, group.materialIndex);
+      geometry.userData = { ...base.userData };
       geometry.setAttribute('aFlags', flags);
       return this.createMesh(geometry, capacity, type);
     });
@@ -252,7 +263,7 @@ export class PartsLayer {
   }
 
   private createMesh(geometry: BufferGeometry, capacity: number, type: string): InstancedMesh {
-    const mesh = new InstancedMesh(geometry, this.material, capacity);
+    const mesh = new InstancedMesh(geometry, this.materials.forType(type), capacity);
     mesh.instanceMatrix.setUsage(DynamicDrawUsage);
     mesh.instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3).fill(1), 3);
     mesh.instanceColor.setUsage(DynamicDrawUsage);

@@ -101,6 +101,7 @@ export interface Conventions {
 
 export interface Catalog {
   readonly version: string;
+  readonly socketGeometrySpace?: string;
   readonly parts: Readonly<Record<string, PartDef>>;
   /** Corpus joint counts keyed by `pairKey`. */
   readonly pairs: Readonly<Record<string, number>>;
@@ -123,6 +124,9 @@ export interface MeshGroup {
   readonly paintable: boolean;
   readonly start: number;
   readonly count: number;
+  readonly texture?: string;
+  readonly textureAlphaBlend?: boolean;
+  readonly opacity?: number;
 }
 
 export interface MeshEntry {
@@ -141,6 +145,7 @@ export interface Manifest {
     readonly positions: readonly [number, number];
     readonly normals: readonly [number, number];
     readonly colors: readonly [number, number];
+    readonly uvs?: readonly [number, number];
     readonly indices: readonly [number, number];
   };
   readonly meshes: readonly MeshEntry[];

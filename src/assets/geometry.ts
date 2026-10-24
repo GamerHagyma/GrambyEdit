@@ -1,5 +1,5 @@
 // Decodes part meshes from the packed binary (spec §5.1) into cached BufferGeometry.
-import { BoxGeometry, BufferAttribute, BufferGeometry } from 'three';
+import { BoxGeometry, BufferAttribute, BufferGeometry, type Texture } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog, Manifest } from '../core/catalog-types';
 import { splitBodies } from '../core/mesh-bodies';
@@ -8,6 +8,7 @@ export interface Assets {
   readonly catalog: Catalog;
   readonly manifest: Manifest;
   readonly bin: ArrayBuffer;
+  readonly textures?: ReadonlyMap<string, Texture>;
 }
 
 const cache = new WeakMap<Assets, Map<string, BufferGeometry>>();
@@ -69,6 +70,16 @@ export function partGeometry(assets: Assets, type: string): BufferGeometry {
         1,
       ),
     );
+    if (sections.uvs) {
+      g.setAttribute(
+        'uv',
+        new BufferAttribute(
+          new Float32Array(bin, sections.uvs[0] + v * 8, entry.vertexCount * 2),
+          2,
+        ),
+      );
+    }
+    entry.groups.forEach((group, material) => g!.addGroup(group.start, group.count, material));
   }
   byType.set(type, g);
   return g;
@@ -107,6 +118,20 @@ export function bodyGeometries(assets: Assets, type: string): readonly BufferGeo
       const g = new BufferGeometry();
       for (const [name, attr] of Object.entries(whole.attributes)) g.setAttribute(name, attr);
       g.setIndex(new BufferAttribute(idx, 1));
+      // A body's compact index can intersect several original material groups.
+      faces.forEach((triangle, local) => {
+        const original = triangle * 3;
+        const group = whole.groups.find((g) => original >= g.start && original < g.start + g.count);
+        if (!group) return;
+        const previous = g.groups.at(-1);
+        if (
+          previous &&
+          previous.materialIndex === group.materialIndex &&
+          previous.start + previous.count === local * 3
+        ) {
+          previous.count += 3;
+        } else g.addGroup(local * 3, 3, group.materialIndex);
+      });
       g.userData.faceMap = Uint32Array.from(faces);
       return g;
     });

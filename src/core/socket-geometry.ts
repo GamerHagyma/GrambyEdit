@@ -12,6 +12,8 @@ export interface SocketGeometryFile {
   cframeFormat: 'roblox-components';
   frameConvention: 'outward-y';
   relativeTo: 'mesh-origin';
+  /** Changes when the mesh origin/basis changes; legacy files have no tag. */
+  meshCoordinateSpace?: string;
   parts: Record<
     string,
     { sockets: Record<SocketId, { cframe: CFrame12 }>; subParts?: Record<string, CFrame12> }
@@ -53,6 +55,12 @@ export function parseSocketGeometry(
     if (json[key] !== want) return { ok: false, error: `${key} must be ${JSON.stringify(want)}` };
   }
   if (!isObject(json.parts)) return { ok: false, error: 'parts must be an object' };
+  if (
+    json.meshCoordinateSpace !== undefined &&
+    (typeof json.meshCoordinateSpace !== 'string' || !json.meshCoordinateSpace)
+  ) {
+    return { ok: false, error: 'meshCoordinateSpace must be a nonempty string' };
+  }
   const parts: SocketGeometryFile['parts'] = {};
   for (const [type, entry] of Object.entries(json.parts)) {
     const at = `parts.${type}`;
@@ -86,9 +94,16 @@ export function parseSocketGeometry(
       ...emptySocketGeometry(),
       captured: text(json.captured),
       method: text(json.method),
+      ...(typeof json.meshCoordinateSpace === 'string'
+        ? { meshCoordinateSpace: json.meshCoordinateSpace }
+        : {}),
       parts,
     },
   };
+}
+
+export function socketGeometryCompatible(cat: Catalog, file: SocketGeometryFile): boolean {
+  return cat.socketGeometrySpace === file.meshCoordinateSpace;
 }
 
 /**
@@ -97,6 +112,7 @@ export function parseSocketGeometry(
  * identity, and the catalog itself is returned when nothing applies.
  */
 export function applySocketGeometry(cat: Catalog, file: SocketGeometryFile): Catalog {
+  if (!socketGeometryCompatible(cat, file)) return cat;
   let parts: Record<string, PartDef> | null = null;
   for (const [type, entry] of Object.entries(file.parts)) {
     const def = cat.parts[type];

@@ -1,0 +1,26 @@
+newmtl material_0
+Kd 0.745098039 0.137254902 0.137254902
+d 1
+illum 2
+
+newmtl material_1
+Kd 0.109803922 0.364705882 0.745098039
+d 1
+illum 2
+
+newmtl material_2
+Kd 0.176470588 0.176470588 0.176470588
+d 1
+illum 2
+
+newmtl material_3
+Kd 0.654901961 0.654901961 0.654901961
+d 1
+illum 2
+
+newmtl material_4
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+map_Kd ../assets/9035797264-aabc7b3ff260a698335b6b2d9277f9f7.png
+

@@ -1,0 +1,6 @@
+newmtl material_0
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+map_Kd ../assets/15612078136-cf8b142376dfd2c97808f93cd4bd6107.png
+

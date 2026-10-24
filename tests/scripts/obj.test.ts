@@ -44,3 +44,64 @@ test('a zero file normal falls back to the face normal', () =>
   expect([
     ...parseObj('v 0 0 0\nv 1 0 0\nv 0 1 0\nvn -0 -0 -0\nf 1//1 2//1 3//1\n').normals,
   ]).toEqual([0, 0, 1, 0, 0, 1, 0, 0, 1]));
+
+test('UV seams split vertices while preserving file normals and bounds', () => {
+  const m = parseObj(`v 0 0 0
+v 1 0 0
+v 0 1 0
+vt 0 0
+vt 1 0
+vt 0 1
+vt 0.5 0.5
+vn 0 0 -1
+f 1/1/1 2/2/1 3/3/1
+f 1/4/1 3/3/1 2/2/1
+`);
+  expect([...m.indices]).toEqual([0, 1, 2, 3, 2, 1]);
+  expect([...m.uvs!]).toEqual([0, 0, 1, 0, 0, 1, 0.5, 0.5]);
+  expect([...m.positions]).toEqual([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0]);
+  expect([...m.normals]).toEqual([0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1]);
+  expect(m.min).toEqual([0, 0, 0]);
+  expect(m.max).toEqual([1, 1, 0]);
+});
+
+test('negative texture and normal indices resolve at the face declaration', () => {
+  const m = parseObj(`v 0 0 0
+v 1 0 0
+v 0 1 0
+vt 0.25 0.75
+vt 1 0
+vt 0 1
+vn 0 0 1
+f -3/-3/-1 -2/-2/-1 -1/-1/-1
+vt 9 9
+vn 0 1 0
+`);
+  expect([...m.uvs!]).toEqual([0.25, 0.75, 1, 0, 0, 1]);
+  expect([...m.normals]).toEqual([0, 0, 1, 0, 0, 1, 0, 0, 1]);
+});
+
+test('texture indices outside the defined coordinates throw', () => {
+  expect(() => parseObj('v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nf 1/2 2/1 3/1')).toThrow(
+    /texture index.*out of range/,
+  );
+});
+
+test('object and group names split runs without losing the active material', () => {
+  const m = parseObj(`v 0 0 0
+v 1 0 0
+v 0 1 0
+o Shell
+usemtl Shared
+f 1 2 3
+g Handle
+f 1 2 3
+usemtl Detail
+f 1 2 3
+`);
+  expect(m.groups).toEqual([
+    { name: 'Shell', material: 'Shared', start: 0, count: 3 },
+    { name: 'Handle', material: 'Shared', start: 3, count: 3 },
+    { name: 'Handle', material: 'Detail', start: 6, count: 3 },
+  ]);
+});

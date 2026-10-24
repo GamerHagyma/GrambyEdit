@@ -1,0 +1,23 @@
+newmtl material_0
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+map_Kd ../assets/9021083637-c1fdf6ccb74e9bef0a1eda3abd450698.png
+
+newmtl material_1
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+
+newmtl material_2
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+map_Kd ../assets/9021243569-ceba6b76278e7bef67d80d93f7167f2e.png
+
+newmtl material_3
+Kd 0.639215686 0.635294118 0.647058824
+d 1
+illum 2
+map_Kd ../assets/9021255255-7faa86ec33c38fcd7bd1c1ff2f747cea.png
+

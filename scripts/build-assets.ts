@@ -1,7 +1,7 @@
 // Builds the runtime assets (spec §5, plan Task 7): catalog.json, parts.json, parts.bin, version.txt.
 // Usage: `npm run assets` (writes public/assets/). Fails only on malformed input files.
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { PLACEHOLDER_BOX } from '../src/core/approx';
@@ -21,11 +21,12 @@ import { splitBodies } from '../src/core/mesh-bodies';
 import { applySocketGeometry, parseSocketGeometry } from '../src/core/socket-geometry';
 import type { CFrame12, RGB, SocketId } from '../src/core/types';
 import { buildSockets, countPairs, workshopFrames, type RawPart } from './lib/catalog';
-import { parseMtl, parseMtlTextures } from './lib/mtl';
+import { parseMtl, parseMtlOpacities, parseMtlTextures } from './lib/mtl';
 import { materialBase, subPartName } from './lib/names';
 import { parseObj, type ObjMesh } from './lib/obj';
 import { groupsOf, packMeshes, type PackInput } from './lib/pack';
 import { averageColor } from './lib/png';
+import { parseRuntimeParts, runtimeRawPart, type RuntimePart } from './lib/runtime-parts';
 
 const DEFAULT_CONVENTIONS: Conventions = {
   mating: 'rx180',
@@ -41,7 +42,18 @@ const ORIENTATIONS = ['OrientationX', 'OrientationY', 'OrientationZ'];
 const DOWN = [1, 0, 0, 0, -1, 0, 0, 0, -1] as const;
 const UP = [1, 0, 0, 0, 1, 0, 0, 0, 1] as const;
 
-type BodyCuration = readonly { name: string; sockets: SocketId[]; anchor: Vec3 }[];
+type BodyCuration = readonly { name: string; sockets: SocketId[]; anchor: Vec3; pivot?: Vec3 }[];
+
+function nativeBodies(bodies: BodyCuration, native: RuntimePart): BodyCuration {
+  return bodies.map((body) => {
+    const paths = body.sockets.map((id) => native.sockets[id]?.parentPath);
+    if (new Set(paths).size !== 1 || paths.some((path) => !path))
+      throw new Error(`Missing native body frame: ${body.name}`);
+    const frame = native.subParts[paths[0]];
+    const origin = frame.slice(0, 3) as unknown as Vec3;
+    return { ...body, anchor: origin, pivot: origin };
+  });
+}
 
 /**
  * A multi-piece part's bodies (D-F3): pivots from the mesh pieces each anchor picks, and frames for
@@ -78,7 +90,12 @@ export function applyBodies(
           : s.frame;
       sockets[id] = { ...s, piece: b.name, frame };
     }
-    return { name: b.name, sockets: b.sockets, anchor: b.anchor, pivot: c as unknown as Vec3 };
+    return {
+      name: b.name,
+      sockets: b.sockets,
+      anchor: b.anchor,
+      pivot: b.pivot ?? (c as unknown as Vec3),
+    };
   });
   return { bodies: out, pieces };
 }
@@ -91,7 +108,12 @@ interface MeshGroupInfo {
   max: Vec3;
 }
 
-function groupInfo(mesh: ObjMesh, type: string, kd: Record<string, [number, number, number]>) {
+function groupInfo(
+  mesh: ObjMesh,
+  type: string,
+  kd: Record<string, [number, number, number]>,
+  native?: RuntimePart,
+) {
   return groupsOf(mesh).map((g): MeshGroupInfo => {
     const min = [Infinity, Infinity, Infinity];
     const max = [-Infinity, -Infinity, -Infinity];
@@ -104,7 +126,7 @@ function groupInfo(mesh: ObjMesh, type: string, kd: Record<string, [number, numb
     }
     const c = kd[materialBase(g.material)];
     return {
-      subPart: g.material ? subPartName(g.material, type) : type,
+      subPart: native?.groups[g.material] ?? (g.material ? subPartName(g.material, type) : type),
       color: c ? [Math.round(c[0] * 255), Math.round(c[1] * 255), Math.round(c[2] * 255)] : GREY,
       triangles: g.count / 3,
       min: min as unknown as Vec3,
@@ -183,7 +205,14 @@ export async function buildAssets(opts: {
   const readText = (p: string) => readFileSync(at(p), 'utf8');
   const readJson = <T>(p: string): T => JSON.parse(readText(p)) as T;
 
-  const raw = readJson<{ parts: Record<string, RawPart> }>('data/part_catalog.json').parts;
+  const community = readJson<{ parts: Record<string, RawPart> }>('data/part_catalog.json').parts;
+  const runtimePath = at('data/runtime_parts.json');
+  const runtime = existsSync(runtimePath)
+    ? parseRuntimeParts(JSON.parse(readFileSync(runtimePath, 'utf8')))
+    : null;
+  const raw = { ...community };
+  for (const [name, native] of Object.entries(runtime?.parts ?? {}))
+    raw[name] = runtimeRawPart(community[name], native);
   const categories = readJson<Record<string, Category>>('data/curation/categories.json');
   const rolesFix = readJson<Record<string, Record<SocketId, SocketRole>>>(
     'data/curation/roles-fix.json',
@@ -201,8 +230,10 @@ export async function buildAssets(opts: {
 
   const parts: Record<string, PartDef> = {};
   const packInputs: PackInput[] = [];
+  const textureFiles = new Map<string, string>();
   for (const type of Object.keys(raw)) {
     const r = raw[type];
+    const native = runtime?.parts[type];
     const paintable = Object.hasOwn(r.props ?? {}, 'RGB');
     let mesh: PartDef['mesh'] = null;
     let objMesh: ObjMesh | null = null;
@@ -211,9 +242,16 @@ export async function buildAssets(opts: {
     if (r.mesh) {
       const obj = parseObj(readText(r.mesh.obj));
       objMesh = obj;
-      const mtlPath = `meshes/workshop/${type}/${type}.mtl`;
-      const kd = existsSync(at(mtlPath)) ? tinted(at(mtlPath), readText(mtlPath)) : {};
-      const groups = groupInfo(obj, type, kd);
+      const mtlPath = native?.mtl ?? `meshes/workshop/${type}/${type}.mtl`;
+      const mtl = existsSync(at(mtlPath)) ? readText(mtlPath) : '';
+      const kd = native ? parseMtl(mtl) : tinted(at(mtlPath), mtl);
+      // Native MTL diffuse colors are captured sRGB; the vertex shader consumes linear RGB.
+      if (native)
+        for (const [material, color] of Object.entries(kd))
+          kd[material] = color.map(linear) as [number, number, number];
+      const textures = native ? parseMtlTextures(mtl) : {};
+      const opacities = parseMtlOpacities(mtl);
+      const groups = groupInfo(obj, type, kd, native);
       const paint = paintable ? paintableGroup(groups, paintGroups[type]) : -1;
       for (const g of groups) {
         if (subParts[g.subPart]) continue;
@@ -228,17 +266,32 @@ export async function buildAssets(opts: {
       }
       const largest = groups.reduce((a, g) => (g.triangles > a.triangles ? g : a), groups[0]);
       mainPartName =
+        native?.primaryPart ??
         partNames[type] ??
         (groups.some((g) => g.subPart === type) ? type : (largest?.subPart ?? type));
       mesh = { id: packInputs.length, min: obj.min, max: obj.max };
       packInputs.push({
         type,
         mesh: obj,
-        groups: groups.map((g, i) => ({
-          subPart: g.subPart,
-          color: g.color,
-          paintable: i === paint,
-        })),
+        groups: groups.map((g, i) => {
+          const material = groupsOf(obj)[i].material;
+          const file = textures[material];
+          let texture: string | undefined;
+          if (file) {
+            const source = resolve(dirname(at(mtlPath)), file);
+            const hash = createHash('sha256').update(readFileSync(source)).digest('hex');
+            texture = `textures/${hash}.png`;
+            textureFiles.set(texture, source);
+          }
+          return {
+            subPart: g.subPart,
+            color: g.color,
+            paintable: i === paint,
+            ...(texture ? { texture } : {}),
+            ...(native?.textureAlphaBlend?.[material] ? { textureAlphaBlend: true } : {}),
+            ...(opacities[material] !== undefined ? { opacity: opacities[material] } : {}),
+          };
+        }),
       });
     } else {
       subParts = {};
@@ -248,9 +301,20 @@ export async function buildAssets(opts: {
       r,
       rolesFix[type],
       mesh ?? PLACEHOLDER_BOX,
-      type === 'Part' ? workshop : null,
+      !native && type === 'Part' ? workshop : null,
     );
-    const curated = Object.hasOwn(bodyCuration, type) ? bodyCuration[type] : undefined;
+    if (native) {
+      for (const [id, socket] of Object.entries(native.sockets)) {
+        s.sockets[id] = { ...s.sockets[id], frame: socket.cframe, frameSource: 'captured' };
+      }
+      subParts = Object.fromEntries(
+        Object.entries(native.subParts).map(([name, cframe]) => [name, { cframe, approx: false }]),
+      );
+    }
+    const originalBodies =
+      bodyCuration[type] ?? (native && type === 'Splitter' ? bodyCuration.Splitter_4 : undefined);
+    const curated =
+      originalBodies && native ? nativeBodies(originalBodies, native) : originalBodies;
     const split = curated && objMesh ? applyBodies(s.sockets, objMesh, curated) : null;
     parts[type] = {
       type,
@@ -274,6 +338,7 @@ export async function buildAssets(opts: {
     pairs: countPairs(readText('data/corpus/wiki_codes.txt').split(/\r?\n/)),
     propMeta,
     conventions: readConventions(at('data/conventions.json')),
+    ...(runtime ? { socketGeometrySpace: runtime.meshCoordinateSpace } : {}),
   };
   const capturedPath = at('data/socket_geometry.json');
   if (existsSync(capturedPath)) {
@@ -286,6 +351,7 @@ export async function buildAssets(opts: {
   const version = createHash('sha256')
     .update(JSON.stringify(catalog))
     .update(packed.bin)
+    .update(JSON.stringify(packed.meshes))
     .digest('hex')
     .slice(0, 12);
   catalog = { ...catalog, version };
@@ -298,6 +364,8 @@ export async function buildAssets(opts: {
     writeFileSync(join(out, 'parts.json'), JSON.stringify(manifest));
     writeFileSync(join(out, 'parts.bin'), packed.bin);
     writeFileSync(join(out, 'version.txt'), version + '\n');
+    if (textureFiles.size) mkdirSync(join(out, 'textures'), { recursive: true });
+    for (const [file, source] of textureFiles) copyFileSync(source, join(out, file));
     for (const line of socketReport(catalog)) console.log(line);
     console.log(
       `assets: wrote ${out} (version ${version}, ${packed.bin.byteLength} bytes of mesh)`,

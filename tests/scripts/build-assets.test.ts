@@ -22,8 +22,8 @@ test('withOrientation adds the missing orientation props after the corpus keys',
 
 test('builds the runtime catalog and mesh pack', async () => {
   const { catalog, manifest, bin } = await buildAssets({ root: '.', outDir: null });
-  expect(Object.keys(catalog.parts)).toHaveLength(132);
-  expect(manifest.meshes).toHaveLength(120);
+  expect(Object.keys(catalog.parts)).toHaveLength(162);
+  expect(manifest.meshes).toHaveLength(162);
   for (const def of Object.values(catalog.parts)) {
     expect(def.props).toEqual(
       expect.arrayContaining(['OrientationX', 'OrientationY', 'OrientationZ']),

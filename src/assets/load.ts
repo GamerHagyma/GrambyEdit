@@ -1,6 +1,7 @@
 // Loads the runtime assets written by `npm run assets` (spec §5) from the site's own origin.
 import type { Catalog, Manifest } from '../core/catalog-types';
 import type { Assets } from './geometry';
+import { SRGBColorSpace, TextureLoader } from 'three';
 
 async function fetchOk(url: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(url, init);
@@ -24,5 +25,34 @@ export async function loadAssets(baseUrl: string = import.meta.env.BASE_URL): Pr
   if (catalog.version !== version || manifest.version !== version) {
     throw new Error('The editor assets are out of sync; reload the page.');
   }
-  return { catalog, manifest, bin };
+  const paths = [
+    ...new Set(
+      manifest.meshes.flatMap((mesh) =>
+        mesh.groups.flatMap((group) => (group.texture ? [group.texture] : [])),
+      ),
+    ),
+  ];
+  const loader = new TextureLoader();
+  const loaded = await Promise.allSettled(
+    paths.map(async (path) => {
+      try {
+        const texture = await loader.loadAsync(`${dir}${path}${q}`);
+        texture.colorSpace = SRGBColorSpace;
+        // OBJ UVs use an upward V axis; TextureLoader images use the standard flipped upload.
+        texture.flipY = true;
+        return [path, texture] as const;
+      } catch (cause) {
+        throw new Error(`Could not load texture ${path}.`, { cause });
+      }
+    }),
+  );
+  const failure = loaded.find((result) => result.status === 'rejected');
+  if (failure?.status === 'rejected') {
+    for (const result of loaded) if (result.status === 'fulfilled') result.value[1].dispose();
+    throw failure.reason;
+  }
+  const textures = new Map(
+    loaded.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : [])),
+  );
+  return { catalog, manifest, bin, textures };
 }

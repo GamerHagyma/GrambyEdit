@@ -30,6 +30,7 @@ import { cfToMatrix4, matrix4ToCf } from '../core/cframe';
 import { childWorldViaSocket } from '../core/conventions';
 import { frameFromNormal } from '../core/frames';
 import type { CFrame12, SocketId } from '../core/types';
+import { PartMaterialCache } from './part-materials';
 
 export type WorkbenchPick =
   | { kind: 'dot'; label: string; cframe: CFrame12 }
@@ -55,25 +56,13 @@ const flat = (color: number, opacity = 1) =>
     polygonOffsetUnits: -2,
   });
 
-/** Baked part colors, alpha forced to 1 (the color attribute's alpha is the paint flag). */
-function partMaterial(): MeshStandardMaterial {
-  const m = new MeshStandardMaterial({ vertexColors: true, roughness: 0.6 });
-  m.onBeforeCompile = (shader) => {
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <color_vertex>',
-      '#include <color_vertex>\nvColor.a = 1.0;',
-    );
-  };
-  m.customProgramCacheKey = () => 'grambyedit-workbench-part';
-  return m;
-}
-
 export class WorkbenchView {
   readonly group = new Group();
   private readonly content = new Group();
   private readonly proxy = new Object3D();
   private readonly gizmo: TransformControls;
-  private readonly partMat = partMaterial();
+  private partMaterials: PartMaterialCache | null = null;
+  private materialAssets: Assets | null = null;
   private readonly mateMat = new MeshStandardMaterial({ color: 0x9a9da3, roughness: 0.7 });
   private mesh: Mesh | null = null;
   private markers: { socket: SocketId; mesh: Mesh; arrow: Mesh }[] = [];
@@ -145,7 +134,12 @@ export class WorkbenchView {
     const r = Math.max(0.03, diag * 0.035);
     this.markerRadius = r;
     this.content.clear();
-    this.mesh = new Mesh(partGeometry(assets, type), this.partMat);
+    if (this.materialAssets !== assets) {
+      this.partMaterials?.dispose();
+      this.partMaterials = new PartMaterialCache(assets);
+      this.materialAssets = assets;
+    }
+    this.mesh = new Mesh(partGeometry(assets, type), this.partMaterials!.forType(type));
     this.content.add(this.mesh);
 
     this.markers = Object.entries(def?.sockets ?? {}).map(([id, s]) => {
@@ -255,7 +249,7 @@ export class WorkbenchView {
     this.gizmo.detach();
     this.gizmo.dispose();
     this.content.clear();
-    this.partMat.dispose();
+    this.partMaterials?.dispose();
     this.mateMat.dispose();
   }
 }

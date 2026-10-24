@@ -4,10 +4,15 @@ import { signal } from '@preact/signals';
 import { approxSocketFrame, PLACEHOLDER_BOX } from '../core/approx';
 import type { Catalog } from '../core/catalog-types';
 import { roundCf } from '../core/cframe';
-import { parseSocketGeometry, type SocketGeometryFile } from '../core/socket-geometry';
+import {
+  emptySocketGeometry,
+  parseSocketGeometry,
+  socketGeometryCompatible,
+  type SocketGeometryFile,
+} from '../core/socket-geometry';
 import type { CFrame12, SocketId } from '../core/types';
 import { saveSocketOverrides } from '../storage/sockets';
-import { socketOverridesSig } from './store';
+import { baseCatalogSig, socketOverridesSig } from './store';
 
 export const wbTypeSig = signal<string | null>(null);
 export const wbSocketSig = signal<SocketId | null>(null);
@@ -28,7 +33,13 @@ export async function captureSocket(
   socket: SocketId,
   cframe: CFrame12,
 ): Promise<void> {
-  const file = socketOverridesSig.value;
+  const cat = baseCatalogSig.peek();
+  const stored = socketOverridesSig.value;
+  // A fresh file is essential: retagging old parts would reactivate legacy frames.
+  const file =
+    cat && !socketGeometryCompatible(cat, stored)
+      ? { ...emptySocketGeometry(), meshCoordinateSpace: cat.socketGeometrySpace }
+      : stored;
   const entry = file.parts[type] ?? { sockets: {} };
   const parts = {
     ...file.parts,
@@ -60,11 +71,11 @@ export function captureProgress(
 ): { type: string; captured: number; total: number; corpusCount: number }[] {
   return Object.values(cat.parts)
     .map((def) => {
-      const done = file.parts[def.type]?.sockets ?? {};
+      const done = socketGeometryCompatible(cat, file) ? (file.parts[def.type]?.sockets ?? {}) : {};
       const ids = Object.keys(def.sockets);
       return {
         type: def.type,
-        captured: ids.filter((id) => done[id]).length,
+        captured: ids.filter((id) => done[id] || def.sockets[id].frameSource === 'captured').length,
         total: ids.length,
         corpusCount: def.corpusCount,
       };
@@ -90,6 +101,10 @@ export async function importSocketFile(
   }
   const parsed = parseSocketGeometry(json);
   if (!parsed.ok) return parsed;
+  const cat = baseCatalogSig.peek();
+  if (cat && !socketGeometryCompatible(cat, parsed.file)) {
+    return { ok: false, error: 'This socket file uses a different mesh coordinate space.' };
+  }
   await commitFile(parsed.file);
   return { ok: true };
 }

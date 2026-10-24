@@ -61,3 +61,18 @@ test('captures for unknown types or sockets are ignored', () => {
   f.parts.Part = { sockets: { '99': { cframe: [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] } } };
   expect(applySocketGeometry(MINI, f)).toBe(MINI);
 });
+
+test('legacy mesh-origin captures cannot overwrite sockets in a new coordinate space', () => {
+  const native = { ...MINI, socketGeometrySpace: 'roblox-primary-part-v1' };
+  const legacy = emptySocketGeometry();
+  legacy.parts.Connector = {
+    sockets: { '5': { cframe: [99, 99, 99, 1, 0, 0, 0, 1, 0, 0, 0, 1] } },
+  };
+  expect(applySocketGeometry(native, legacy)).toBe(native);
+});
+
+test('the parser retains the coordinate-space tag for compatible captures', () => {
+  const input = { ...emptySocketGeometry(), meshCoordinateSpace: 'roblox-primary-part-v1' };
+  const parsed = parseSocketGeometry(input);
+  expect(parsed.ok && parsed.file).toMatchObject({ meshCoordinateSpace: 'roblox-primary-part-v1' });
+});

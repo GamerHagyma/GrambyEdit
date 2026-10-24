@@ -200,15 +200,14 @@ export function App(): JSX.Element {
     refreshCreations().catch((e: unknown) =>
       toast(`Could not read the library: ${(e as Error).message}`, 'error'),
     );
-    loadSocketOverrides().then((file) => {
-      if (alive) socketOverridesSig.value = file;
-    });
     loadAssets()
-      .then((assets) => {
+      .then(async (assets) => {
+        const file = await loadSocketOverrides(assets.catalog.socketGeometrySpace);
         if (!alive) return;
         batch(() => {
           assetsSig.value = assets;
           baseCatalogSig.value = assets.catalog;
+          socketOverridesSig.value = file;
         });
       })
       .catch((e: unknown) => {

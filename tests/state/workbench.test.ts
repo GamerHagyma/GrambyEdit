@@ -1,5 +1,10 @@
 import 'fake-indexeddb/auto';
-import { baseCatalogSig, catalogSig, resetStoreForTests } from '../../src/state/store';
+import {
+  baseCatalogSig,
+  catalogSig,
+  socketOverridesSig,
+  resetStoreForTests,
+} from '../../src/state/store';
 import {
   captureSocket,
   captureProgress,
@@ -55,4 +60,19 @@ test('captures are rounded so exported files stay clean', async () => {
   expect((await loadSocketOverrides()).parts.Part.sockets['6'].cframe).toEqual([
     0, 0.5, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1,
   ]);
+});
+
+test('new-space captures persist separately and never reactivate legacy measurements', async () => {
+  const space = 'roblox-primary-part-v1';
+  const legacy = emptySocketGeometry();
+  legacy.parts.Part = { sockets: { '6': { cframe: [99, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1] } } };
+  await importSocketFile(JSON.stringify(legacy));
+  baseCatalogSig.value = { ...MINI, socketGeometrySpace: space };
+  const frame = [0, -0.25, 0, 1, 0, 0, 0, -1, 0, 0, 0, -1] as const;
+  await captureSocket('Connector', '5', frame);
+  expect(socketOverridesSig.value.parts.Part).toBeUndefined();
+  expect(catalogSig.value!.parts.Connector.sockets['5'].frame).toEqual(frame);
+  expect((await loadSocketOverrides()).parts.Part.sockets['6'].cframe[0]).toBe(99);
+  expect((await loadSocketOverrides(space)).parts.Connector.sockets['5'].cframe).toEqual(frame);
+  expect(await importSocketFile(JSON.stringify(legacy))).toMatchObject({ ok: false });
 });
