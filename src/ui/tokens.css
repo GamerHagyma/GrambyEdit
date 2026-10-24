@@ -1476,6 +1476,97 @@ kbd {
   cursor: pointer;
 }
 
+/* The left dock's Parts and Generators tabs stay in view while the panel scrolls. */
+.dock-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+
+/* Generators panel (spec §13.9) */
+.generators {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px;
+}
+.gen-shapes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.gen-shapes .button {
+  justify-content: center;
+}
+.gen-shapes .button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.gen-form,
+.gen-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gen-presets {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.gen-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--row);
+}
+.gen-field > label,
+.gen-label {
+  flex: none;
+  width: 84px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.gen-field input:not([type='color']),
+.gen-field select {
+  flex: 1;
+  min-width: 0;
+  height: var(--row);
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.gen-field input[type='color'] {
+  width: 48px;
+  height: var(--row);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: none;
+}
+.gen-pick {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gen-cost,
+.gen-warning,
+.gen-error {
+  margin: 0;
+  font-size: 12px;
+}
+.gen-cost {
+  font-variant-numeric: tabular-nums;
+}
+.gen-warning {
+  color: var(--warn);
+}
+.gen-error {
+  color: var(--bad);
+}
+
 /* Part browser (spec §13.1) */
 .part-browser {
   display: flex;

@@ -10,7 +10,7 @@ import { arm } from '../state/place';
 import { isTypingTarget, resolveKey } from '../state/keymap';
 import { assetsSig, baseCatalogSig, socketOverridesSig } from '../state/store';
 import { toast } from '../state/toasts';
-import { closeDialog, contextMenuSig, dialogSig } from '../state/ui';
+import { closeDialog, contextMenuSig, dialogSig, leftTabSig, showLeftTab } from '../state/ui';
 import { setStorageErrorReporter } from '../storage/prefs';
 import { loadSocketOverrides } from '../storage/sockets';
 import { toolSig } from '../tools/manager';
@@ -28,6 +28,8 @@ import { SettingsDialog } from './dialogs/SettingsDialog';
 import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
 import { Meters } from './layout/Meters';
 import { Shell } from './layout/Shell';
+import { Tabs } from './layout/Tabs';
+import { GeneratorsPanel } from './panels/GeneratorsPanel';
 import { HistoryPanel } from './panels/HistoryPanel';
 import { IssuesPanel } from './panels/IssuesPanel';
 import { Outliner } from './panels/Outliner';
@@ -82,18 +84,37 @@ function ContextMenuHost(): JSX.Element | null {
   );
 }
 
-/** The left dock: the Socket Workbench or the Paint panel for their tools, else the part browser. */
+const LEFT_TABS = [
+  { id: 'parts', label: 'Parts' },
+  { id: 'generators', label: 'Generators' },
+] as const;
+
+/** The left dock: the Socket Workbench or the Paint panel for their tools, else Parts or Generators. */
 function LeftDock(): JSX.Element {
   const tool = toolSig.value;
   if (tool === 'sockets') return <WorkbenchPanel />;
   if (tool === 'paint') return <PaintPanel />;
+  const tab = LEFT_TABS.find((t) => t.id === leftTabSig.value) ?? LEFT_TABS[0];
   return (
-    <PartBrowser
-      onArm={(c) =>
-        arm(c.kind === 'part' ? { kind: 'part', type: c.type } : { kind: 'creation', id: c.id })
-      }
-      creations={creationsSig.value.map((r) => ({ id: r.id, name: r.name }))}
-    />
+    <>
+      <div class="dock-tabs">
+        <Tabs tabs={LEFT_TABS} active={tab.id} onChange={showLeftTab} />
+      </div>
+      <div role="tabpanel" aria-label={tab.label}>
+        {tab.id === 'generators' ? (
+          <GeneratorsPanel />
+        ) : (
+          <PartBrowser
+            onArm={(c) =>
+              arm(
+                c.kind === 'part' ? { kind: 'part', type: c.type } : { kind: 'creation', id: c.id },
+              )
+            }
+            creations={creationsSig.value.map((r) => ({ id: r.id, name: r.name }))}
+          />
+        )}
+      </div>
+    </>
   );
 }
 

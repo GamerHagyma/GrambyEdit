@@ -33,6 +33,14 @@ export const contextMenuSig = signal<{
   readonly items: readonly { label: string; command: string; disabled?: boolean }[];
 } | null>(null);
 
+/** The left dock's tab outside the Sockets and Paint tools (pref `leftTab`): Parts or Generators. */
+export const leftTabSig = signal<string>(loadPref<string>('leftTab', 'parts'));
+
+export function showLeftTab(id: string): void {
+  leftTabSig.value = id;
+  savePref('leftTab', id);
+}
+
 /** The inspector tab on show (pref `rightTab`); Shell checks it against its tabs. */
 export const inspectorTabSig = signal<string>(loadPref<string>('rightTab', 'properties'));
 

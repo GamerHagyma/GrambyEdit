@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/preact';
+import { fireEvent, render, screen } from '@testing-library/preact';
 import { addPart } from '../../src/core/ops/parts';
 import { App } from '../../src/ui/App';
 import { CREDITS } from '../../src/ui/credits';
-import { savePref } from '../../src/storage/prefs';
+import { loadPref, savePref } from '../../src/storage/prefs';
+import { showLeftTab } from '../../src/state/ui';
 import {
   baseCatalogSig,
   commit,
@@ -69,4 +70,15 @@ test('Ctrl+Z in a field outside data-app-undo leaves the history alone', () => {
   expect(historySig.value.past).toHaveLength(1);
   expect(e.defaultPrevented).toBe(false);
   input.remove();
+});
+
+test('the left dock switches between Parts and Generators and remembers the choice', () => {
+  showLeftTab('parts');
+  render(<App />);
+  expect(screen.queryByText('Generate')).toBeNull();
+  fireEvent.click(screen.getByRole('tab', { name: 'Generators' }));
+  expect(screen.getByText('Generate')).toBeTruthy();
+  expect(loadPref('leftTab', 'parts')).toBe('generators');
+  fireEvent.click(screen.getByRole('tab', { name: 'Parts' }));
+  expect(screen.queryByText('Generate')).toBeNull();
 });
