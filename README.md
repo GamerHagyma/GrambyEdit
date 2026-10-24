@@ -33,6 +33,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 
 - **Working as of October 2026 (2026.10), with the "THE REMAKE UPDATE" version of Road to Gramby's.**
 - Joints and physics simulation are not implemented. The editor cannot verify how a creation will behave in game.
+- Wiring and logic are not currently simulated.
 - Some complex nested point mounts still differ from the game. Check those assemblies in game.
 - The tool will probably break with the next game update. I will probably update it for the next version, but there is no guarantee.
 

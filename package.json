@@ -13,8 +13,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write src tests scripts index.html vite.config.ts package.json tsconfig.json .prettierrc.json .github .claude",
-    "format:check": "prettier --check src tests scripts index.html vite.config.ts package.json tsconfig.json .prettierrc.json .github .claude",
+    "format": "prettier --write src tests scripts index.html vite.config.ts package.json tsconfig.json .prettierrc.json .github",
+    "format:check": "prettier --check src tests scripts index.html vite.config.ts package.json tsconfig.json .prettierrc.json .github",
     "assets": "tsx scripts/build-assets.ts"
   },
   "dependencies": {

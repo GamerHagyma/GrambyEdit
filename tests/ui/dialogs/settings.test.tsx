@@ -48,9 +48,9 @@ test('a value typed before Escape is committed', () => {
   expect(close).toHaveBeenCalled();
 });
 
-test('load example replaces the build with the first example', () => {
+test('load example replaces the build with the cube creation', () => {
   render(<FirstRun />);
   fireEvent.click(screen.getByText('Load example'));
-  expect(docSig.value.order).toHaveLength(4);
+  expect(docSig.value.order).toHaveLength(20);
   expect(localStorage.getItem('grambyedit:firstRunDone')).toBe('true');
 });
