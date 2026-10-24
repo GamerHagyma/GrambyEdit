@@ -1,119 +1,120 @@
-# GrambyEdit
+<div align="center">
 
-A 3D blueprint editor for [Road to Gramby's](https://www.roblox.com/games/5796917097/Road-to-Grambys)
-share codes, built as a static site for GitHub Pages. Paste a code, edit it in 3D, export a new code.
+# 🛠️ GrambyEdit
 
-```
-npm install
+**Big ideas. Tiny parts. One very long road trip.**
+
+A browser-based 3D blueprint editor for [Road to Gramby's](https://www.roblox.com/games/5796917097/Road-to-Grambys).
+
+Import a share code, build something fun, and bring it back into the game.
+
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-222222?style=flat-square&logo=threedotjs&logoColor=white)
+![Preact](https://img.shields.io/badge/Preact-673AB8?style=flat-square&logo=preact&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+
+[Get started](#get-started) · [Controls](#make-yourself-at-home) · [Run locally](#run-locally) · [Report a bug](https://github.com/GamerHagyma/GrambyEdit/issues)
+
+</div>
+
+![A 426-part convertible in GrambyEdit, with the part browser and build statistics open](docs/images/editor-preview.png)
+
+## A little more room to build
+
+GrambyEdit gives your creations a proper workspace: a 3D view, precise transforms, reusable assemblies, and tools that make repetitive building much quicker. Whether you're polishing a car or assembling an entirely unreasonable contraption, there's room to experiment.
+
+| What you want to do | What you'll find |
+| --- | --- |
+| **Edit a creation** | Import share codes or JSON, work with native part meshes and textures, then export a fresh code. |
+| **Place things precisely** | Visible sockets, click-to-connect placement, editable ephemeral connection points, and local or world-grid snapping. |
+| **Work on a whole assembly** | Select parts or attached branches, move and rotate them together, and edit shared properties in one go. |
+| **Add some colour** | Paint selections and regions, auto-colour new parts, or give generated shapes gradients and seeded random palettes. |
+| **Skip the repetitive bits** | Twelve shape generators, picked hosts, live previews, and custom GasCap surfaces with four movable corners. |
+| **Keep your favourite pieces** | Favourite parts, a local creation library, reusable prefabs, and importable/exportable library backups. |
+| **Keep things manageable** | A searchable Outliner, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
+
+## Get started
+
+1. Open the editor and choose **Start empty**, or use **File → Import code** to bring in a creation.
+2. Pick a part from the **Parts** tab, then click in the viewport to place it. Right-click when you're done to return to Select.
+3. Move, rotate, paint, or try the **Generators** and **Surfaces** tabs. The previews show what you're about to add.
+4. Use **File → Export code**, then load the result in Road to Gramby's.
+
+Your library and preferences are stored in your browser. Export a backup when you want to move them to another browser or computer.
+
+## Make yourself at home
+
+Choose **Blender** controls for orbiting around a build, or **Studio** controls for flying through it. You can switch from the toolbar.
+
+| Shortcut | Action |
+| --- | --- |
+| `G` / `R` | Move / rotate the selection |
+| `X`, `Y`, `Z` during a transform | Choose an axis |
+| Type a number | Set an exact distance or angle |
+| Hold `Ctrl` | Snap to the toolbar's step size |
+| `Enter` / `Esc` | Confirm / cancel a transform |
+| `Ctrl+Z` | Undo |
+| `1` to `6` | Select, Move, Rotate, Connect, Point, Paint |
+| `?` | Open the full shortcut guide |
+
+**In the Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click lets you hide or show the selection. Hidden parts stay available in the tree, ready to bring back.
+
+**On a surface:** Shift-click its corner buttons or viewport dots to select several corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
+
+## Run locally
+
+You'll need **Node.js 24 or newer** and a browser with **WebGL 2** support.
+
+```sh
+git clone https://github.com/GamerHagyma/GrambyEdit.git
+cd GrambyEdit
+npm ci
 npm run assets
 npm run dev
+```
+
+Open the local URL printed by Vite. To build the static site:
+
+```sh
+npm run build
+npm run preview
+```
+
+The repository includes a [GitHub Pages workflow](.github/workflows/pages.yml) that builds and deploys pushes to `main`. Set the repository's Pages source to **GitHub Actions** to use it. The site base path is `/GrambyEdit/`.
+
+## Want to help?
+
+Bug reports, screenshots, and small example share codes are especially useful. If a creation looks different in game, include both views and the code that reproduces it.
+
+Before sending a change, run:
+
+```sh
+npm run assets
+npm run typecheck
+npm run format:check
 npm test
+npm run build
 ```
 
-The editor's design is `docs/EDITOR_DESIGN.md`; the build plan is
-`docs/superpowers/plans/2026-10-22-grambyedit-v1.md`.
+The main pieces live in `src/core` for blueprint rules and geometry, `src/tools` for editing, `src/viewport` for rendering, and `src/ui` for panels. The asset pipeline lives in `scripts`.
 
----
+For the deeper details, see the [blueprint format](docs/RTG_BLUEPRINT_FORMAT.md), [editor design](docs/EDITOR_DESIGN.md), and [asset sources](docs/SOURCES.md).
 
-## Research and assets
+## Still growing
 
-This folder also holds the research and assets the editor is built from.
+GrambyEdit is under active development. Some complex nested point mounts still differ from the game. Check those assemblies in game, and keep a copy of your original share code while experimenting.
 
-Start with **`docs/RTG_BLUEPRINT_FORMAT.md`**. It is the authoritative spec
-of the sharecode format, the game's physical rules and what an editor must
-respect.
+## Made possible by
 
----
+- **Mumble Games**, creators of Road to Gramby's and its part artwork.
+- **[JuanCrakYT / RtG-Format](https://github.com/JuanCrakYT/RtG-Format)** for community format research and mesh exports.
+- **[jirrob / GrambysWorkshop](https://github.com/jirrob/GrambysWorkshop)** for reference tooling and exports.
+- Everyone testing builds and sharing the wonderfully specific bugs that help this editor improve.
 
-## What is here
+GrambyEdit is a community project, unaffiliated with Mumble Games or Roblox. Game artwork belongs to its respective owners; vendored projects retain their original licences.
 
-```
-docs/
-  RTG_BLUEPRINT_FORMAT.md     the spec  <- read this first
-  SOCKET_GEOMETRY.md          the one missing dataset + how to capture it
-  SOURCES.md                  where every file came from, and licences
-  RTG-ai-FORMAT-buildlog.md   the original chronological build log
-  community/                  upstream community research, vendored verbatim
-data/
-  part_catalog.json           133 parts: sockets, roles, pieces, props, mesh, geometry
-  socket_table.json           just the socket inventory (what a 3D editor snaps against)
-  props_schema.json           36 prop keys, their JSON type and the parts that use them
-  corpus_stats.json           corpus counters + the 60 most common joint pairs
-  corpus/                     the 185 real sharecodes everything derives from
-meshes/
-  rtg-format/<Part>/          121 part meshes (.obj) + model metadata + textures
-  workshop/<Part>/            the same parts from a second exporter, with .mtl + .png
-vendor/
-  rtg-preview/                an existing three.js 3D preview of these meshes
-  grambys-workshop/           a Godot editor for this game (reference implementation)
-captures/                     where captured socket geometry goes (schema + procedure)
-tools/                        the codec, the corpus analysers, the catalogue builder
-```
+<div align="center">
 
-## The short version of what we know
+**Have fun building. See you down the road!**
 
-| | |
-|---|---|
-| **Format** | `sharecode = base64(compact JSON array of [name, connections, props])` — complete and verified in game |
-| **Joint** | `[child_socket, parent_socket, parent_index_1based]` — only the child stores it |
-| **Parts** | 133 known, 121 with meshes, all socket ids mapped |
-| **Physics rules** | one mate per circle; an ephemeral mount consumes its whole piece; unmounted parts dangle; big creations need `Anchor`s |
-| **Meshes** | 121 parts in Roblox studs, ready to render 1:1 |
-| **Missing** | **socket geometry** — where each socket sits on its part. Known for 3 of 133 parts |
-
-## The one correction in this bundle
-
-The previous spec claimed a hard rule of "one joint per piece" with "0
-violations across 37,115 real joints". That was never measured — the check
-had a type bug and never fired. Re-run correctly:
-
-* **69.2%** of real creations use both faces of one physical piece (a wire
-  that receives and sends on the same end). This is normal.
-* What *is* forbidden in 185/185 builds: one mate per circle, and **an
-  ephemeral mount consuming its whole piece** (mounting on one face and
-  jointing the partner face is what tore the v5 build apart).
-
-Details: spec §3.1 and §14. The fixed tooling is in `tools/`.
-
-## Verify it yourself
-
-```
-cd tools
-python verify_spec.py         # 120 checks of every number in the spec
-python verify_doc_samples.py  # decodes every sharecode quoted in the spec
-python build_catalog.py       # regenerates ../data/*.json
-python verify_catalog.py      # cross-checks the catalogue + the invariants
-python test_blueprint.py      # 14 encoder/validator regression tests
-```
-
-All of these pass as shipped.
-
-## Where to start if you are building the editor
-
-1. `data/socket_table.json` — the snap targets. Per part: child sockets,
-   parent sockets, the role of each, the semantic name, and the piece
-   grouping for splitters and wires.
-2. `data/part_catalog.json` — everything else, including the mesh path and
-   bounding box per part.
-3. `meshes/rtg-format/<Part>/<Part>.obj` — the geometry, in studs.
-4. `tools/blueprint.py` — a working codec to build on.
-5. `tools/compile_model.py` — contains `build_eval` / `eval_lights`, the
-   topological graph simulator that reproduces the tree model 500/500. Use it
-   for live preview of switch states.
-6. `vendor/rtg-preview/preview.js` — an existing three.js renderer for these
-   meshes; useful as a starting point for the viewport.
-
-## Known gaps
-
-* **Socket geometry for 130 of 133 parts.** See `docs/SOCKET_GEOMETRY.md`.
-  Without it the editor can be a graph/tree editor but not a spatial one.
-* The `Switch` circle 1 vs circle 2 role (input vs output) is ambiguous
-  between the corpus and the community; one in-game test settles it
-  (spec §12, item 12).
-* Maximum entries / code length / children per part are unknown.
-* The exact set of loader validation rules is unknown; the community's
-  `research/unknowns.md` lists 20 open items.
-
-## Credits
-
-Road to Gramby's and all part meshes © Mumble Games. Mesh exports: JuanCrakYT/RtG-Format and jirrob/GrambysWorkshop (MIT).
+</div>
