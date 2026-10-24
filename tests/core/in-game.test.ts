@@ -3,7 +3,8 @@
 import { readFileSync } from 'node:fs';
 import { Box3, Vector3 } from 'three';
 import type { Catalog } from '../../src/core/catalog-types';
-import { computePoses, socketWorld, type Poses } from '../../src/core/pose';
+import { cfToMatrix4 } from '../../src/core/cframe';
+import { computePoses, socketWorld, SPRING_DROP, type Poses } from '../../src/core/pose';
 import type { Doc } from '../../src/core/types';
 import { docOf, mount, part, pt, sock } from '../helpers/doc';
 import { importCode } from '../helpers/import';
@@ -216,4 +217,73 @@ test('the game-confirmed green comparison plates centre on normal, rotated-host 
     center.multiplyScalar(0.25);
     expectNear(center, 0, 0.55, 0);
   }
+});
+
+test('A wheel on a Spinner (Bearing) or a Servo keeps its default turn, whatever its Orientation, as in game', async () => {
+  // The user's car (2026-10-24): wheels turned in the editor sat at their default turn in game.
+  const cat = await realCatalog();
+  const turned = { OrientationX: 90, OrientationY: 45 };
+  for (const hub of ['Bearing', 'Servo_Physics']) {
+    const wheel = (props: Record<string, number>) =>
+      computePoses(
+        docOf(part(1, hub), part(2, 'Wheel', [sock('1', 1, '2')], props)),
+        cat,
+        cat.conventions,
+      ).world.get(2)!;
+    wheel(turned).elements.forEach((v, k) => expect(v).toBeCloseTo(wheel({}).elements[k], 9));
+  }
+  // On an ordinary socket the turn still applies.
+  const onPart = (props: Record<string, number>) =>
+    computePoses(
+      docOf(part(1, 'Part'), part(2, 'Wheel', [sock('1', 1, '6')], props)),
+      cat,
+      cat.conventions,
+    ).world.get(2)!;
+  expect(onPart(turned).equals(onPart({}))).toBe(false);
+});
+
+test('A part on a wheel socket (Suspension) hangs SPRING_DROP below it, where the spring settles in game', async () => {
+  // The user's car (2026-10-24): wheels on the Chassis sat lower in game than on their sockets.
+  const cat = await realCatalog();
+  // Where the child's socket lands, less where the base's socket is, in the base's own axes.
+  const drop = (base: string, socket: string) => {
+    const doc = docOf(part(1, base), part(2, 'Bearing', [sock('1', 1, socket)]));
+    const poses = computePoses(doc, cat, cat.conventions);
+    const toBase = poses.world.get(1)!.clone().invert();
+    const at = (id: number, type: string, s: string) =>
+      new Vector3()
+        .setFromMatrixPosition(
+          poses.world.get(id)!.clone().multiply(cfToMatrix4(cat.parts[type].sockets[s].frame)),
+        )
+        .applyMatrix4(toBase);
+    return at(2, 'Bearing', '1').sub(at(1, base, socket));
+  };
+  for (const [base, socket] of [
+    ['Chassis', '1'],
+    ['Chassis', '5'],
+    ['GoKart', '4'],
+    ['ShoppingCart', '3'],
+  ]) {
+    expectNear(drop(base, socket), 0, -SPRING_DROP, 0);
+  }
+  // The steering socket has no spring.
+  expectNear(drop('Chassis', '10'), 0, 0, 0);
+});
+
+test("A wheel on a Spinner (Bearing) stands upright, its axle along the Spinner's, as in game", async () => {
+  // The user's car (2026-10-24): upright wheels in game, lying flat in the editor.
+  const cat = await realCatalog();
+  const doc = docOf(
+    part(1, 'Chassis'),
+    part(2, 'Bearing', [sock('1', 1, '1')]),
+    part(3, 'Wheel', [sock('1', 2, '2')]),
+  );
+  const poses = computePoses(doc, cat, cat.conventions);
+  const axis = (id: number) => new Vector3().setFromMatrixColumn(poses.world.get(id)!, 0);
+  const at = (id: number) => new Vector3().setFromMatrixPosition(poses.world.get(id)!);
+  // A wheel's axle is its X, its thin axis: across the car, as the Spinner's.
+  expect(Math.abs(axis(3).x)).toBeCloseTo(1, 9);
+  expect(Math.abs(axis(2).x)).toBeCloseTo(1, 9);
+  // And outside the Spinner, away from the Chassis.
+  expect(at(3).x).toBeGreaterThan(at(2).x);
 });

@@ -66,7 +66,10 @@ export function bodyWorld(poses: Poses, id: PartId, body: number): Matrix4 | und
   return poses.bodies?.get(id)?.[body] ?? poses.world.get(id);
 }
 
-/** A socket's world frame: its body's world times the socket frame; null without a pose. */
+/**
+ * A socket's world frame, where its children mate (a wheel socket's hangs SPRING_DROP below it): its
+ * body's world times the socket frame; null without a pose.
+ */
 export function socketWorld(
   poses: Poses,
   cat: Catalog,
@@ -93,8 +96,16 @@ interface SocketFrame extends Frame {
 const socketCache = new WeakMap<Catalog, Map<string, SocketFrame>>();
 
 /**
- * A socket's frame in part space. Unknown types and sockets get an approx frame on the placeholder
- * or mesh bbox: on the −Y face when used as a child socket, cycling the faces otherwise.
+ * How far a part on a wheel socket (the game's MountType Suspension) hangs below it, along the base's
+ * −Y: the game seats it on a spring that settles under the car's weight. Not simulated; estimated from
+ * the user's screenshots of a Chassis car (2026-10-24).
+ */
+export const SPRING_DROP = 0.9;
+
+/**
+ * A socket's frame in part space; as a parent, a wheel socket's hangs SPRING_DROP below the socket.
+ * Unknown types and sockets get an approx frame on the placeholder or mesh bbox: on the −Y face when
+ * used as a child socket, cycling the faces otherwise.
  */
 function socketFrame(
   cat: Catalog,
@@ -110,7 +121,11 @@ function socketFrame(
     const def = cat.parts[type];
     const s = def?.sockets[socket];
     if (s) {
-      f = { m: cfToMatrix4(s.frame), approx: s.frameSource === 'approx', unknown: false };
+      const m = cfToMatrix4(s.frame);
+      if (as === 'parent' && s.mountType === 'Suspension') {
+        m.premultiply(new Matrix4().makeTranslation(0, -SPRING_DROP, 0));
+      }
+      f = { m, approx: s.frameSource === 'approx', unknown: false };
     } else {
       const box = def?.mesh ?? PLACEHOLDER_BOX;
       const cf = approxSocketFrame({
@@ -127,7 +142,10 @@ function socketFrame(
   return f;
 }
 
-/** The socket's frame in part space; unknown types and sockets get an approx frame. */
+/**
+ * The socket's frame in part space, where its children mate (a wheel socket's hangs SPRING_DROP below
+ * it); unknown types and sockets get an approx frame.
+ */
 export function socketMatrix(
   cat: Catalog,
   type: string,
@@ -156,9 +174,24 @@ function hingeTurn(
     return null;
   }
   if (onto === 'point') return type === 'GasCap' ? 'gascap-point' : 'point';
-  const door =
-    Object.hasOwn(cat.parts, onto.type) && cat.parts[onto.type].sockets[onto.socket]?.door === true;
-  return door ? 'door' : null;
+  return mountTypeOf(cat, onto.type, onto.socket) === 'Door' ? 'door' : null;
+}
+
+/** A parent socket's mount type in game (`SocketDef.mountType`), if it has one. */
+function mountTypeOf(cat: Catalog, type: string, socket: SocketId): string | undefined {
+  return Object.hasOwn(cat.parts, type) ? cat.parts[type].sockets[socket]?.mountType : undefined;
+}
+
+/** Mount types that spin their child themselves, so the game keeps it at its default turn. */
+const SPINNING_MOUNTS: ReadonlySet<string> = new Set(['Bearing', 'Servo']);
+
+/**
+ * Whether a child on `type`'s parent `socket` keeps its default turn whatever its Orientation: on a
+ * Spinner (Bearing) or a Servo, as in game (user, 2026-10-24).
+ */
+export function ignoresOrientation(cat: Catalog, type: string, socket: SocketId): boolean {
+  const mount = mountTypeOf(cat, type, socket);
+  return mount !== undefined && SPINNING_MOUNTS.has(mount);
 }
 
 /**
@@ -278,6 +311,12 @@ interface PartInfo {
   readonly lead: number;
   /** Per body, the index of its first socket or point conn, or -1. */
   readonly conn: Int32Array;
+}
+
+/** A body's pivot in part space, what `Orientation` turns it about; undefined for one-piece parts. */
+export function piecePivot(cat: Catalog, type: string, body: number): Vector3 | undefined {
+  const def = Object.hasOwn(cat.parts, type) ? cat.parts[type] : undefined;
+  return def?.bodies ? pivots(def)[body] : undefined;
 }
 
 const pivotCache = new WeakMap<PartDef, readonly Vector3[]>();
@@ -473,7 +512,10 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
         }
       }
       // `mateWorld` (conventions.ts) inline: R turns the body about its pivot, or (v1 guess) the socket.
-      const turns = t.kind === 'socket' || conv.orientationOnPoints;
+      const turns =
+        t.kind === 'socket'
+          ? !ignoresOrientation(cat, parent.type, t.socket)
+          : conv.orientationOnPoints;
       const r = turns ? orientationMatrix(part.props, conv) : null;
       if (r && conv.orientationPivot === 'socket') m.multiply(r).multiply(after);
       else if (r) {

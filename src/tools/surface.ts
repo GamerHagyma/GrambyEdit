@@ -4,7 +4,13 @@
 import { Matrix4, Quaternion, Vector3, type Vector2 } from 'three';
 import type { Vec3 } from '../core/catalog-types';
 import { posesSig } from '../state/derived';
-import { selectCorner, setCorners, surfaceHostSig, surfaceSig } from '../state/surfaces';
+import {
+  selectCorner,
+  setCorners,
+  surfaceCreatedSig,
+  surfaceHostSig,
+  surfaceSig,
+} from '../state/surfaces';
 import { getViewport } from '../viewport/context';
 import type { GizmoHandlers } from '../viewport/gizmo';
 import type { Tool, ToolPointer } from './manager';
@@ -23,6 +29,8 @@ function hostWorld(): Matrix4 | null {
 
 /** The corners in world space, while the surface has a parent. */
 export function cornerWorlds(): Vector3[] | null {
+  // Hidden once Create made the caps, until Undo takes them out again.
+  if (surfaceCreatedSig.value !== null) return null;
   const world = hostWorld();
   return world && surfaceSig.value.corners.map((c) => new Vector3(...c).applyMatrix4(world));
 }
@@ -76,7 +84,8 @@ function movedBy(d: CornerDrag, delta: TransformDelta): [number, Vec3][] {
   const tidy = (v: number) => Math.round(v * 1e6) / 1e6 + 0;
   return d.corners.map((i, k) => {
     const p = new Vector3(...d.from[k]).applyMatrix4(d.world).add(delta.offset);
-    if (delta.grid) p.set(snapValue(p.x, delta.grid), snapValue(p.y, delta.grid), snapValue(p.z, delta.grid));
+    if (delta.grid)
+      p.set(snapValue(p.x, delta.grid), snapValue(p.y, delta.grid), snapValue(p.z, delta.grid));
     p.applyMatrix4(back);
     return [i, [tidy(p.x), tidy(p.y), tidy(p.z)]];
   });

@@ -39,6 +39,7 @@ function Header({ doc, ids }: { doc: Doc; ids: readonly PartId[] }): JSX.Element
     const kept = ids.filter((id) => doc.parts.get(id)?.type === type);
     selectionSig.value = {
       parts: new Set(kept),
+      pieces: new Map(),
       points: new Set(),
       active: kept[kept.length - 1] ?? null,
     };

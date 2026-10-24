@@ -279,6 +279,11 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.status-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Dialogs */
 .dialog-backdrop {

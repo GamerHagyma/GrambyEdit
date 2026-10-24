@@ -30,11 +30,17 @@ function rawConn(triple: Json[]): Conn {
 }
 
 /** A connection triple `[self, socket | {uuid}, parent]`. */
-function readConn(triple: Json[], owner: PartId, count: number): Conn {
+function readConn(triple: Json[], owner: PartId, count: number, anchored: boolean): Conn {
   const [a, b, c] = triple;
   const self = socketId(a);
-  const part = parentIndex(c, owner, count);
-  if (self !== null && c === owner && socketId(b) !== null && !String(b).startsWith('{')) {
+  const part = anchored && c === owner ? owner : parentIndex(c, owner, count);
+  if (
+    !anchored &&
+    self !== null &&
+    c === owner &&
+    socketId(b) !== null &&
+    !String(b).startsWith('{')
+  ) {
     // A joint between two of the part's own sockets, made in game (I-SELF-JOINT). Its index must
     // follow the part when earlier parts are deleted, so it is marked rather than kept verbatim.
     return { self, target: { kind: 'raw', triple: [...triple], self: true } };
@@ -93,11 +99,16 @@ function readPart(
   if (typeof name !== 'string') return { ok: false, reason: 'name is not a string' };
   if (!Array.isArray(conns)) return { ok: false, reason: 'connections is not an array' };
   const connections: Conn[] = [];
+  let anchored = false;
   for (const [i, c] of conns.entries()) {
     if (!Array.isArray(c) || c.length !== 3) {
       return { ok: false, reason: `connection ${i} is not a 3-element array` };
     }
-    connections.push(readConn(c, id, count));
+    // Secondary self-connections can place another body after an external conn anchors the part.
+    // Unanchored self-joints keep the legacy raw representation and cannot create a pose root loop.
+    const conn = readConn(c, id, count, anchored);
+    connections.push(conn);
+    if (conn.target.kind !== 'raw' && conn.target.part !== id) anchored = true;
   }
   const fields = readProps(props);
   if (!fields.ok) return fields;

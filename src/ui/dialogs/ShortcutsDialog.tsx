@@ -42,10 +42,24 @@ const MOUSE: Section = {
   title: 'Mouse',
   rows: [
     { keys: ['Click'], action: 'Select a part' },
+    {
+      keys: ['Click'],
+      action: 'Select a piece of a Wire, Switch, Button or other multi-piece part',
+    },
+    { keys: ['Double-click'], action: 'Select the whole multi-piece part' },
     { keys: ['Shift+Click'], action: 'Add or remove a part' },
     { keys: ['Ctrl+Click'], action: 'Remove a part' },
     { keys: ['Drag'], action: 'Box select from empty space' },
-    { keys: ['Drag'], action: 'Move tool: drag a part onto a socket or surface to re-attach it' },
+    {
+      keys: ['Drag'],
+      action:
+        'Move tool: drag a part or piece onto a socket (within 20 px) or surface to re-attach it; the Select tool drags pieces too',
+    },
+    {
+      keys: ['Drag'],
+      action:
+        'Stack a Wire end on its other end: use its free socket or surface after placing that other end',
+    },
     { keys: ['Click'], action: 'Connect tool: pick a part for a free socket or point' },
     { keys: ['Shift+Click'], action: 'Connect tool: gather several sockets, then pick once' },
     { keys: ['Drag'], action: 'Connect tool: from one socket to another to join them' },

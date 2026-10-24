@@ -7,18 +7,22 @@ import type { Catalog, Conventions } from '../core/catalog-types';
 import { childWorldViaPoint, childWorldViaSocket } from '../core/conventions';
 import { defaultChildSocket } from '../core/defaults';
 import { frameFromNormal } from '../core/frames';
+import { orderIndex } from '../core/doc';
 import { poseDescendants } from '../core/graph';
+import { draftDoc } from '../core/ops/conns';
 import {
   bodyCheckDoc,
   bodyDescendants,
   chooseMountSocket,
   makeFreeMovable,
+  pieceBodies,
   retargetCheckDoc,
   retargetBody,
   retargetPose,
+  selfStackRefusal,
   rotateInPlace,
   setWorldPose,
-  topmost,
+  transformPiece,
   turnsInPlace,
   type PoseTarget,
 } from '../core/ops/move';
@@ -28,21 +32,32 @@ import {
   bodyPivot,
   bodyWorld,
   childSocketMatrix,
+  ignoresOrientation,
+  leadBody,
+  piecePivot,
   poseConn,
   socketMatrix,
   type Poses,
 } from '../core/pose';
 import { canBeChild, canBeParent } from '../core/rules';
-import type { Doc, PartId, SocketId, Verdict } from '../core/types';
+import type { Conn, Doc, PartId, SocketId, Verdict } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, hoverSig, select, selectionSig, type Selection } from '../state/selection';
+import {
+  hiddenSig,
+  hoverPieceSig,
+  hoverSig,
+  select,
+  selectPiece,
+  selectionSig,
+  type Selection,
+} from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { loadPref, savePref } from '../storage/prefs';
 import { getViewport } from '../viewport/context';
-import { cursorRay, pickPart, pickPoint, pickSocket } from '../viewport/raycast';
+import { cursorRay, pickPart, pickSocketWhere } from '../viewport/raycast';
 import type { Tool, ToolPointer } from './manager';
-import { clickOp, createSelectTool } from './select';
+import { createClickSelect, createSelectTool, hasPieces, pressAt } from './select';
 
 export type PivotMode = 'median' | 'active' | 'individual';
 export type Axis = 'X' | 'Y' | 'Z';
@@ -78,24 +93,69 @@ export function setSpace(space: Space): void {
 const positionOf = (m: Matrix4) => new Vector3().setFromMatrixPosition(m);
 const translation = (v: Vector3) => new Matrix4().makeTranslation(v.x, v.y, v.z);
 
-/** The transform pivot: the active part's origin, or the mean of the origins (also for individual). */
+/**
+ * The transform pivot: the active part's origin, or the mean of the origins (also for individual).
+ * `originOf` gives a part's origin where it is not its world position: a selected piece's (D25).
+ */
 export function pivotOf(
   poses: Poses,
   ids: readonly PartId[],
   mode: PivotMode,
   active: PartId | null,
+  originOf: (id: PartId) => Vector3 | undefined = () => undefined,
 ): Vector3 {
-  const own = mode === 'active' && active !== null ? poses.world.get(active) : undefined;
-  if (own) return positionOf(own);
+  const at = (id: PartId) => {
+    const m = poses.world.get(id);
+    return m ? (originOf(id) ?? positionOf(m)) : undefined;
+  };
+  const own = mode === 'active' && active !== null ? at(active) : undefined;
+  if (own) return own;
   const sum = new Vector3();
   let n = 0;
   for (const id of ids) {
-    const m = poses.world.get(id);
-    if (!m) continue;
-    sum.add(positionOf(m));
+    const p = at(id);
+    if (!p) continue;
+    sum.add(p);
     n++;
   }
   return n > 0 ? sum.divideScalar(n) : sum;
+}
+
+/** Where a piece turns: its body's pivot in world space; the part's origin when either is unknown. */
+export function pieceOrigin(
+  poses: Poses,
+  cat: Catalog,
+  doc: Doc,
+  id: PartId,
+  body: number,
+): Vector3 {
+  const world = bodyWorld(poses, id, body) ?? poses.world.get(id) ?? new Matrix4();
+  const type = doc.parts.get(id)?.type;
+  const pivot = type === undefined ? undefined : piecePivot(cat, type, body);
+  return (pivot?.clone() ?? new Vector3()).applyMatrix4(world);
+}
+
+/** A selection's origins (for `pivotOf`) and the world matrices its local axes turn with. */
+export function selectionFrame(
+  doc: Doc,
+  poses: Poses,
+  sel: Selection,
+  cat: Catalog | null | undefined,
+): {
+  originOf: (id: PartId) => Vector3 | undefined;
+  worldOf: (id: PartId) => Matrix4 | undefined;
+} {
+  const piece = (id: PartId) => (cat ? sel.pieces.get(id) : undefined);
+  return {
+    originOf: (id) => {
+      const b = piece(id);
+      return b === undefined ? undefined : pieceOrigin(poses, cat!, doc, id, b);
+    },
+    worldOf: (id) => {
+      const b = piece(id);
+      return b === undefined ? poses.world.get(id) : bodyWorld(poses, id, b);
+    },
+  };
 }
 
 /** Rounds half away from zero to a multiple of `step` (no float noise, no -0); `step <= 0` keeps `v`. */
@@ -131,10 +191,27 @@ export function deltaMatrix(delta: TransformDelta, origin: Vector3): Matrix4 {
 }
 
 /** True when `delta` turns a part about its own origin (a rotation that leaves the origin put). */
+/** Whether `delta` turns at all. */
+const turns = (delta: Matrix4) =>
+  new Quaternion().setFromRotationMatrix(delta).angleTo(new Quaternion()) > 1e-9;
+
+/** The part's label when it hangs from a Spinner's or Servo's socket, which keeps its default turn. */
+function spunBy(d: Draft, cat: Catalog, id: PartId): string | null {
+  const t = poseConn(d.get(id)!)?.target;
+  const parent = t?.kind === 'socket' ? d.get(t.part) : undefined;
+  if (t?.kind !== 'socket' || !parent || !ignoresOrientation(cat, parent.type, t.socket)) {
+    return null;
+  }
+  const doc = draftDoc(d);
+  return `${d.get(id)!.type} #${orderIndex(doc).get(id)! + 1}`;
+}
+
 function turnsAboutOrigin(delta: Matrix4, world: Matrix4): boolean {
   const o = positionOf(world);
   const turn = new Quaternion().setFromRotationMatrix(delta);
-  return turn.angleTo(new Quaternion()) > 1e-9 && o.clone().applyMatrix4(delta).distanceTo(o) < 1e-9;
+  return (
+    turn.angleTo(new Quaternion()) > 1e-9 && o.clone().applyMatrix4(delta).distanceTo(o) < 1e-9
+  );
 }
 
 /**
@@ -156,6 +233,13 @@ export function applyTransform(
     const world = poses.world.get(id);
     if (!world) continue;
     const delta = deltaOf(id);
+    const spun = spunBy(d, cat, id);
+    if (spun && turns(delta)) {
+      refused.push(
+        `${spun} sits on a Spinner or Servo, which keeps it at its default turn in game.`,
+      );
+      continue;
+    }
     if (turnsInPlace(d.get(id)!, conv) && turnsAboutOrigin(delta, world)) {
       rotateInPlace(d, conv, poses, id, new Quaternion().setFromRotationMatrix(delta));
       continue;
@@ -177,45 +261,111 @@ export function gizmoPlacement(
   sel: Selection,
   mode: PivotMode,
   space: Space,
+  cat?: Catalog | null,
 ): { position: Vector3; quaternion: Quaternion } | null {
   const ids = [...sel.parts].filter((id) => doc.parts.has(id) && poses.world.has(id));
   if (ids.length === 0) return null;
   const active = typeof sel.active === 'number' && sel.parts.has(sel.active) ? sel.active : null;
+  const { originOf, worldOf } = selectionFrame(doc, poses, sel, cat);
   const quaternion = new Quaternion();
   if (space === 'local') {
-    poses.world.get(active ?? ids[ids.length - 1])!.decompose(new Vector3(), quaternion, new Vector3());
+    worldOf(active ?? ids[ids.length - 1])!.decompose(new Vector3(), quaternion, new Vector3());
   }
-  return { position: pivotOf(poses, ids, mode, active), quaternion };
+  return { position: pivotOf(poses, ids, mode, active, originOf), quaternion };
 }
 
-const plural = (verb: string, n: number) => `${verb} ${n} ${n === 1 ? 'part' : 'parts'}`;
+const plural = (verb: string, n: number, noun = 'part') =>
+  `${verb} ${n} ${noun}${n === 1 ? '' : 's'}`;
 
-/** A transform in progress over the selection's topmost parts; the doc changes only at `finish`. */
+/** A transform in progress over the selection's topmost items; the doc changes only at `finish`. */
 export interface Session {
+  /** Topmost items: whole parts, and parts of which one piece moves (`pieces`). */
   readonly ids: readonly PartId[];
-  /** Every part that moves (topmost parts and their pose descendants), mapped to its topmost part. */
+  /**
+   * Every part drawn moved whole (topmost whole parts and the descendants of every item), mapped to
+   * its topmost item. A piece item's own part is not here: its moving bodies are (`pieces`).
+   */
   readonly moving: ReadonlyMap<PartId, PartId>;
   readonly poses: Poses;
-  /** Topmost parts that turn about their own origin, through `Orientation`, whatever the pivot. */
+  /** Topmost whole parts that turn about their own origin, through `Orientation`, whatever the pivot. */
   readonly inPlace: ReadonlySet<PartId>;
+  /** Piece items (D25): the piece, the bodies its move carries (`pieceBodies`), and its origin. */
+  readonly pieces: ReadonlyMap<PartId, { body: number; bodies: number[]; origin: Vector3 }>;
+}
+
+interface Item {
+  readonly id: PartId;
+  /** The piece that moves; null for the whole part. */
+  readonly body: number | null;
+  readonly bodies: number[];
+  /** Every part that moves with it whole: the part itself and its descendants for a whole item. */
+  readonly moves: ReadonlySet<PartId>;
+  /** What it hangs from: a piece's own conn, else the part's pose conn. */
+  readonly anchor: Conn['target'] | undefined;
+}
+
+/** The selection as transform items, without those another item already carries. */
+function sessionItems(doc: Doc, cat: Catalog, poses: Poses, sel: Selection): Item[] {
+  const items: Item[] = [];
+  for (const id of sel.parts) {
+    const part = doc.parts.get(id);
+    if (!part || !poses.world.has(id)) continue;
+    const def = Object.hasOwn(cat.parts, part.type) ? cat.parts[part.type] : undefined;
+    const pc = poseConn(part);
+    const piece = sel.pieces.get(id);
+    // A part that hangs from nothing moves whole, every piece with it (P5).
+    if (piece === undefined || !pc || !def?.bodies?.[piece]) {
+      const moves = new Set([id, ...poseDescendants(doc, id)]);
+      items.push({ id, body: null, bodies: [], moves, anchor: pc?.target });
+      continue;
+    }
+    const bodies = pieceBodies(doc, cat, id, piece);
+    const moves = new Set<PartId>();
+    for (const b of bodies) for (const below of bodyDescendants(doc, cat, id, b)) moves.add(below);
+    const sockets = def.bodies[piece].sockets;
+    const own = part.conns.find((c) => c.target.kind !== 'raw' && sockets.includes(c.self));
+    items.push({ id, body: piece, bodies, moves, anchor: (own ?? pc).target });
+  }
+  /** Whether moving `it` moves what `t` points at. */
+  const carries = (it: Item, t: Conn['target']): boolean => {
+    if (t.kind === 'raw') return false;
+    if (it.moves.has(t.part)) return true;
+    if (it.body === null || t.part !== it.id) return false;
+    const part = doc.parts.get(it.id)!;
+    const def = cat.parts[part.type];
+    // Points ride the lead body.
+    const b = t.kind === 'socket' ? bodyOfSocket(def, t.socket) : leadBody(def, part);
+    return it.bodies.includes(b);
+  };
+  return items.filter((it) => {
+    const t = it.anchor;
+    return !t || !items.some((o) => o !== it && carries(o, t));
+  });
 }
 
 /** Starts a transform of the selection; null when nothing is selected or the library is not loaded. */
 export function beginSession(): Session | null {
   const doc = docSig.value;
   const poses = posesSig.value;
-  const sel = [...selectionSig.value.parts].filter((id) => poses.world.has(id));
   const cat = catalogSig.value;
-  if (sel.length === 0 || cat === null) return null;
-  const ids = topmost(doc, sel);
+  if (cat === null) return null;
+  const items = sessionItems(doc, cat, poses, selectionSig.value);
+  if (items.length === 0) return null;
   const moving = new Map<PartId, PartId>();
-  for (const id of ids) {
-    moving.set(id, id);
-    for (const below of poseDescendants(doc, id)) moving.set(below, id);
+  const pieces = new Map<PartId, { body: number; bodies: number[]; origin: Vector3 }>();
+  for (const it of items) {
+    for (const id of it.moves) moving.set(id, it.id);
+    if (it.body !== null) {
+      const origin = pieceOrigin(poses, cat, doc, it.id, it.body);
+      pieces.set(it.id, { body: it.body, bodies: it.bodies, origin });
+    }
   }
   transformStateSig.value = 'transform';
-  const inPlace = new Set(ids.filter((id) => turnsInPlace(doc.parts.get(id)!, cat.conventions)));
-  return { ids, moving, poses, inPlace };
+  const ids = items.map((it) => it.id);
+  const inPlace = new Set(
+    ids.filter((id) => !pieces.has(id) && turnsInPlace(doc.parts.get(id)!, cat.conventions)),
+  );
+  return { ids, moving, poses, inPlace, pieces };
 }
 
 /** Draws the moving parts at `deltaOf(topmost) · world` without changing the doc. */
@@ -243,16 +393,32 @@ export function previewMoving(
 const originDelta = (s: Session, delta: TransformDelta) => (top: PartId) =>
   deltaMatrix(
     delta.kind === 'rotate' && s.inPlace.has(top) ? { ...delta, pivot: 'individual' } : delta,
-    positionOf(s.poses.world.get(top)!),
+    s.pieces.get(top)?.origin ?? positionOf(s.poses.world.get(top)!),
   );
+
+/** Draws each piece item's moving bodies at `deltaOf(id) · body world`. */
+function previewPieces(s: Session, deltaOf: (id: PartId) => Matrix4): void {
+  const vp = getViewport();
+  if (!vp?.layer) return;
+  for (const [id, { bodies }] of s.pieces) {
+    const delta = deltaOf(id);
+    for (const b of bodies) {
+      const world = bodyWorld(s.poses, id, b);
+      if (world) vp.layer.setBodyPreview(id, b, delta.clone().multiply(world));
+    }
+  }
+  vp.request();
+}
 
 export function previewSession(s: Session, delta: TransformDelta): void {
   previewMoving(s.moving, s.poses, originDelta(s, delta));
+  previewPieces(s, originDelta(s, delta));
 }
 
 /** Puts the moving parts back where the doc has them. */
 export function cancelSession(s: Session): void {
   previewMoving(s.moving, s.poses, () => new Matrix4());
+  previewPieces(s, () => new Matrix4());
   transformStateSig.value = 'idle';
 }
 
@@ -262,8 +428,16 @@ export function finishSession(s: Session, delta: TransformDelta): void {
   transformStateSig.value = 'idle';
   if (!cat) return cancelSession(s);
   let refused: string[] = [];
-  const patch = commit(plural(delta.kind === 'move' ? 'Move' : 'Rotate', s.ids.length), (d) => {
-    refused = applyTransform(d, cat, cat.conventions, s.poses, s.ids, originDelta(s, delta));
+  const verb = delta.kind === 'move' ? 'Move' : 'Rotate';
+  const noun = s.pieces.size === s.ids.length ? 'piece' : 'part';
+  const deltaOf = originDelta(s, delta);
+  const whole = s.ids.filter((id) => !s.pieces.has(id));
+  const patch = commit(plural(verb, s.ids.length, noun), (d) => {
+    refused = applyTransform(d, cat, cat.conventions, s.poses, whole, deltaOf);
+    for (const [id, { body }] of s.pieces) {
+      const v = transformPiece(d, cat, cat.conventions, s.poses, id, body, deltaOf(id));
+      if (!v.ok) refused.push(v.message);
+    }
   });
   if (patch === null) cancelSession(s);
   if (refused.length > 0) toast(refused.join('\n'), 'warn');
@@ -293,11 +467,24 @@ export const gizmoHandlers = {
 
 /** Movement past this many pixels turns a press on a part into a drag. */
 const DRAG_PX = 4;
+/** A drag drops onto the nearest socket that takes it within this many pixels (D25). */
+export const SNAP_PX = 20;
+
+/**
+ * A drag re-attach in progress, for the sockets the view shows (D25): the last point under the cursor,
+ * the last part under it, and what is being dragged.
+ */
+export const reattachSig = signal<{
+  readonly point: Vector3;
+  readonly near: PartId | null;
+  readonly moving: ReadonlySet<PartId>;
+} | null>(null);
 
 interface Reattach {
   readonly id: PartId;
   /** The body dragged, for multi-piece parts (D-F3): only it re-attaches; null drags the whole part. */
   readonly body: number | null;
+  readonly bodies: readonly number[];
   readonly moving: ReadonlyMap<PartId, PartId>;
   readonly poses: Poses;
   /** The doc `retargetPose` will check availability in. */
@@ -306,6 +493,9 @@ interface Reattach {
   readonly plane: Plane;
   readonly grab: Vector3 | null;
   target: { pose: PoseTarget; world: Matrix4 } | { root: Matrix4 } | null;
+  /** The last point and part under the cursor (`reattachSig`). */
+  point: Vector3;
+  near: PartId | null;
 }
 
 function beginReattach(id: PartId, ndc: Vector2, body: number | null): Reattach | null {
@@ -324,7 +514,20 @@ function beginReattach(id: PartId, ndc: Vector2, body: number | null): Reattach 
   const grab = cursorRay(ndc)?.intersectPlane(plane, new Vector3()) ?? null;
   transformStateSig.value = 'reattach';
   const check = body === null ? retargetCheckDoc(doc, cat, id) : bodyCheckDoc(doc, cat, id, body);
-  return { id, body, moving, poses, check, plane, grab, target: null };
+  const bodies = body === null ? [] : pieceBodies(doc, cat, id, body);
+  return {
+    id,
+    body,
+    bodies,
+    moving,
+    poses,
+    check,
+    plane,
+    grab,
+    target: null,
+    point: positionOf(world),
+    near: null,
+  };
 }
 
 /** The child sockets of a dragged body that can take `kind` in the check doc, preferred first. */
@@ -342,41 +545,62 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   const cat = catalogSig.value!;
   const conv = cat.conventions;
   const part = doc.parts.get(r.id)!;
-  const skip = new Set([...r.moving.keys(), r.id]);
-  if (r.body === null) skip.delete(r.id);
-  const sock = pickSocket(ndc, skip, (c) => canBeParent(r.check, cat, c.part, c.socket).ok);
+  const skip = new Set(r.moving.keys());
+  const def = cat.parts[part.type];
+  const refusesSelf = (target: PoseTarget): boolean =>
+    target.part === r.id &&
+    (r.body === null ||
+      selfStackRefusal(def, r.body, target, r.check.parts.get(r.id)!.conns) !== null);
+  /** The child socket that would join a host socket, or null when that joint is refused. */
+  const selfFor = (c: { part: PartId; socket: SocketId }): SocketId | null => {
+    if (skip.has(c.part) || !canBeParent(r.check, cat, c.part, c.socket).ok) return null;
+    if (refusesSelf({ kind: 'socket', ...c })) return null;
+    const fit = defaultChildSocket(cat, part.type, doc.parts.get(c.part)!.type, c.socket);
+    const self = r.body === null ? fit : (bodySockets(r, 'joint', fit)[0] ?? null);
+    return self !== null && canBeChild(r.check, cat, r.id, self, 'joint').ok ? self : null;
+  };
+  const sock = pickSocketWhere(ndc, (c) => selfFor(c) !== null, SNAP_PX);
   if (sock) {
     const host = doc.parts.get(sock.part)!;
-    const fit = defaultChildSocket(cat, part.type, host.type, sock.socket);
-    const self = r.body === null ? fit : (bodySockets(r, 'joint', fit)[0] ?? null);
-    if (
-      self !== null &&
-      canBeChild(r.check, cat, r.id, self, 'joint').ok &&
-      canBeParent(r.check, cat, sock.part, sock.socket).ok
-    ) {
-      const world = childWorldViaSocket(
-        bodyWorld(r.poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
-        socketMatrix(cat, host.type, sock.socket).m,
-        childSocketMatrix(cat, part.type, self, { type: host.type, socket: sock.socket }).m,
-        part.props,
-        conv,
-        bodyPivot(cat, part.type, self),
-      );
-      return {
-        pose: { kind: 'socket', part: sock.part, socket: sock.socket, childSocket: self },
-        world,
-      };
-    }
+    const self = selfFor(sock)!;
+    const at = bodyWorld(r.poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!;
+    const frame = socketMatrix(cat, host.type, sock.socket).m;
+    const world = childWorldViaSocket(
+      at,
+      frame,
+      childSocketMatrix(cat, part.type, self, { type: host.type, socket: sock.socket }).m,
+      ignoresOrientation(cat, host.type, sock.socket) ? {} : part.props,
+      conv,
+      bodyPivot(cat, part.type, self),
+    );
+    r.point = positionOf(at.clone().multiply(frame));
+    r.near = sock.part;
+    return {
+      pose: { kind: 'socket', part: sock.part, socket: sock.socket, childSocket: self },
+      world,
+    };
   }
-  const hit = pickPart(ndc, skip);
+  const hit = pickPart(ndc, skip, r.body === null ? undefined : { part: r.id, body: r.body });
   hoverSig.value = hit?.part ?? null;
+  // A target lights whole.
+  hoverPieceSig.value = null;
   if (hit) {
+    r.point = hit.point.clone();
+    r.near = hit.part;
     const mount =
       r.body === null
         ? chooseMountSocket(r.check, cat, r.id)
         : (bodySockets(r, 'mount', null)[0] ?? null);
     if (mount === null) return null;
     const frame = cfToMatrix4(frameFromNormal(hit.point.toArray(), hit.normal.toArray()));
+    const pose: PoseTarget = {
+      kind: 'surface',
+      part: hit.part,
+      frame,
+      partName: hit.subPart,
+      body: hit.body,
+    };
+    if (refusesSelf(pose)) return null;
     const world = childWorldViaPoint(
       frame,
       new Matrix4(),
@@ -386,7 +610,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       conv,
       bodyPivot(cat, part.type, mount),
     );
-    return { pose: { kind: 'surface', part: hit.part, frame, partName: hit.subPart }, world };
+    return { pose, world };
   }
   // Empty space: a root follows the cursor; anything else (a body too) would cancel, so it stays put.
   if (r.body !== null || poseConn(part) || !r.grab) return null;
@@ -396,6 +620,11 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
 
 function updateReattach(r: Reattach, ndc: Vector2): void {
   r.target = findTarget(r, ndc);
+  reattachSig.value = {
+    point: r.point,
+    near: r.near ?? (r.body === null ? null : r.id),
+    moving: new Set(r.moving.keys()),
+  };
   const before = (r.body === null ? r.poses.world.get(r.id) : bodyWorld(r.poses, r.id, r.body))!;
   const t = r.target;
   const delta = !t
@@ -410,7 +639,10 @@ function updateReattach(r: Reattach, ndc: Vector2): void {
 /** Draws the dragged body at `m` (its doc pose to undo the preview). */
 function previewBody(r: Reattach, m: Matrix4): void {
   const vp = getViewport();
-  vp?.layer?.setBodyPreview(r.id, r.body!, m);
+  const delta = m.clone().multiply(bodyWorld(r.poses, r.id, r.body!)!.clone().invert());
+  for (const b of r.bodies) {
+    vp?.layer?.setBodyPreview(r.id, b, delta.clone().multiply(bodyWorld(r.poses, r.id, b)!));
+  }
   vp?.request();
 }
 
@@ -422,6 +654,7 @@ function undoPreview(r: Reattach): void {
 
 function endReattach(r: Reattach): void {
   transformStateSig.value = 'idle';
+  reattachSig.value = null;
   hoverSig.value = null;
   const cat = catalogSig.value;
   const t = r.target;
@@ -440,11 +673,13 @@ function endReattach(r: Reattach): void {
 }
 
 /**
- * The Move and Rotate tools: the gizmo (placed by the viewport) moves or turns the selection, clicks
- * and box drags select as in the Select tool, and on the Move tool dragging a part re-attaches it.
+ * The Move, Rotate and Select tools: the gizmo (placed by the viewport, Move and Rotate only) moves or
+ * turns the selection, clicks and box drags select as in the plain select tool, and dragging a part
+ * re-attaches it: any part on the Move tool, a piece of a multi-piece part on the Select tool (D25).
  */
-export function createTransformTool(id: 'move' | 'rotate'): Tool {
+export function createTransformTool(id: 'move' | 'rotate' | 'select'): Tool {
   const inner = createSelectTool();
+  const click = createClickSelect(hasPieces);
   let press: { x: number; y: number; part: PartId; body: number } | null = null;
   let drag: Reattach | null = null;
   let gizmoPress = false;
@@ -452,6 +687,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
     if (drag) {
       undoPreview(drag);
       transformStateSig.value = 'idle';
+      reattachSig.value = null;
       hoverSig.value = null;
     }
     press = null;
@@ -469,11 +705,24 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
       if (e.kind === 'move' && e.button === -1) return inner.onPointer!(e);
       if (e.button !== 0) return;
       if (e.kind === 'down') {
-        if (getViewport()?.gizmo?.busy()) {
-          gizmoPress = true;
-          return;
+        const pressed = id === 'rotate' ? null : pressAt(e.ndc);
+        const piece = pressed?.hit && hasPieces(pressed.hit.part) ? pressed.hit : null;
+        const gizmo = getViewport()?.gizmo;
+        if (gizmo?.busy()) {
+          // The gizmo's centre sits on a selected piece and would cover it whole: there the piece
+          // wins, so dragging it re-attaches it onto sockets (D25). Its arrows and planes still move it.
+          const yields =
+            piece !== null &&
+            gizmo.axis() === 'XYZ' &&
+            selectionSig.value.pieces.get(piece.part) === piece.body;
+          if (!yields) {
+            gizmoPress = true;
+            return;
+          }
+          gizmo.cancel();
         }
-        const hit = id === 'move' && !pickPoint(e.ndc) ? pickPart(e.ndc) : null;
+        const drags = id === 'move' || piece !== null;
+        const hit = pressed && !pressed.point && drags ? pressed.hit : null;
         if (hit) press = { x: e.x, y: e.y, part: hit.part, body: hit.body };
         else inner.onPointer!(e);
         return;
@@ -485,7 +734,10 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
       if (!press) return inner.onPointer!(e);
       if (e.kind === 'move') {
         if (!drag && Math.hypot(e.x - press.x, e.y - press.y) > DRAG_PX) {
-          if (!selectionSig.value.parts.has(press.part)) select([press.part], 'replace');
+          if (!selectionSig.value.parts.has(press.part)) {
+            if (hasPieces(press.part)) selectPiece(press.part, press.body, 'replace');
+            else select([press.part], 'replace');
+          }
           // On a multi-piece part, the body under the cursor moves alone, as in game.
           const type = docSig.value.parts.get(press.part)!.type;
           const pieces = catalogSig.value?.parts[type]?.bodies;
@@ -494,10 +746,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
         if (drag) updateReattach(drag, e.ndc);
       } else if (e.kind === 'up') {
         if (drag) endReattach(drag);
-        else {
-          const { ids, op } = clickOp(press.part, e);
-          select(ids, op);
-        }
+        else click({ part: press.part, body: press.body }, e, performance.now());
         press = null;
         drag = null;
       }
@@ -507,7 +756,7 @@ export function createTransformTool(id: 'move' | 'rotate'): Tool {
         reset();
         return true;
       }
-      return (inner.onKey?.(e) ?? false);
+      return inner.onKey?.(e) ?? false;
     },
   };
 }

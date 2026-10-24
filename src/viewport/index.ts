@@ -6,13 +6,21 @@ import { parseShareText } from '../core/share';
 import { poseTargets, type Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
-import { hiddenSig, hoverPointSig, hoverSig, select, selectionSig } from '../state/selection';
+import {
+  hiddenSig,
+  hoverPieceSig,
+  hoverPointSig,
+  hoverSig,
+  select,
+  selectionSig,
+} from '../state/selection';
 import { settingsSig } from '../state/settings';
 import { assetsSig, catalogSig, docSig, loadDoc, viewBus } from '../state/store';
 import { BlenderControls, type NavHost } from './cameras/blender';
 import { CameraRig } from './cameras/rig';
 import { StudioControls } from './cameras/studio';
 import { registerDebug } from './debug';
+import { dragSocketParts } from './drag-sockets';
 import { createGrid } from './grid';
 import { createNavGizmo } from './nav-gizmo';
 import { PartsLayer } from './parts-layer';
@@ -35,7 +43,6 @@ import {
   pointGizmoPlacement,
   selectedPoint,
 } from '../tools/point';
-import { createSelectTool } from '../tools/select';
 import {
   cornerWorlds,
   createSurfaceTool,
@@ -46,6 +53,8 @@ import {
   createTransformTool,
   gizmoHandlers,
   gizmoPlacement,
+  pieceOrigin,
+  reattachSig,
   pivotModeSig,
   spaceSig,
   transformStateSig,
@@ -99,6 +108,8 @@ function overlay(
 
 /** How many parts near the camera show their markers for Connect and Point (the layers' limit). */
 const NEAR_PARTS = 400;
+/** While a part or piece is dragged, sockets show on this many parts nearest the drag (D25). */
+const DRAG_PARTS = 12;
 
 function nearestParts(doc: Doc, poses: Poses, eye: Vector3, n: number): PartId[] {
   const at = new Vector3();
@@ -111,7 +122,7 @@ function nearestParts(doc: Doc, poses: Poses, eye: Vector3, n: number): PartId[]
   return all.map((p) => p.id);
 }
 
-const selectTool = createSelectTool();
+const selectTool = createTransformTool('select');
 const moveTool = createTransformTool('move');
 const rotateTool = createTransformTool('rotate');
 const paintTool = createPaintTool({
@@ -218,11 +229,22 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
         ? nearestParts(doc, poses, rig.camera.position, NEAR_PARTS).filter((id) => !hidden.has(id))
         : null;
     let socketParts: PartId[] = [];
-    if (state === 'reattach') socketParts = hover === null ? [] : [hover];
-    else if (state === 'idle' && (tool === 'connect' || tool === 'place')) socketParts = near!;
+    const drag = reattachSig.value;
+    if (state === 'reattach') {
+      socketParts = drag ? dragSocketParts(doc, poses, hover, drag, hidden, DRAG_PARTS) : [];
+    } else if (state === 'idle' && (tool === 'connect' || tool === 'place')) socketParts = near!;
     else if (state === 'idle') {
       socketParts = [...sel.parts].filter((id) => !hidden.has(id));
       if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
+      // A selected piece also shows the sockets around it: where a drag can join it (D25).
+      const [piece] = sel.pieces;
+      if (piece) {
+        const point = pieceOrigin(poses, cat, doc, piece[0], piece[1]);
+        const drag = { point, near: null, moving: sel.parts };
+        for (const id of dragSocketParts(doc, poses, null, drag, hidden, DRAG_PARTS)) {
+          if (!socketParts.includes(id)) socketParts.push(id);
+        }
+      }
     }
     const attach =
       state === 'idle' ? poseTargets(doc, cat, [...sel.parts].slice(0, NEAR_PARTS)) : null;
@@ -263,7 +285,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     follow(rig.camera);
     gizmo.update(rig.camera);
     const wb = inWorkbench();
-    if (ctx.layer) ctx.layer.group.visible = ctx.layer.labels.group.visible = !wb;
+    if (ctx.layer) {
+      ctx.layer.group.visible = ctx.layer.labels.group.visible = !wb;
+      ctx.layer.springs.group.visible = !wb;
+    }
     sockets.group.visible = !wb;
     points.group.visible = !wb;
     workbench.group.visible = wb;
@@ -429,6 +454,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   };
   const onLeave = () => {
     if (hoverSig.value !== null) hoverSig.value = null;
+    if (hoverPieceSig.value !== null) hoverPieceSig.value = null;
   };
   const onWheel = (e: WheelEvent) => controls().onWheel(e);
   /** A part card dragged over the view arms the Place tool; its ghost follows, and the drop places it. */
@@ -544,7 +570,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     grid.setTheme(s.theme);
     if (assets && ctx.layer?.assets !== assets) {
       if (ctx.layer) {
-        scene.remove(ctx.layer.group, ctx.layer.labels.group);
+        scene.remove(ctx.layer.group, ctx.layer.labels.group, ctx.layer.springs.group);
         ctx.layer.dispose();
       }
       if (ctx.ghost) {
@@ -552,7 +578,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
         ctx.ghost.dispose();
       }
       ctx.layer = new PartsLayer(assets);
-      scene.add(ctx.layer.group, ctx.layer.labels.group);
+      scene.add(ctx.layer.group, ctx.layer.labels.group, ctx.layer.springs.group);
       ctx.ghost = new GhostLayer(assets);
       scene.add(ctx.ghost.group);
     }
@@ -582,10 +608,17 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     request();
   });
   const stopHighlight = effect(() => {
-    const { parts, active } = selectionSig.value;
+    const { parts, pieces, active } = selectionSig.value;
     const hover = hoverSig.value;
+    const hoverPiece = hoverPieceSig.value;
     if (!assetsSig.value) return;
-    ctx.layer?.highlight(parts, hover, typeof active === 'number' ? active : null);
+    ctx.layer?.highlight(
+      parts,
+      hover,
+      typeof active === 'number' ? active : null,
+      pieces,
+      hoverPiece,
+    );
     request();
   });
 
@@ -675,6 +708,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
               selectionSig.value,
               pivotModeSig.value,
               spaceSig.value,
+              catalogSig.value,
             );
     transformGizmo.place(at);
     request();

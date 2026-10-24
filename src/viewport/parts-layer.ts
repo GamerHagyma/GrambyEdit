@@ -15,6 +15,7 @@ import { POSE_APPROX, type Poses } from '../core/pose';
 import type { Doc, Json, PartId } from '../core/types';
 import { LabelsLayer } from './labels-layer';
 import { SlotAllocator } from './slots';
+import { SpringsLayer } from './springs-layer';
 import { PartMaterialCache } from './part-materials';
 
 /** Bits of the per-instance `aFlags` attribute. */
@@ -71,7 +72,28 @@ interface Layer {
   /** One mesh, or one per body of a multi-piece part (D-F3); a part uses the same slot in each. */
   meshes: InstancedMesh[];
   readonly slots: SlotAllocator;
-  flags: InstancedBufferAttribute;
+  /** One per mesh: each body's geometry carries its own `aFlags`. */
+  flags: InstancedBufferAttribute[];
+}
+
+/** A part's highlight bits: `whole` on every body, and `bodies` on single bodies. */
+interface Lit {
+  whole: number;
+  bodies: Map<number, number>;
+}
+
+/** Adds bits to a part's whole-part bits, or to one body's bits when `body` is given. */
+function addLit(lit: Lit, bits: number, body: number | undefined): void {
+  if (body === undefined) lit.whole |= bits;
+  else lit.bodies.set(body, (lit.bodies.get(body) ?? 0) | bits);
+}
+
+/** The highlight bits of one body of a part with `count` bodies. A body index past the last lights them all. */
+function bodyBits(lit: Lit | undefined, body: number, count: number): number {
+  if (!lit) return 0;
+  let bits = lit.whole;
+  for (const [picked, b] of lit.bodies) if (picked === body || picked >= count) bits |= b;
+  return bits;
 }
 
 const isRgb = (v: Json | undefined): v is [number, number, number] =>
@@ -81,11 +103,13 @@ export class PartsLayer {
   readonly group = new Group();
   /** The text parts show in game; its group goes in the scene next to `group`. */
   readonly labels = new LabelsLayer();
+  /** The game's suspension springs; its group goes in the scene next to `group` too. */
+  readonly springs = new SpringsLayer();
   private readonly layers = new Map<string, Layer>();
   private readonly owner = new Map<PartId, Layer>();
-  /** Per part: the sync-owned bits (approx, hidden, painted) and the highlight bits. */
+  /** Per part: the sync-owned bits (approx, hidden, painted), and the highlight bits. */
   private readonly base = new Map<PartId, number>();
-  private highlights = new Map<PartId, number>();
+  private highlights = new Map<PartId, Lit>();
   private readonly desaturate = { value: 1 };
   readonly material = createPartMaterial(this.desaturate);
   private readonly materials: PartMaterialCache;
@@ -135,7 +159,7 @@ export class PartsLayer {
       if ((poses.flags.get(id) ?? 0) & POSE_APPROX) f |= FLAG_APPROX;
       if (isHidden) f |= FLAG_HIDDEN;
       this.base.set(id, f);
-      layer.flags.setX(slot, f | (this.highlights.get(id) ?? 0));
+      this.writeFlags(id, layer, slot);
     }
     for (const layer of this.layers.values()) {
       for (const mesh of layer.meshes) {
@@ -143,9 +167,10 @@ export class PartsLayer {
         mesh.instanceMatrix.needsUpdate = true;
         mesh.instanceColor!.needsUpdate = true;
       }
-      layer.flags.needsUpdate = true;
+      for (const flags of layer.flags) flags.needsUpdate = true;
     }
     this.labels.sync(doc, poses, hidden);
+    this.springs.sync(doc, poses, hidden, this.assets.catalog);
   }
 
   /**
@@ -178,26 +203,43 @@ export class PartsLayer {
     mesh.instanceMatrix.needsUpdate = true;
   }
 
-  /** Sets the selection, hover and active bits, touching only parts whose bits change. */
-  highlight(selected: ReadonlySet<PartId>, hovered: PartId | null, active: PartId | null): void {
-    const next = new Map<PartId, number>();
-    for (const id of selected) next.set(id, FLAG_SELECTED | (id === active ? FLAG_ACTIVE : 0));
-    if (hovered !== null) next.set(hovered, (next.get(hovered) ?? 0) | FLAG_HOVERED);
-    for (const id of new Set([...this.highlights.keys(), ...next.keys()])) {
-      const bits = next.get(id) ?? 0;
-      if ((this.highlights.get(id) ?? 0) === bits) continue;
+  /**
+   * Sets the selection, hover and active bits. A piece lights its body only; a body index out of
+   * range lights the whole part.
+   */
+  highlight(
+    selected: ReadonlySet<PartId>,
+    hovered: PartId | null,
+    active: PartId | null,
+    pieces: ReadonlyMap<PartId, number> = new Map(),
+    hoveredPiece: number | null = null,
+  ): void {
+    const next = new Map<PartId, Lit>();
+    const litOf = (id: PartId): Lit => {
+      if (!next.has(id)) next.set(id, { whole: 0, bodies: new Map() });
+      return next.get(id)!;
+    };
+    for (const id of selected) {
+      addLit(litOf(id), FLAG_SELECTED | (id === active ? FLAG_ACTIVE : 0), pieces.get(id));
+    }
+    if (hovered !== null) addLit(litOf(hovered), FLAG_HOVERED, hoveredPiece ?? undefined);
+    const touched = new Set([...this.highlights.keys(), ...next.keys()]);
+    this.highlights = next;
+    for (const id of touched) {
       const layer = this.owner.get(id);
       const slot = layer?.slots.slotOf(id);
       if (!layer || slot === undefined) continue;
-      layer.flags.setX(slot, (this.base.get(id) ?? 0) | bits);
-      layer.flags.needsUpdate = true;
+      this.writeFlags(id, layer, slot);
+      for (const flags of layer.flags) flags.needsUpdate = true;
     }
-    this.highlights = next;
   }
 
   /** True when any part carries a highlight bit (the outline pass can be skipped otherwise). */
   hasHighlight(): boolean {
-    for (const bits of this.highlights.values()) if (bits & HIGHLIGHT) return true;
+    for (const lit of this.highlights.values()) {
+      if (lit.whole & HIGHLIGHT) return true;
+      for (const bits of lit.bodies.values()) if (bits & HIGHLIGHT) return true;
+    }
     return false;
   }
 
@@ -229,6 +271,7 @@ export class PartsLayer {
     }
     this.materials.dispose();
     this.labels.dispose();
+    this.springs.dispose();
     this.layers.clear();
     this.owner.clear();
   }
@@ -241,9 +284,17 @@ export class PartsLayer {
     }
     const slot = layer.slots.alloc(id);
     if (layer.slots.capacity > layer.meshes[0].instanceMatrix.count) this.grow(layer);
-    layer.flags.setX(slot, 0);
+    for (const flags of layer.flags) flags.setX(slot, 0);
     this.owner.set(id, layer);
     return layer;
+  }
+
+  /** Writes each body's flags for a part: the base bits, plus the highlight bits that body carries. */
+  private writeFlags(id: PartId, layer: Layer, slot: number): void {
+    const base = this.base.get(id) ?? 0;
+    const lit = this.highlights.get(id);
+    const count = layer.meshes.length;
+    layer.flags.forEach((flags, body) => flags.setX(slot, base | bodyBits(lit, body, count)));
   }
 
   private release(id: PartId, layer: Layer): void {
@@ -256,19 +307,19 @@ export class PartsLayer {
   }
 
   private createLayer(type: string, capacity: number): Layer {
-    const flags = new InstancedBufferAttribute(new Float32Array(capacity), 1).setUsage(
-      DynamicDrawUsage,
-    );
     // Per-layer geometries that share the cached part's buffers, so `aFlags` stays per layer.
     const bases = bodyGeometries(this.assets, type) ?? [partGeometry(this.assets, type)];
-    const meshes = bases.map((base) => {
+    const flags = bases.map(() =>
+      new InstancedBufferAttribute(new Float32Array(capacity), 1).setUsage(DynamicDrawUsage),
+    );
+    const meshes = bases.map((base, b) => {
       const geometry = new BufferGeometry();
       for (const [name, attr] of Object.entries(base.attributes)) geometry.setAttribute(name, attr);
       geometry.setIndex(base.index);
       for (const group of base.groups)
         geometry.addGroup(group.start, group.count, group.materialIndex);
       geometry.userData = { ...base.userData };
-      geometry.setAttribute('aFlags', flags);
+      geometry.setAttribute('aFlags', flags[b]);
       return this.createMesh(geometry, capacity, type);
     });
     return { type, meshes, slots: new SlotAllocator(capacity), flags };
@@ -299,10 +350,15 @@ export class PartsLayer {
   /** Rebuilds the layer's meshes at the allocator's doubled capacity, keeping every instance. */
   private grow(layer: Layer): void {
     const cap = layer.slots.capacity;
-    const flags = new InstancedBufferAttribute(new Float32Array(cap), 1).setUsage(DynamicDrawUsage);
-    flags.array.set(layer.flags.array);
-    layer.meshes = layer.meshes.map((old) => {
-      old.geometry.setAttribute('aFlags', flags);
+    const flags = layer.flags.map((old) => {
+      const next = new InstancedBufferAttribute(new Float32Array(cap), 1).setUsage(
+        DynamicDrawUsage,
+      );
+      next.array.set(old.array);
+      return next;
+    });
+    layer.meshes = layer.meshes.map((old, b) => {
+      old.geometry.setAttribute('aFlags', flags[b]);
       const mesh = this.createMesh(old.geometry, cap, layer.type);
       mesh.instanceMatrix.array.set(old.instanceMatrix.array);
       mesh.instanceColor!.array.set(old.instanceColor!.array);

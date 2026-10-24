@@ -103,3 +103,43 @@ test('a self-joint keeps pointing at its own part after an earlier part is delet
   const without1 = { ...d, order: [2], parts: new Map([...d.parts].filter(([id]) => id !== 1)) };
   expect(toEntries(without1)).toEqual([['Part', [[1, '6', 1]], []]]);
 });
+
+test.each(['4', '{stack}'])(
+  'an anchored self-connection to %s stays editable and reindexes',
+  (target) => {
+    const d = imp([
+      ['Part', [], []],
+      ['Part', [], []],
+      [
+        'Wire',
+        [
+          ['3', '6', 2],
+          ['1', target, 3],
+        ],
+        [],
+      ],
+    ]);
+    expect(d.parts.get(3)!.conns[1]).toEqual({
+      self: '1',
+      target: target.startsWith('{')
+        ? { kind: 'point', part: 3, uuid: target }
+        : { kind: 'socket', part: 3, socket: target },
+    });
+    const without1 = {
+      ...d,
+      order: [2, 3],
+      parts: new Map([...d.parts].filter(([id]) => id !== 1)),
+    };
+    expect(toEntries(without1)).toEqual([
+      ['Part', [], []],
+      [
+        'Wire',
+        [
+          ['3', '6', 1],
+          ['1', target, 2],
+        ],
+        [],
+      ],
+    ]);
+  },
+);

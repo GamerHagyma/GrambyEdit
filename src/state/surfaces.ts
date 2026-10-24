@@ -172,7 +172,10 @@ export const surfacePreviewSig = computed<PartsPreview | null>(() => {
   return cat && world && built?.ok ? previewOnHost(built.sub, cat, world) : null;
 });
 
-/** Create: the caps go onto the parent in one history entry and become the selection (one-shot, D22). */
+/**
+ * Create: the caps go onto the parent in one history entry and become the selection (one-shot, D22).
+ * The corners hide until Undo takes the caps out again.
+ */
 export function createSurface(): void {
   const cat = catalogSig.value;
   const host = surfaceHostSig.value;
@@ -191,7 +194,7 @@ export function createSurface(): void {
     return;
   }
   select(ids, 'replace');
-  surfaceSig.value = { ...surfaceSig.value, created: ids };
+  surfaceSig.value = { ...surfaceSig.value, created: ids, selected: [] };
 }
 
 /** The Surfaces tab is on show: its tool takes the view while a parent is picked. */

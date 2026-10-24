@@ -5,6 +5,7 @@ import { issuesSig } from '../../state/derived';
 import { keysFor } from '../../state/keymap';
 import { selectionSig, selectModeSig } from '../../state/selection';
 import { settingsSig } from '../../state/settings';
+import { catalogSig, docSig } from '../../state/store';
 import { inspectorTabSig, openDialog, showInspectorTab, statusHintSig } from '../../state/ui';
 import { mountViewport } from '../../viewport/index';
 import { CREDITS } from '../credits';
@@ -116,6 +117,17 @@ export function Shell({
     : 'properties';
   const chooseTab = (id: string) => showInspectorTab(id);
   const selected = selectionSig.value.parts.size;
+  const cat = catalogSig.value;
+  const doc = docSig.value;
+  const multiPiece = [...selectionSig.value.parts].some((id) => {
+    const part = doc.parts.get(id);
+    return part && (cat?.parts[part.type]?.bodies?.length ?? 0) > 1;
+  });
+  const hint =
+    statusHintSig.value ??
+    (multiPiece
+      ? 'Drag piece to socket/surface (Select/Move) · G/R: move/rotate · Double-click: whole part'
+      : null);
   const scheme = settingsSig.value.cameraScheme;
   /** A menu item that runs a command and shows its first key in the current scheme. */
   const cmd = (id: string, label: string): MenuItem => ({
@@ -189,7 +201,11 @@ export function Shell({
         </span>
         {status}
         <IssueBadge />
-        {statusHintSig.value && <span class="status-hint">{statusHintSig.value}</span>}
+        {hint && (
+          <span class="status-hint" title={hint}>
+            {hint}
+          </span>
+        )}
         <small class="credit">{CREDITS}</small>
       </StatusBar>
       <Toasts />

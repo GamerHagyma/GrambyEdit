@@ -85,7 +85,12 @@ function rayAt(ndc: Vector2): Raycaster | null {
 }
 
 /** The visible part under `ndc`, with the sub-part whose triangles were hit; parts in `skip` are ignored. */
-export function pickPart(ndc: Vector2, skip?: ReadonlySet<PartId>): Hit | null {
+export function pickPart(
+  ndc: Vector2,
+  skip?: ReadonlySet<PartId>,
+  /** One body to look through: a dragged piece, whose doc pose is still drawn under it. */
+  skipBody?: { readonly part: PartId; readonly body: number },
+): Hit | null {
   const ray = rayAt(ndc);
   const assets = assetsSig.value;
   if (!ray || !assets) return null;
@@ -107,6 +112,7 @@ export function pickPart(ndc: Vector2, skip?: ReadonlySet<PartId>): Hit | null {
     const worlds = poses.bodies?.get(id);
     const shapes = bodies ?? [partGeometry(assets, part.type)];
     shapes.forEach((geometry, body) => {
+      if (skipBody?.part === id && skipBody.body === body) return;
       const world = (bodies && worlds?.[body]) || lead;
       probe.geometry = geometry;
       probe.matrixWorld.copy(world);
@@ -176,6 +182,24 @@ export function pickSocket(
   const tied = hits.filter((h) => h.px <= hits[0].px + TIE_PX);
   const { part, socket } = (prefer && tied.find(prefer)) ?? hits[0];
   return { part, socket };
+}
+
+/** The displayed socket nearest the cursor within `radiusPx` that `accept` takes (a drag's drop, D25). */
+export function pickSocketWhere(
+  ndc: Vector2,
+  accept: (s: { part: PartId; socket: SocketId }) => boolean,
+  radiusPx: number,
+): { part: PartId; socket: SocketId } | null {
+  const vp = getViewport();
+  let best: { part: PartId; socket: SocketId } | null = null;
+  let bestPx = radiusPx;
+  for (const s of vp?.sockets?.shown() ?? []) {
+    const px = screenDistance(s.world, ndc);
+    if (px === null || px >= bestPx || !accept(s)) continue;
+    best = { part: s.part, socket: s.socket };
+    bestPx = px;
+  }
+  return best;
 }
 
 /** The drawn point nearest the cursor, within a small screen radius. */

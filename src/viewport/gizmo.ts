@@ -107,6 +107,11 @@ export class TransformGizmo {
     );
   }
 
+  /** The handle under the pointer (TransformControls' axis: 'X', 'XY', 'XYZ' for the centre…), or null. */
+  axis(): string | null {
+    return this.controls.object !== undefined ? this.controls.axis : null;
+  }
+
   /** Esc mid-drag: puts the gizmo back, reports a cancel, and ignores the rest of the drag. */
   cancel(): boolean {
     if (!this.dragging) return false;

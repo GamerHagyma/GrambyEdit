@@ -46,9 +46,9 @@ test('preserves soft texture alpha without making opaque textured meshes transpa
   ).toBe(true);
 });
 
-test('flags the hinged child sockets and the door sockets the game turns them on', async () => {
+test("flags the hinged child sockets, and keeps the game's mount type on parent sockets", async () => {
   const { catalog } = await buildAssets({ root: '.', outDir: null });
-  const flagged = (flag: 'hinge' | 'door') =>
+  const flagged = (flag: 'hinge') =>
     Object.values(catalog.parts)
       .flatMap((p) =>
         Object.entries(p.sockets)
@@ -57,13 +57,43 @@ test('flags the hinged child sockets and the door sockets the game turns them on
       )
       .sort();
   expect(flagged('hinge')).toEqual(['DoorA.1', 'DoorB.1', 'DoorC.1', 'DoorD.1', 'GasCap.1']);
-  expect(flagged('door')).toEqual([
-    'Chassis.12',
-    'Chassis.20',
-    'Chassis.3',
-    'Roof.2',
-    'Roof.3',
-    'Roof.4',
-    'Roof.5',
+  const mounts = Object.values(catalog.parts)
+    .flatMap((p) =>
+      Object.entries(p.sockets)
+        .filter(([, s]) => s.mountType)
+        .map(([id, s]) => `${p.type}.${id} ${s.mountType}`),
+    )
+    .sort();
+  expect(mounts).toEqual([
+    'BallSocket.2 BallSocket',
+    'Bearing.2 Bearing',
+    'Chassis.1 Suspension',
+    'Chassis.10 Steering',
+    'Chassis.12 Door',
+    'Chassis.20 Door',
+    'Chassis.3 Door',
+    'Chassis.4 Suspension',
+    'Chassis.5 Suspension',
+    'Chassis.6 Suspension',
+    'GoKart.4 Suspension',
+    'GoKart.6 Steering',
+    'Roof.2 Door',
+    'Roof.3 Door',
+    'Roof.4 Door',
+    'Roof.5 Door',
+    'Servo_Physics.2 Servo',
+    'ShoppingCart.2 Steering',
+    'ShoppingCart.3 Suspension',
+    'ShoppingCart.4 Suspension',
+    'ShoppingCart.5 Suspension',
+    'ShoppingCart.6 Suspension',
   ]);
+}, 30_000);
+
+test("turns the Spinner's output so +Y points out of the part, as the Servo's is captured", async () => {
+  // The game captures it as a hinge attachment, its spin axis (X) out of the part.
+  const { catalog } = await buildAssets({ root: '.', outDir: null });
+  const spinner = catalog.parts.Bearing.sockets['2'].frame;
+  const servo = catalog.parts.Servo_Physics.sockets['2'].frame;
+  spinner.forEach((v, k) => expect(v).toBeCloseTo(servo[k], 6));
 }, 30_000);

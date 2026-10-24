@@ -120,6 +120,8 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D21 | **Generator host picker:** the Generators tab can pick a part in the build as the host. The shape is centred on that part in its own axes, its points go onto that part (no extra host part), it previews live in the view, and Generate adds it at once. Without a picked part, Generate arms Place as before. The panel always shows a small picture of the shape, turning slowly; Spin stops it and a drag turns it by hand (user, 2026-10-24) | user (2026-10-24) | "Point at a part and it will generate the shape on top of it, instead of having to drag it onto it." The centre was the user's choice over the clicked spot. |
 | D22 | **GasCap surfaces:** a Surfaces tab fills four corners, relative to a picked parent part, with rows of GasCaps on points of that part. The corners span a bilinear patch, so a corner lifted out of plane twists the surface. Caps (fixed 0.645-stud squares) overlap just enough to leave no gaps, are flush at square edges, and stick out slightly at slanted ones. With more than one colour they are lifted 0–0.015 studs by row and by place in the row (odd or even), so overlaps never flicker. Creating is one-shot: the caps are ordinary points and parts, and the corners are editor state, outside undo | user (2026-10-24) | "It would be very important that it would fill the bounds of the 4 points without visible gaps." Sticking out over leaving slivers, and one-shot over re-editable, were the user's choices. Five or more corners come later. |
 | D23 | **Hinged parts turn on door sockets and points:** door sockets use `S(c, a) · Ry(90°)`; ordinary sockets stay unturned. On points, non-GasCap hinged parts keep the inferred centre-turn rule. GasCaps use the calibrated rotation and hinge-distance translation in §10.2, superseding the earlier centre-turn-only and zero-translation guesses | user + me (2026-10-24) | The quarter turn fits the Chassis fuel door and Roof openings; Kamaz doors on Connectors remain unturned. The user confirmed all three compensated green plates centred in the six-case in-game comparison, covering normal, rotated-host and rotated-point cases. This establishes the GasCap point translation; the nested probe's global orientation still differs between game and editor. |
+| D24 | **Spinner, Servo and wheel-socket mounts:** a part on a Spinner (`Bearing`) or `Servo_Physics` output keeps its default turn: its Orientation is ignored, turning it is refused with the reason, and the ±90° commands skip it. The Spinner's output comes captured as the game's hinge attachment, its spin axis (X) out of the part; the build turns it `Rz(−90°)` so +Y points out (§5.3), which equals the Servo's captured frame, so a wheel on it stands upright. A part on a wheel socket (mount type `Suspension`: Chassis 1, 4, 5, 6; GoKart 4; ShoppingCart 3–6) hangs `SPRING_DROP` = 0.9 studs below it along the base's −Y, and the view draws a coil from the socket down to it (§10.2, §11.1). Nothing is simulated | user + me (2026-10-24) | In the user's car, wheels turned in the editor kept their default turn in game, stood upright where the editor laid them flat, and hung on a visible spring below the Chassis's wheel wells. The drop and the coil are measured from the user's Chassis screenshot; GoKart and ShoppingCart reuse them unverified. The Spinner's turn about its axle is a guess: the Servo's. |
+| D25 | **Multi-piece parts are edited by piece.** A click on a piece selects that piece alone; a double-click or an Outliner row selects the whole part. The gizmo, G and R move or turn a piece by rules P1–P5 (§9.3). Dragging a piece onto a socket joins it, with the Move or the Select tool, and the drop snaps to the nearest socket that accepts the piece, within 20 px. A selected piece shows the sockets around it, and a press on it wins over the gizmo's centre, which would otherwise cover it (user, 2026-10-25). Whole-part commands are unchanged, and a new wire is still dropped whole, then its ends are dragged | user (2026-10-24) | A wire end could not be moved or re-wired on its own: the user could not "modify the wiring in the editor", because a click selected the whole part. |
 
 ---
 
@@ -215,7 +217,7 @@ Also emitted:
 - frames outside the mesh bbox by more than 0.25 studs (how the `AltitudeSensor` placeholder was caught);
 - duplicate or unknown socket ids.
 
-Every frame is stored **outward**: local +Y points out of the part, for child and parent sockets alike. Until captured data lands, `Part` uses the Workshop frames read **row-major** (the fix in §24.1), with its ball socket 1 turned 180° about X to face outward; everything else uses `approx` frames (§10.5). Captured frames come from the Socket Workbench (§12.7). They apply at runtime from local storage, and once committed as `data/socket_geometry.json` the build merges them for everyone.
+Every frame is stored **outward**: local +Y points out of the part, for child and parent sockets alike. Until captured data lands, `Part` uses the Workshop frames read **row-major** (the fix in §24.1), with its ball socket 1 turned 180° about X to face outward; everything else uses `approx` frames (§10.5). Captured frames come from the Socket Workbench (§12.7). They apply at runtime from local storage, and once committed as `data/socket_geometry.json` the build merges them for everyone. The game's own capture keeps the convention except for the Spinner's output (`Bearing` socket 2), a hinge attachment with its spin axis X out of the part: the build turns it `Rz(−90°)` so +Y points out (D24).
 
 ### 5.4 Data fixes before any feature relies on roles (needs your confirmation)
 Under the current catalog roles, **558 of 1,621 logic-to-logic joints in the corpus (34%) join two inputs or two outputs** (**verified**). The corrections below follow the spec's own verified table:
@@ -407,6 +409,20 @@ Multi-selection transforms move only the **topmost** selected parts (no selected
 
 New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ · World(p) · S(p, m) · Me⁻¹ · Re(p)⁻¹`. This is §10.2's ephemeral equation solved for `CF(u)`; symbols are defined there.
 
+**Pieces (D25).** A piece is one body of a multi-piece part (D19). Its own conn is the first non-raw conn on one of its sockets. A gizmo, G or R moves a piece by the first rule below that fits (`transformPiece`). Every check runs before any change, so a refusal leaves the doc as it was.
+
+| case | the piece's own conn | result |
+|---|---|---|
+| P1 | on a point | The point moves. A point carries one part, so only this piece moves. |
+| P2 | none, and the part has a pose conn | A new point goes on the lead's host, with a conn from the piece's first child socket that accepts a mount. Refused when none does: "This piece has no free connection point to mount on." |
+| P3 | a structural socket joint | The joint becomes a mount on a new point on the same parent, if that socket can still mount without it. Otherwise refused, with the reason and "Detach it first to move it freely." |
+| P4 | a signal joint | Refused: "`Wire #n` is wired to `Button #m` at this piece. Drag the piece onto another socket to re-wire it." |
+| P5 | none; the part is a root | The part's layout moves, so all its pieces move together. |
+
+A move of the lead piece also carries every piece with no conn of its own, which keeps its place next to the lead (D19), and every piece stacked on a carried piece. The preview shows the same bodies. Point-mounted children ride the lead and participate in cycle checks.
+
+**Self-stacking (user, 2026-10-25).** A Wire end may attach to a free socket or the surface of its stationary other end once that end has an external connection. The new self-connection is secondary so the external connection still leads the part. A point-mounted end's sockets remain unavailable under the game's piece rules; its surface can carry the other end. The importer resolves secondary self-connections after an external anchor, preserving editable placement through export/import. Unanchored legacy self-joints remain raw. Same-body drops and body dependency loops are refused. Selecting a multi-piece part shows drag, G/R and double-click instructions in the bottom bar; a tool's current prompt takes precedence.
+
 ---
 
 ## 10. Spatial model (`core/pose.ts`, `core/conventions.ts`)
@@ -426,6 +442,9 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 
 - A hinged child socket mates by `S(c, a) · Ry(90°)` on a door socket, and by `Q · S(c, a)` on a point, `Q` being that quarter turn about the part's origin (D23), with the GasCap exception below.
 - **Calibrated GasCap point mount:** its effective socket has rotation `Rotation(S(c, a)) · Ry(90°)` and translation `(0, e, 0)`, where `e = -Position(S(c, a)).z` is the captured hinge distance (0.322 studs). In the flat probe this moves the cap −Z by 0.322; inverse placement adds the compensation along the point plane, so newly generated caps land where previewed. The user confirmed centring in all three green comparison cases (normal, rotated host, rotated points). This supersedes the zero-translation hypothesis. Both pose computation and inverse point placement use the same frame. Ordinary sockets and other hinged types are unchanged. The nested comparison probe also shows a separate global orientation discrepancy, not resolved by this translation calibration.
+
+- **Spinners and Servos (D24):** a child on a socket whose mount type is `Bearing` or `Servo` takes `R(c) = I`: the game keeps it at its default turn.
+- **Wheel sockets (D24):** a `Suspension` socket mates its child at `T(0, −SPRING_DROP, 0) · S(q, b)`, 0.9 studs down the base's −Y, where the game's spring settles it. Socket markers stay on the socket itself; the springs layer (§11.1) draws the coil between.
 
 - `R(c)` is built from the child's `OrientationX/Y/Z` props (degrees; values accumulate past 360 in real codes, e.g. 1080). It turns the child in its own frame, about its pivot `p` (D18): the part origin for one-piece parts, the piece's mesh-component centre for multi-piece parts. With `orientationPivot: 'socket'` the earlier formula applies instead: `World(q) · S(q, b) · R(c) · M · S(c, a)⁻¹`.
 - **Multi-piece parts** (D19) have one world matrix per piece. A piece is posed by the first conn on its own sockets. A piece without one keeps its place next to the lead piece (the piece of the part's first conn). Loops anchor per piece (§10.6).
@@ -476,7 +495,10 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
 - **One `InstancedMesh` per part type.** Capacity doubles when full and slots are recycled. Baked vertex group colors plus the paintable mask let a small `onBeforeCompile` patch choose `instanceColor` (the `RGB` prop) for paintable vertices and the baked color elsewhere. That keeps draw calls to one per part type present.
 - Per-instance attributes: `instanceColor` (paint), `aFlags` (selected / hovered / approximate / hidden / glow).
 - **Selection outline:** selected instances render into a mask target, and a full-screen edge pass draws an orange outline (white for hover; the active part is brighter). This is the Blender look, and it works with 16K selected parts.
+- **Pieces (D25):** on a multi-piece part, the outline and the hover light only the picked body. Each body mesh has its own `aFlags`, so a piece's bits survive when the layer grows. A whole-part pick lights every body, and a drop target lights whole.
+- **Drag sockets:** while a part or piece is dragged, the sockets shown are those of the hovered part, the part last hovered in the drag, and the 12 parts nearest the drag point. Whole moving and hidden parts never show; a piece drag keeps its own part's stationary sockets visible for self-stacking (`viewport/drag-sockets.ts`).
 - **Sockets layer:** instanced shaded spheres with an arrow along the socket's outward +Y and a contrasting outline, at constant screen size, so a socket reads from every side.
+- **Springs layer** (`viewport/springs-layer.ts`, D24): a navy coil, five turns 0.33 studs round, from each wheel socket with a part on it down to that part. It sits in its own group, beside the parts, so picking and outlines skip it, and it hides with hidden parts.
 
   | socket state | look |
   |---|---|
@@ -540,7 +562,8 @@ The toolbar holds Select · Move · Rotate · Connect · Point · Paint (keys 1�
 
 | input | action |
 |---|---|
-| click | select |
+| click | select. On a multi-piece part (D25), select that piece alone |
+| double-click | select the whole part (a second plain click on the same spot within 400 ms and 4 px) |
 | Shift+click | toggle |
 | Ctrl+click | remove |
 | drag on empty space | box select |
@@ -566,6 +589,7 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
    The popover shows "attach by socket N ▾" so you can change it. On a point, the part always mounts by its default mount socket.
 4. The placed part becomes selected. Nothing stays armed (D20): each further click on a free socket opens the picker again, with the recent types first. Shift+click several sockets first to place on all of them at once.
 5. **Wiring existing parts:** drag from one socket to another, or click one and then the other. The child side is whichever end is a child-side socket; ambiguous cases resolve by role, then corpus frequency. The preview line turns green or red with the §7.1 reason. The joint is appended, or becomes `conns[0]` if the child was a root; pose cycles are refused.
+   - A Light's input is a child socket (Light socket 1), so a Light hangs from a Wire end's parent socket (2 or 4). The Light does not join the end. Checked against `public/assets/catalog.json` (2026-10-24).
 
 ### 12.3 Point (must-have: free ephemeral connection points)
 - Click a part surface: a point is created on that host at the hit.
@@ -592,7 +616,8 @@ Attachment points are selectable entities (`hostId:uuid`), visible when their ho
 - Modal transforms take X/Y/Z axis constraints (again for the active part's local axis, again to unlock), typed numbers, Enter or LMB to confirm, Esc or RMB to cancel. With no axis, a move follows the mouse in the view plane and a rotation turns about the view axis with the mouse.
 - **Snapping happens only while Ctrl is held**, for the gizmo and the modal alike, to the snap steps (move in studs, rotate in degrees), which the toolbar's Snap fields and Settings edit (user decision, 2026-10-23). By default a move goes whole steps from where it started. With the toolbar's **World grid** ticked, a snapped move lands on the world grid instead, on all three axes whichever axis is dragged; moves then use world axes, for points and surface corners too (user, 2026-10-24).
 - **No shortcut uses a Ctrl combination that browsers reserve or that reloads the page** (Ctrl+T/N/W/Tab, Ctrl+1–9, Ctrl+R; user decision, 2026-10-23).
-- The Move tool also drags parts with **snap-to-socket / snap-to-surface re-attach** (§9.3).
+- The Move tool also drags parts with **snap-to-socket / snap-to-surface re-attach** (§9.3), and the Select tool drags pieces of multi-piece parts the same way (D25). On a selected piece the gizmo's centre covers the piece, so a press there drags the piece onto sockets instead; the arrows and planes still move it. While a piece is selected, the sockets of the 12 parts nearest it show too. A socket within 20 px of the cursor that accepts the part or piece wins, nearest first; otherwise the drop lands on the surface under the cursor. A target part lights whole (D25).
+- **Pieces (D25):** with a piece selected, the gizmo, G and R move or turn that piece alone, by rules P1–P5 (§9.3). The gizmo sits on the piece's own pivot. A refused move is toasted with its reason, and the doc is unchanged. Whole-part commands (Delete, Copy, Duplicate, Hide, Paint, Properties, the ±90° commands) act on the whole part.
 - All conversions follow §9.3. One transaction per completed transform.
 
 ### 12.5 Paint (must-have: auto paint / region paint — all four meanings)
@@ -762,7 +787,7 @@ The left dock's **Surfaces** tab, after **Generators** (`ui/panels/SurfacePanel.
 - Corners: drag the active one with the gizmo (§12.9), or type X/Y/Z in the parent's axes. **Reset corners** returns to the starting square.
 - The status line shows the count ("48 GasCaps in 6 rows") and the cost line, as for generators. Errors (corners too close, crossed or dented, more than 20,000 caps) disable Create.
 - Colours: single, gradient along corner 1 → 2 or 1 → 4, or random from a palette.
-- **Create** adds the caps onto the parent in one history entry and selects them. The preview hides until the surface changes or Undo takes the caps out.
+- **Create** adds the caps onto the parent in one history entry and selects them. The preview and the corners hide until the surface changes or Undo takes the caps out (user, 2026-10-24).
 - Tiling (`core/surfaces/tiling.ts`): rows of caps along corner 1 → 2, or along 2 → 3 when that takes fewer. Each row (the band between two lines of constant v) is sliced square to its middle line into cells, like bricks, with as many cells as its length needs; each cap holds the row's direction and covers its cell's outline (the slices' ends and the band's corners between them). That is gap-free: seen along the cap's normal, a slice runs straight across the row, and the band's lines of constant v are straight pieces between slices. The fewest caps are searched over a few row counts, both ways. Before this (user, 2026-10-24), every cell followed the slant of a uniform grid, and one corner raised 6 studs on a 4-stud square took 350 caps; a 4 × 2 parallelogram leaning 4 studs took 385. Now they take 105 and 27, within about 1–2 times their area in caps; a sharp point (20° or less) costs up to about 2 times.
 
 ---

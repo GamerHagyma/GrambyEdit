@@ -30,8 +30,11 @@ export interface SocketDef {
    * and points (D23).
    */
   readonly hinge?: true;
-  /** A door socket (the game's MountType Door): hinged children mount on it turned (D23). */
-  readonly door?: true;
+  /**
+   * A parent socket's mount type in game (its MountType attribute): Door turns hinged children (D23),
+   * Bearing and Servo keep children at their default turn, Suspension hangs them on a spring.
+   */
+  readonly mountType?: string;
 }
 
 /**

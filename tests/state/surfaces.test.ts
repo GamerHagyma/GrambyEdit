@@ -20,6 +20,7 @@ import {
 } from '../../src/state/surfaces';
 import { baseCatalogSig, docSig, loadDoc, resetStoreForTests, undo } from '../../src/state/store';
 import { pickSig } from '../../src/tools/pick';
+import { cornerWorlds } from '../../src/tools/surface';
 import { docOf, part } from '../helpers/doc';
 import { realCatalog } from '../helpers/real-catalog';
 
@@ -145,4 +146,15 @@ test('several corners move in one change', () => {
     before[2],
     [7, 7, 7],
   ]);
+});
+
+test('Create hides the corners until Undo takes the caps out again', () => {
+  pickTop();
+  selectCorner(1);
+  expect(cornerWorlds()).toHaveLength(4);
+  createSurface();
+  expect(cornerWorlds()).toBeNull();
+  expect(surfaceSig.value.selected).toEqual([]);
+  undo();
+  expect(cornerWorlds()).toHaveLength(4);
 });

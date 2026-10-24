@@ -159,6 +159,15 @@ export function paintedGroups(
   return new Set(pick ? [groups.indexOf(pick)] : []);
 }
 
+/**
+ * A Spinner's output (MountType Bearing) comes captured as the game's hinge attachment, its spin axis
+ * (X) out of the part. Turned by Rz(−90°) so +Y points out, the catalog's convention, as the Servo's
+ * output is captured: a wheel on it then stands upright, as in game (user, 2026-10-24).
+ */
+function hingeOutward([x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22]: CFrame12): CFrame12 {
+  return [x, y, z, -r01, r00, r02, -r11, r10, r12, -r21, r20, r22];
+}
+
 function outsideBy(p: CFrame12, min: Vec3, max: Vec3): number {
   let d2 = 0;
   for (let a = 0; a < 3; a++) {
@@ -327,12 +336,17 @@ export async function buildAssets(opts: {
         const attributes = socket.attributes ?? {};
         s.sockets[id] = {
           ...s.sockets[id],
-          frame: socket.cframe,
+          frame:
+            socket.side === 'parent' && attributes.MountType === 'Bearing'
+              ? hingeOutward(socket.cframe)
+              : socket.cframe,
           frameSource: 'captured',
           ...(socket.side === 'child' && Object.hasOwn(attributes, 'HingeType')
             ? { hinge: true }
             : {}),
-          ...(socket.side === 'parent' && attributes.MountType === 'Door' ? { door: true } : {}),
+          ...(socket.side === 'parent' && typeof attributes.MountType === 'string'
+            ? { mountType: attributes.MountType }
+            : {}),
         };
       }
       subParts = Object.fromEntries(

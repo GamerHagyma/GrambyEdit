@@ -8,6 +8,7 @@
 import { signal } from '@preact/signals';
 import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
+import { catalogSig, docSig } from '../state/store';
 import { settingsSig } from '../state/settings';
 import { surfaceSig } from '../state/surfaces';
 import { getViewport } from '../viewport/context';
@@ -22,6 +23,7 @@ import {
   pivotModeSig,
   pivotOf,
   previewSession,
+  selectionFrame,
   snapValue,
   transformStateSig,
   type Axis,
@@ -50,12 +52,12 @@ function partsTarget(): Target | null {
   const sel = selectionSig.value;
   const ids = [...sel.parts].filter((id) => session.poses.world.has(id));
   const active = typeof sel.active === 'number' && sel.parts.has(sel.active) ? sel.active : null;
+  // A selected piece (D25) turns about, and along, its own body.
+  const { originOf, worldOf } = selectionFrame(docSig.value, session.poses, sel, catalogSig.value);
   const local = new Quaternion();
-  session.poses.world
-    .get(active ?? ids[ids.length - 1])!
-    .decompose(new Vector3(), local, new Vector3());
+  worldOf(active ?? ids[ids.length - 1])!.decompose(new Vector3(), local, new Vector3());
   return {
-    pivot: pivotOf(session.poses, ids, pivotModeSig.value, active),
+    pivot: pivotOf(session.poses, ids, pivotModeSig.value, active, originOf),
     local,
     preview: (d) => previewSession(session, d),
     finish: (d) => finishSession(session, d),
@@ -165,7 +167,8 @@ function moveDelta(m: Modal): TransformDelta {
   const typed = typedValue(m);
   const step = settingsSig.value.snapMove;
   // Typing without a constraint moves along X, as in Blender.
-  if (typed !== null) return { kind: 'move', offset: (axis ?? AXES.X.clone()).multiplyScalar(typed) };
+  if (typed !== null)
+    return { kind: 'move', offset: (axis ?? AXES.X.clone()).multiplyScalar(typed) };
   let offset = new Vector3();
   if (axis) {
     // Mouse travel along the axis as drawn on screen, converted back to studs.
@@ -201,7 +204,10 @@ function rotation(m: Modal): { axis: Vector3; degrees: number } {
   const turn = ((((MathUtils.radToDeg(to - from) + 180) % 360) + 360) % 360) - 180;
   // Seen from the side the axis points away to, the same screen turn is the opposite rotation.
   const degrees = axis.dot(toViewer) < 0 ? -turn : turn;
-  return { axis, degrees: snapping(m) ? snapValue(degrees, settingsSig.value.snapRotate) : degrees };
+  return {
+    axis,
+    degrees: snapping(m) ? snapValue(degrees, settingsSig.value.snapRotate) : degrees,
+  };
 }
 
 function rotateDelta(m: Modal): TransformDelta {
@@ -221,7 +227,12 @@ function hintText(m: Modal, d: TransformDelta): string {
   const snap = m.ctrl ? 'snapping' : `hold Ctrl to snap (${step})`;
   const keys = `X/Y/Z axis · type a number · ${snap} · Enter confirms · Esc cancels`;
   if (d.kind === 'move') {
-    const amount = m.typed || d.offset.toArray().map((v) => v.toFixed(3)).join(', ');
+    const amount =
+      m.typed ||
+      d.offset
+        .toArray()
+        .map((v) => v.toFixed(3))
+        .join(', ');
     return `Move${m.axis ? ` along ${m.axis}${space}` : ''}: ${amount} · ${keys}`;
   }
   const about = m.axis ? `${m.axis}${space}` : 'the view axis';

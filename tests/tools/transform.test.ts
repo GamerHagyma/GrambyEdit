@@ -11,6 +11,7 @@ import {
   snapValue,
 } from '../../src/tools/transform';
 import { MINI } from '../helpers/catalog';
+import { realCatalog } from '../helpers/real-catalog';
 import { docOf, mount, part, pt, sock } from '../helpers/doc';
 
 const same = (a: Matrix4, b: Matrix4) =>
@@ -42,10 +43,21 @@ test('snapping leaves no float noise and no negative zero', () => {
 
 test('a rotation turns about the pivot, or about each origin for individual origins', () => {
   const quarter = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2);
-  const at = (v: Vector3, m: Matrix4) => v.clone().applyMatrix4(m).toArray().map((x) => +x.toFixed(9) + 0);
-  const aboutPivot = deltaMatrix({ kind: 'rotate', rotation: quarter, pivot: new Vector3(1, 0, 0) }, new Vector3(3, 0, 0));
+  const at = (v: Vector3, m: Matrix4) =>
+    v
+      .clone()
+      .applyMatrix4(m)
+      .toArray()
+      .map((x) => +x.toFixed(9) + 0);
+  const aboutPivot = deltaMatrix(
+    { kind: 'rotate', rotation: quarter, pivot: new Vector3(1, 0, 0) },
+    new Vector3(3, 0, 0),
+  );
   expect(at(new Vector3(3, 0, 0), aboutPivot)).toEqual([1, 0, -2]);
-  const individual = deltaMatrix({ kind: 'rotate', rotation: quarter, pivot: 'individual' }, new Vector3(3, 0, 0));
+  const individual = deltaMatrix(
+    { kind: 'rotate', rotation: quarter, pivot: 'individual' },
+    new Vector3(3, 0, 0),
+  );
   expect(at(new Vector3(3, 0, 0), individual)).toEqual([3, 0, 0]);
   const move = deltaMatrix({ kind: 'move', offset: new Vector3(0, 0, 5) }, new Vector3(3, 0, 0));
   expect(at(new Vector3(3, 0, 0), move)).toEqual([3, 0, 5]);
@@ -67,7 +79,8 @@ test('applyTransform moves topmost parts through points or layout and lists refu
     refused = applyTransform(d, MINI, C, poses, [2, 5, 6], () => shift);
   });
   const after = computePoses(doc, MINI, C);
-  for (const id of [2, 3, 6]) same(after.world.get(id)!, shift.clone().multiply(poses.world.get(id)!));
+  for (const id of [2, 3, 6])
+    same(after.world.get(id)!, shift.clone().multiply(poses.world.get(id)!));
   same(after.world.get(5)!, poses.world.get(5)!);
   expect(refused).toEqual([
     'Light #5 has no free connection point to mount on without breaking its joint to Gate-AND #4. Detach it first to move it freely.',
@@ -85,7 +98,10 @@ test('a socket-joined part is converted to a point mount without jumping', () =>
 });
 
 test('turning a socket-joined part keeps its joint and writes its Orientation, as the game does', () => {
-  const d0 = docOf(part(1, 'Part'), part(2, 'Gate-AND', [sock('4', 1, '6')], { OrientationX: 1080 }));
+  const d0 = docOf(
+    part(1, 'Part'),
+    part(2, 'Gate-AND', [sock('4', 1, '6')], { OrientationX: 1080 }),
+  );
   const poses = computePoses(d0, MINI, C);
   const world = poses.world.get(2)!;
   const quarter = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI / 2);
@@ -115,4 +131,24 @@ test('grid snapping lands the moved point on the world grid on every axis (user,
   close(gridOffset(new Vector3(0.6, 0, 0), from, 0.25), 0.7, -0.1, -0.05);
   // Without moving, the point still lands on the grid.
   close(gridOffset(new Vector3(), from, 0.25), -0.05, -0.1, -0.05);
+});
+
+test('turning a part on a Spinner or a Servo is refused: the game keeps its default turn', async () => {
+  const cat = await realCatalog();
+  const conv = cat.conventions;
+  const d0 = docOf(part(1, 'Bearing'), part(2, 'Wheel', [sock('1', 1, '2')]));
+  const poses = computePoses(d0, cat, conv);
+  const at = new Vector3().setFromMatrixPosition(poses.world.get(2)!);
+  const turn = new Matrix4()
+    .makeTranslation(at.x, at.y, at.z)
+    .multiply(new Matrix4().makeRotationY(Math.PI / 2))
+    .multiply(new Matrix4().makeTranslation(-at.x, -at.y, -at.z));
+  let refused: string[] = [];
+  const { doc } = transact(d0, 'Rotate 1 part', (d) => {
+    refused = applyTransform(d, cat, conv, poses, [2], () => turn);
+  });
+  expect(refused).toEqual([
+    'Wheel #2 sits on a Spinner or Servo, which keeps it at its default turn in game.',
+  ]);
+  expect(doc.parts.get(2)).toEqual(d0.parts.get(2));
 });
