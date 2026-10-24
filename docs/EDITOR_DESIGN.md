@@ -114,7 +114,7 @@ Claim labels used below: **verified** (ran it or read it in this repo), **spec**
 | D15 | **Socket Workbench:** an in-editor tool generates per-part probe codes (a colored marker stick on every socket); you click each marker's spot on the part mesh; it exports `data/socket_geometry.json` | user ("use the visualizer to gather that data") + me | Turns the missing dataset into roughly 1–2 minutes per part, prioritised by corpus usage. Captured frames apply live from local storage before they are committed. |
 | D16 | v1 only: logic/live simulation and every tier-2 item are out of scope | user | |
 | D17 | Repo `GrambyEdit`; Mumble Games credited as owner of the game assets; mostly private use | user | Free GitHub Pages needs a public repo (§20). |
-| D18 | `Orientation` turns the posed part (or piece) about its own pivot **after** mating, composed `Ry · Rx · Rz` (Roblox's Orientation order) | user + me | In game a part turns about its centre (2026-10-23). The order: a `Part` tilted on X and turned 180° on Y showed its tilt mirrored while X was applied first (2026-10-24). The order is **inferred**; probes P2–P3 confirm it. |
+| D18 | `Orientation` turns the posed part (or piece) about its own axes and pivot **after** mating. A positive `OrientationY` turns it clockwise seen from above (against the right-hand rule); X and Z follow the right-hand rule; the order is `Ry · Rx · Rz` | user + me | In game a part turns about its centre (2026-10-23). The user's Part test (`tests/fixtures/part_test.txt`, 2026-10-24) put a Y = 90 column on the side opposite the right-hand rule. Bumpers and Wings are turned on Z = 90 hundreds of times in the corpus, which only makes sense about the part's own axes. The X and Z directions and the order are **unverified**; probe P7 settles them. |
 | D19 | **Multi-piece parts** (`Wire`, `Switch`, `Button`, `RemoteButton`, `TripWire`, the Splitters, `RubberBand`, `Rope`; `data/curation/bodies.json`): each piece is posed by its own first connection and can be dragged on its own | user | In game a Wire end or a Switch circle moves separately from its base (2026-10-23). |
 | D20 | Connect never arms a part type: every click on a free socket or point opens the picker, recent types first. Shift+click still gathers several targets | user | The armed type kept placing the same part (2026-10-23). |
 
@@ -429,7 +429,7 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
 | symbol | default | why |
 |---|---|---|
 | M, Me | `Rx(180°)`: every frame is stored outward, so the child's frame is turned to face the parent's | identical to the Workshop's "frames coincide" mating, whose ball frame points inward (§24.1); the roll (flip about X vs Z) is a **guess** that probe P1 settles |
-| R | `Ry(OrientationY) · Rx(OrientationX) · Rz(OrientationZ)` in the child's own frame, about its pivot (§10.2), i.e. three.js `Euler(x, y, z, 'YXZ')` (`orientationOrder`) | Roblox's Orientation order; **inferred** from the user's `Part` report (D18). Probes P2–P3 confirm it |
+| R | `Ry(−OrientationY) · Rx(OrientationX) · Rz(OrientationZ)` in the child's own frame, about its pivot (§10.2), i.e. three.js `Euler(x, −y, z, 'YXZ')` (`orientationOrder`, `orientationSigns: [1, −1, 1]`) | the Y direction is **verified** in game (D18); the X and Z directions and the order (Roblox's) are **guesses** until probe P7 |
 | Re | R, applied on points too (`orientationOnPoints: true`) | **guess** |
 | pivot | `orientationPivot: 'part'` | the user's in-game observation (D18) |
 | Sub | identity for every partName | until your capture supplies sub-piece frames |
@@ -441,7 +441,8 @@ New point frame, so nothing jumps: `CF(u) = (World(h) · Sub(h, partName))⁻¹ 
    - P2–P3 `OrientationX` and `OrientationY` = 90 on a socket joint;
    - P4 a `Gate-AND` on a `Base` point with a 90°-rotated `cframe`;
    - P5 a `Base` host with `OrientationY` = 90 hosting a point;
-   - P6 a `Roof` host with `partName` `"Glass"` vs `"Roof"`.
+   - P6 a `Roof` host with `partName` `"Glass"` vs `"Roof"`;
+   - P7 turn directions and order: a red stick on +X and a blue one on +Z for reference, a yellow Part (X 90), a purple Part (Z 90) and a green Part (X 90, Y 90) with sticks showing where each turned. Every sign and order combination gives a different picture.
    You report what you see; the answers become `conventions.json` values.
 
 ### 10.5 Fallback frames (`frameSource: 'approx'`)
