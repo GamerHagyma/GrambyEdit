@@ -93,3 +93,23 @@ test.each(['Servo', 'Servo_Physics'])(
     expect((screen.getByLabelText('Limit enabled') as HTMLInputElement).checked).toBe(false);
   },
 );
+
+test('Sustain stays checked and the active direction remains pressed after inspecting another part', () => {
+  loadDoc(docOf(part(1, 'Servo'), part(2, 'Part')));
+  select([1], 'replace');
+  render(<Properties />);
+  fireEvent.click(screen.getByLabelText('Sustain'));
+  fireEvent.click(screen.getByRole('button', { name: 'Red — positive' }));
+  act(() => advanceServoSimulation(0.2));
+  act(() => select([2], 'replace'));
+  expect(screen.queryByRole('group', { name: 'Simulate' })).toBeNull();
+  act(() => advanceServoSimulation(0.2));
+  expect(servoPreviewSig.value?.angle).toBe(18);
+  act(() => select([1], 'replace'));
+  expect((screen.getByLabelText('Sustain') as HTMLInputElement).checked).toBe(true);
+  expect(screen.getByRole('button', { name: 'Red — positive' }).getAttribute('aria-pressed')).toBe(
+    'true',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+  expect(servoPreviewSig.value).toBeNull();
+});

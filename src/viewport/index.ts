@@ -6,7 +6,7 @@ import { parseShareText } from '../core/share';
 import { poseTargets, type Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
-import { withServoPreview } from '../state/servo-preview';
+import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
   hiddenSig,
@@ -436,7 +436,15 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.focus({ preventScroll: true });
     if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
     if (controls().onPointerDown(e) || e.button !== 0) return;
-    finishServoSimulation();
+    const simulation = servoPreviewSig.peek();
+    if (
+      toolSig.peek() !== 'select' ||
+      modalActiveSig.peek() ||
+      !simulation ||
+      !servoSustainEnabled(simulation.id)
+    ) {
+      finishServoSimulation();
+    }
     canvas.setPointerCapture(e.pointerId);
     toolPointer(toTool(e, 'down', 0));
     const move = (ev: PointerEvent) => toolPointer(toTool(ev, 'move', 0));

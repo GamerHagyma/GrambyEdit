@@ -1,17 +1,17 @@
 import type { JSX } from 'preact';
-import { useLayoutEffect, useState } from 'preact/hooks';
+import { useLayoutEffect } from 'preact/hooks';
 import type { PartId } from '../../core/types';
 import type { ServoDirection } from '../../core/servo-simulation';
-import { servoPreviewSig } from '../../state/servo-preview';
+import { servoPreviewSig, servoSustainEnabled, setServoSustain } from '../../state/servo-preview';
 import { activateServo, releaseServo } from '../../state/servo-simulation';
 
 export function ServoControls({ id }: { readonly id: PartId }): JSX.Element {
-  const [sustain, setSustain] = useState(false);
+  const sustain = servoSustainEnabled(id);
   const preview = servoPreviewSig.value;
   const direction = preview?.id === id ? preview.direction : 0;
   useLayoutEffect(
     () => () => {
-      if (servoPreviewSig.peek()?.id === id) releaseServo();
+      if (servoPreviewSig.peek()?.id === id && !servoSustainEnabled(id)) releaseServo();
     },
     [id],
   );
@@ -75,8 +75,8 @@ export function ServoControls({ id }: { readonly id: PartId }): JSX.Element {
           type="checkbox"
           checked={sustain}
           onChange={(e) => {
-            releaseServo();
-            setSustain(e.currentTarget.checked);
+            if (servoPreviewSig.peek()?.id === id) releaseServo();
+            setServoSustain(id, e.currentTarget.checked);
           }}
         />
         Sustain

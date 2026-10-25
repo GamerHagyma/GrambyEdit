@@ -221,3 +221,22 @@ test('Escape releases a sustained servo and lets Rest return to zero', async () 
   expect(docSig.value.parts.get(1)!.props.Rotation ?? 0).toBe(0);
   cancelServoSimulation();
 });
+
+test('Escape stops a sustained servo while focus is in isolated reference controls', async () => {
+  const { activateServo, advanceServoSimulation } =
+    await import('../../src/state/servo-simulation');
+  const { servoPreviewSig } = await import('../../src/state/servo-preview');
+  inspectorTabSig.value = 'properties';
+  render(<App />);
+  commit('Add Servo', (d) => {
+    addPart(d, 'Servo', { Rest: false });
+  });
+  select([1], 'replace');
+  activateServo(1, 1, true);
+  advanceServoSimulation(0.2);
+  fireEvent.click(screen.getByRole('tab', { name: 'Reference', exact: true }));
+  expect(servoPreviewSig.value?.direction).toBe(1);
+  fireEvent.keyDown(screen.getByLabelText('Image URL'), { key: 'Escape', code: 'Escape' });
+  expect(servoPreviewSig.value).toBeNull();
+  expect(docSig.value.parts.get(1)!.props.Rotation).toBe(9);
+});

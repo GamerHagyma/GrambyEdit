@@ -7,7 +7,7 @@ import { cancelPick } from '../tools/pick';
 import { setTool } from '../tools/manager';
 import { disarm } from './place';
 import { selectionSig } from './selection';
-import { servoPreviewSig } from './servo-preview';
+import { servoPreviewSig, servoSustainEnabled, setServoSustain } from './servo-preview';
 import { commit, docSig, workspaceVersionSig } from './store';
 import { committedPosesSig } from './derived';
 import { POSE_CYCLE } from '../core/pose';
@@ -89,6 +89,7 @@ export function activateServo(
     setTool('select');
   }
   const next = sustain && p?.direction === direction ? 0 : direction;
+  setServoSustain(id, sustain);
   servoPreviewSig.value = {
     workspace: workspaceVersionSig.peek(),
     doc,
@@ -120,7 +121,11 @@ export function startServoLifecycle(): () => void {
       cancelServoSimulation();
       return;
     }
-    if (p.direction !== 0 && (selected.size !== 1 || !selected.has(p.id) || tab !== 'properties'))
+    if (
+      p.direction !== 0 &&
+      !servoSustainEnabled(p.id) &&
+      (selected.size !== 1 || !selected.has(p.id) || tab !== 'properties')
+    )
       releaseServo();
   });
   const release = () => releaseServo();

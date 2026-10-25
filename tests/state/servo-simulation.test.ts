@@ -6,7 +6,11 @@ import {
   startServoLifecycle,
   cancelServoSimulation,
 } from '../../src/state/servo-simulation';
-import { servoPreviewSig, withServoPreview } from '../../src/state/servo-preview';
+import {
+  servoPreviewSig,
+  withServoPreview,
+  servoSustainEnabled,
+} from '../../src/state/servo-preview';
 import {
   docSig,
   loadDoc,
@@ -90,7 +94,7 @@ test('real edits and New/import cancel stale angles rather than writing over the
   expect(docSig.value.parts.get(1)!.type).toBe('Part');
   expect(historySig.value.past).toHaveLength(0);
 });
-test('blur and tab changes release sustained activation', () => {
+test('blur releases sustained activation but inspector tab changes keep it running', () => {
   activateServo(1, 1, true);
   advanceServoSimulation(0.2);
   window.dispatchEvent(new Event('blur'));
@@ -98,7 +102,9 @@ test('blur and tab changes release sustained activation', () => {
   activateServo(1, -1, true);
   advanceServoSimulation(0.1);
   inspectorTabSig.value = 'reference';
-  expect(servoPreviewSig.value).toBeNull();
+  expect(servoPreviewSig.value?.direction).toBe(-1);
+  advanceServoSimulation(0.1);
+  expect(servoPreviewSig.value?.angle).toBeCloseTo(0);
 });
 
 test('replacing the workspace with the same document object cancels its active preview', () => {
@@ -108,4 +114,35 @@ test('replacing the workspace with the same document object cancels its active p
   loadDoc(original);
   expect(servoPreviewSig.value).toBeNull();
   expect(historySig.value.past).toHaveLength(0);
+});
+
+test('sustained rotation and preference survive selection changes; explicit release still stops', () => {
+  loadDoc(docOf(part(1, 'Servo'), part(2, 'Part')));
+  select([1], 'replace');
+  activateServo(1, 1, true);
+  advanceServoSimulation(0.2);
+  select([2], 'replace');
+  expect(servoPreviewSig.value?.direction).toBe(1);
+  advanceServoSimulation(0.2);
+  expect(servoPreviewSig.value?.angle).toBe(18);
+  select([1], 'replace');
+  expect(servoSustainEnabled(1)).toBe(true);
+  releaseServo();
+  expect(servoPreviewSig.value).toBeNull();
+  expect(docSig.value.parts.get(1)!.props.Rotation).toBe(18);
+});
+
+test('momentary activation still releases on deselection and Sustain clears on workspace replacement', () => {
+  loadDoc(docOf(part(1, 'Servo'), part(2, 'Part')));
+  select([1], 'replace');
+  activateServo(1, 1, false);
+  advanceServoSimulation(0.1);
+  select([2], 'replace');
+  expect(servoPreviewSig.value).toBeNull();
+  select([1], 'replace');
+  activateServo(1, 1, true);
+  expect(servoSustainEnabled(1)).toBe(true);
+  loadDoc(docOf(part(1, 'Servo')));
+  expect(servoPreviewSig.value).toBeNull();
+  expect(servoSustainEnabled(1)).toBe(false);
 });

@@ -156,6 +156,13 @@ const dialogOpen = () => document.querySelector('.dialog-backdrop') !== null;
 const referenceTarget = (target: EventTarget | null) =>
   target instanceof Element && target.closest('[data-reference-ui]') !== null;
 
+/** Capture only this explicit stop action, even inside otherwise isolated reference controls. */
+function onServoEscape(e: KeyboardEvent): void {
+  if (e.key !== 'Escape' || e.defaultPrevented || dialogOpen() || !servoPreviewSig.peek()) return;
+  releaseServo();
+  e.preventDefault();
+}
+
 /**
  * The one key router: the viewport's own keys first (gizmo cancel, tool keys, camera fly keys), then the
  * keymap's command. Text fields and open dialogs keep their keys, except undo and redo inside a
@@ -163,11 +170,6 @@ const referenceTarget = (target: EventTarget | null) =>
  */
 function onKey(e: KeyboardEvent): void {
   if (e.defaultPrevented || dialogOpen() || referenceTarget(e.target)) return;
-  if (e.key === 'Escape' && servoPreviewSig.peek()) {
-    releaseServo();
-    e.preventDefault();
-    return;
-  }
   if (isTypingTarget(e.target)) {
     const field = e.target as HTMLElement;
     const id = resolveKey(e, settingsSig.value.cameraScheme);
@@ -237,6 +239,7 @@ export function App(): JSX.Element {
       document.documentElement.dataset.theme = settingsSig.value.theme;
     });
     window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onServoEscape, true);
     document.addEventListener('copy', onCopy);
     document.addEventListener('paste', onPaste);
     let alive = true;
@@ -262,6 +265,7 @@ export function App(): JSX.Element {
       stopTheme();
       stopAutosave();
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onServoEscape, true);
       document.removeEventListener('copy', onCopy);
       document.removeEventListener('paste', onPaste);
     };
