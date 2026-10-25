@@ -16,7 +16,7 @@ import {
   type ShapeInput,
 } from '../core/generators';
 import { insertSubDoc } from '../core/ops/clipboard';
-import { addPlacementSymmetry } from './symmetry';
+import { addPlacementSymmetry, rememberSymmetryPlacements } from './symmetry';
 import { transact } from '../core/ops/transact';
 import { isRgb } from '../core/palette';
 import { EMPTY_POSES } from '../core/pose';
@@ -388,6 +388,7 @@ export function generate(): void {
     toast((e as Error).message, 'warn');
     return;
   }
+  rememberSymmetryPlacements(ids);
   select(ids, 'replace');
   genHostPickSig.value = null;
 }

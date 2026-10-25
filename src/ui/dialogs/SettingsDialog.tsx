@@ -234,9 +234,16 @@ export function SettingsDialog({
           onCommit={(v) => updateSettings({ shiftSocketEnlargement: v })}
         />
         <p class="muted">
-          While carrying or dragging parts, hold Shift for enlarged compatible sockets and
-          socket-only snapping. 100% doubles their size.
+          Hold Shift while carrying or dragging parts for socket-only snapping. Compatible sockets
+          near the cursor show through surfaces and grow smoothly toward it. 100% doubles their size
+          at the cursor.
         </p>
+        <NumberField
+          label="Shift socket focus radius (px)"
+          value={s.shiftSocketRadius}
+          {...R.shiftSocketRadius}
+          onCommit={(v) => updateSettings({ shiftSocketRadius: v })}
+        />
       </section>
 
       <section class="settings-section">

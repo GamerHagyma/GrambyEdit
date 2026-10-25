@@ -6,7 +6,7 @@ import type { Catalog, SocketDef } from '../core/catalog-types';
 import { cfToMatrix4 } from '../core/cframe';
 import { bodyOfSocket, bodyWorld, type Poses } from '../core/pose';
 import { isSocketUsed, mountSockets, pieceSockets } from '../core/rules';
-import { socketMagnification } from '../state/socket-focus';
+import { socketCursorSig, socketInfluence, socketMagnification } from '../state/socket-focus';
 import type { Doc, PartId, SocketId } from '../core/types';
 import type { CameraRig } from './cameras/rig';
 import { MarkerPool, srgbToLinear } from './markers';
@@ -61,6 +61,7 @@ export class SocketsLayer {
   private readonly markers = new MarkerPool('sphere', this.group);
   /** Attach targets show through the parts in front of them, the selected part above all. */
   private readonly pinnedMarkers = new MarkerPool('sphere', this.group, true);
+  private focusedMarkers: MarkerPool | null = null;
   private list: ShownSocket[] = [];
 
   /** Sockets currently drawn, for screen-space picking. */
@@ -89,6 +90,7 @@ export class SocketsLayer {
       m: Matrix4;
       world: Vector3;
       d: number;
+      px: number;
       side?: 'child' | 'parent';
     };
     const candidate = (id: PartId, socket: SocketId, child = false): Candidate | null => {
@@ -99,12 +101,21 @@ export class SocketsLayer {
       if (!world || !s) return null;
       const m = world.clone().multiply(cfToMatrix4(child ? s.childFrame! : s.frame));
       const p = new Vector3().setFromMatrixPosition(m);
+      const cursor = socketCursorSig.peek(),
+        screen = p.clone().project(rig.camera);
       return {
         part: id,
         socket,
         m,
         world: p,
         d: p.distanceTo(eye),
+        px:
+          cursor && screen.z >= -1 && screen.z <= 1
+            ? Math.hypot(
+                ((screen.x - cursor.x) * rig.width) / 2,
+                ((screen.y - cursor.y) * rig.height) / 2,
+              )
+            : Infinity,
         side: child ? 'child' : s.side === 'child' ? 'child' : 'parent',
       };
     };
@@ -131,7 +142,7 @@ export class SocketsLayer {
     const rest = all.slice(0, Math.max(0, max));
     const scale = new Matrix4();
     const sized = (c: Candidate) => {
-      const size = RADIUS_PX * worldPerPixel(rig, c.d) * socketMagnification(c);
+      const size = RADIUS_PX * worldPerPixel(rig, c.d) * socketMagnification(c, c.px);
       return c.m.clone().multiply(scale.makeScale(size, size, size));
     };
     const top = this.pinnedMarkers.get(pinned.length);
@@ -139,30 +150,38 @@ export class SocketsLayer {
       top.set(i, sized(c), srgbToLinear(ATTACH.fill), srgbToLinear(ATTACH.rim), 1),
     );
     top.finish(pinned.length);
-    const markers = this.markers.get(rest.length);
-    rest.forEach((c, i) => {
-      const part = doc.parts.get(c.part)!;
-      const def = cat.parts[part.type]!;
-      const m = sized(c);
-      const used = isSocketUsed(
-        doc,
-        c.part,
-        c.socket,
-        def.sockets[c.socket].childFrame ? c.side : undefined,
-      );
-      const consumed =
-        !used &&
-        mountSockets(doc, c.part).some(
-          (m) => m !== c.socket && pieceSockets(def, m).includes(c.socket),
+    const focused = rest.filter((c) => socketInfluence(c, c.px) > 0);
+    const normal = rest.filter((c) => socketInfluence(c, c.px) === 0);
+    const paint = (pool: MarkerPool, items: Candidate[]) => {
+      const markers = pool.get(items.length);
+      items.forEach((c, i) => {
+        const part = doc.parts.get(c.part)!;
+        const def = cat.parts[part.type]!;
+        const m = sized(c);
+        const used = isSocketUsed(
+          doc,
+          c.part,
+          c.socket,
+          def.sockets[c.socket].childFrame ? c.side : undefined,
         );
-      const style = consumed
-        ? CONSUMED
-        : c.side === 'child' && def.sockets[c.socket].childFrame
-          ? STYLE.mount
-          : socketStyle(def.sockets[c.socket]);
-      markers.set(i, m, srgbToLinear(style.fill), srgbToLinear(style.rim), used ? 0.35 : 1);
-    });
-    markers.finish(rest.length);
+        const consumed =
+          !used &&
+          mountSockets(doc, c.part).some(
+            (m) => m !== c.socket && pieceSockets(def, m).includes(c.socket),
+          );
+        const style = consumed
+          ? CONSUMED
+          : c.side === 'child' && def.sockets[c.socket].childFrame
+            ? STYLE.mount
+            : socketStyle(def.sockets[c.socket]);
+        markers.set(i, m, srgbToLinear(style.fill), srgbToLinear(style.rim), used ? 0.35 : 1);
+      });
+      markers.finish(items.length);
+    };
+    paint(this.markers, normal);
+    if (focused.length && !this.focusedMarkers)
+      this.focusedMarkers = new MarkerPool('sphere', this.group, true);
+    if (this.focusedMarkers) paint(this.focusedMarkers, focused);
     this.list = [...pinned, ...rest].map(({ part, socket, world, side }) => ({
       part,
       socket,
@@ -174,5 +193,6 @@ export class SocketsLayer {
   dispose(): void {
     this.markers.dispose();
     this.pinnedMarkers.dispose();
+    this.focusedMarkers?.dispose();
   }
 }

@@ -152,7 +152,7 @@ function subPartAt(cat: Catalog | null, type: string, faceIndex: number): string
 function screenDistance(world: Vector3, ndc: Vector2): number | null {
   const vp = getViewport()!;
   const v = world.clone().project(vp.rig.camera);
-  if (v.z > 1) return null;
+  if (v.z < -1 || v.z > 1) return null;
   const dx = ((v.x - ndc.x) / 2) * vp.canvas.clientWidth;
   const dy = ((v.y - ndc.y) / 2) * vp.canvas.clientHeight;
   return Math.hypot(dx, dy);
@@ -176,7 +176,7 @@ export function pickSocket(
   for (const s of vp.sockets?.shown() ?? []) {
     if (skip?.has(s.part)) continue;
     const px = screenDistance(s.world, ndc);
-    if (px !== null && px < MARKER_PICK_PX * socketMagnification(s))
+    if (px !== null && px < MARKER_PICK_PX * socketMagnification(s, px))
       hits.push({ part: s.part, socket: s.socket, px });
   }
   if (hits.length === 0) return null;
@@ -198,7 +198,7 @@ export function pickSocketWhere(
   for (const s of vp?.sockets?.shown() ?? []) {
     if (s.side === 'child') continue;
     const distance = screenDistance(s.world, ndc);
-    const px = distance === null ? null : distance / socketMagnification(s);
+    const px = distance === null ? null : distance / socketMagnification(s, distance);
     if (px === null || px >= bestPx || !accept(s)) continue;
     best = { part: s.part, socket: s.socket };
     bestPx = px;

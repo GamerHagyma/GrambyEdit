@@ -52,7 +52,7 @@ import {
   type Selection,
 } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
-import { shiftSocketSig, socketFocusSig } from '../state/socket-focus';
+import { shiftSocketSig, socketFocusSig, socketCursorSig } from '../state/socket-focus';
 import { toast } from '../state/toasts';
 import { loadPref, savePref } from '../storage/prefs';
 import { getViewport } from '../viewport/context';
@@ -574,16 +574,22 @@ function beginReattach(
 }
 
 /** The child sockets of a dragged body that can take `kind` in the check doc, preferred first. */
-function bodySockets(r: Reattach, kind: 'joint' | 'mount', prefer: SocketId | null): SocketId[] {
+function bodySockets(
+  r: Reattach,
+  kind: 'joint' | 'mount',
+  prefer: SocketId | null,
+  check = r.check,
+): SocketId[] {
   const cat = catalogSig.value!;
   const def = cat.parts[docSig.value.parts.get(r.id)!.type];
   const own = (def?.bodies?.[r.body!]?.sockets ?? []).filter((s) => def!.childSockets.includes(s));
-  const ok = own.filter((s) => canBeChild(r.check, cat, r.id, s, kind).ok);
+  const ok = own.filter((s) => canBeChild(check, cat, r.id, s, kind).ok);
   return prefer !== null && ok.includes(prefer) ? [prefer, ...ok.filter((s) => s !== prefer)] : ok;
 }
 
 /** The drop target under the cursor: a free compatible socket, else a part surface (spec §9.3). */
 function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
+  socketCursorSig.value = ndc.clone();
   const doc = docSig.value;
   const cat = catalogSig.value!;
   const conv = cat.conventions;
@@ -591,22 +597,38 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
   if (!part) return null;
   const skip = new Set(r.moving.keys());
   const def = cat.parts[part.type];
+  let checkedDoc = r.doc,
+    check = r.check;
   const refusesSelf = (target: PoseTarget): boolean =>
     target.part === r.id &&
     (r.body === null ||
-      selfStackRefusal(def, r.body, target, r.check.parts.get(r.id)!.conns) !== null);
+      selfStackRefusal(def, r.body, target, check.parts.get(r.id)!.conns) !== null);
   /** The child socket that would join a host socket, or null when that joint is refused. */
   const selfFor = (c: { part: PartId; socket: SocketId }): SocketId | null => {
+    const current = docSig.peek();
+    if (!current.parts.has(r.id)) return null;
+    if (current !== checkedDoc) {
+      checkedDoc = current;
+      check =
+        r.body === null
+          ? retargetCheckDoc(current, cat, r.id)
+          : bodyCheckDoc(current, cat, r.id, r.body);
+    }
     if (
-      !r.check.parts.has(c.part) ||
+      !check.parts.has(c.part) ||
       skip.has(c.part) ||
-      !canBeParent(r.check, cat, c.part, c.socket).ok
+      !canBeParent(check, cat, c.part, c.socket).ok
     )
       return null;
     if (refusesSelf({ kind: 'socket', ...c })) return null;
-    const fit = defaultChildSocket(cat, part.type, doc.parts.get(c.part)!.type, c.socket);
-    const self = r.body === null ? fit : (bodySockets(r, 'joint', fit)[0] ?? null);
-    return self !== null && canBeChild(r.check, cat, r.id, self, 'joint').ok ? self : null;
+    const fit = defaultChildSocket(
+      cat,
+      current.parts.get(r.id)!.type,
+      current.parts.get(c.part)!.type,
+      c.socket,
+    );
+    const self = r.body === null ? fit : (bodySockets(r, 'joint', fit, check)[0] ?? null);
+    return self !== null && canBeChild(check, cat, r.id, self, 'joint').ok ? self : null;
   };
   socketFocusSig.value = (c) => selfFor(c) !== null;
   const sock = pickSocketWhere(ndc, (c) => selfFor(c) !== null, SNAP_PX);

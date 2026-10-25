@@ -12,6 +12,7 @@ import { realCatalog } from '../../helpers/real-catalog';
 import { copyFrame } from '../../../src/core/symmetry';
 import { validate } from '../../../src/core/rules';
 import { DEFAULT_LIMITS } from '../../../src/core/types';
+import { matrix4ToCf } from '../../../src/core/cframe';
 const C = MINI.conventions;
 const scene = () =>
   docOf(
@@ -314,3 +315,146 @@ test('secondary signal joints on reused occupied targets are also rejected atomi
   ).toThrow(/Cannot preserve mirrored connections/);
   expect(base.parts.size).toBe(5);
 });
+test('an aligned mirrored Connector uses the free native opposite socket, without ephemeral points', async () => {
+  const cat = await realCatalog(),
+    base = docOf(part(1, 'Connector'), part(2, 'Connector', [sock('5', 1, '1')])),
+    poses = computePoses(base, cat, cat.conventions);
+  let made: number[] = [];
+  const result = transact(base, 'mirror', (d) => {
+    made = symmetryCopies(
+      d,
+      cat,
+      poses,
+      [2],
+      1,
+      symmetryTransforms(new Matrix4(), 'plane', 'x', 4),
+      true,
+    );
+  }).doc;
+  expect(result.parts.get(made[0])!.conns[0].target).toEqual({
+    kind: 'socket',
+    part: 1,
+    socket: '2',
+  });
+  expect(result.parts.get(1)!.points).toBeNull();
+  const after = computePoses(result, cat, cat.conventions);
+  expect(after.world.get(made[0])!.elements[12]).toBeCloseTo(-poses.world.get(2)!.elements[12], 6);
+  const again = transact(result, 'Again', (d) => {
+    expect(
+      symmetryCopies(
+        d,
+        cat,
+        after,
+        [2],
+        1,
+        symmetryTransforms(after.world.get(1)!, 'plane', 'x', 4),
+        true,
+      ),
+    ).toEqual([]);
+  });
+  expect(again.patch).toBeNull();
+});
+
+test('solving orientation for a native joint still deduplicates subsequent approvals', async () => {
+  const cat = await realCatalog(),
+    [transform] = symmetryTransforms(new Matrix4(), 'plane', 'x', 4),
+    wanted = new Matrix4().makeRotationY(Math.PI / 2).setPosition(-3, 1, 0),
+    source = copyFrame(transform, wanted, 'Part');
+  const base = {
+    ...docOf(part(1, 'Part'), part(2, 'Part'), part(3, 'Part')),
+    layout: new Map([
+      [2, matrix4ToCf(source)],
+      [3, matrix4ToCf(new Matrix4().makeTranslation(-3, 0, 0))],
+    ]),
+  };
+  let made: number[] = [];
+  const result = transact(base, 'Mirror', (d) => {
+    made = symmetryCopies(
+      d,
+      cat,
+      computePoses(base, cat, cat.conventions),
+      [2],
+      1,
+      [transform],
+      true,
+    );
+  }).doc;
+  expect(result.parts.get(made[0])!.conns[0].target).toEqual({
+    kind: 'socket',
+    part: 3,
+    socket: '6',
+  });
+  expect(result.parts.get(made[0])!.props.OrientationY).toBe(-90);
+  expect(
+    transact(result, 'Again', (d) => {
+      expect(
+        symmetryCopies(
+          d,
+          cat,
+          computePoses(result, cat, cat.conventions),
+          [2],
+          1,
+          [transform],
+          true,
+        ),
+      ).toEqual([]);
+    }).patch,
+  ).toBeNull();
+});
+
+test.each([
+  { offset: 0, occupied: false, native: true },
+  { offset: 0.00005, occupied: false, native: true },
+  { offset: 0.0002, occupied: false, native: false },
+  { offset: 0, occupied: true, native: false },
+])(
+  'native search respects tight position tolerance and occupancy: %j',
+  async ({ offset, occupied, native }) => {
+    const cat = await realCatalog(),
+      [transform] = symmetryTransforms(new Matrix4(), 'plane', 'x', 4),
+      wanted = new Matrix4().makeTranslation(-3 + offset, 1, 0),
+      source = copyFrame(transform, wanted, 'Part');
+    const base = {
+      ...docOf(
+        part(1, 'Part'),
+        part(2, 'Part'),
+        part(3, 'Part'),
+        ...(occupied ? [part(4, 'Part', [sock('1', 3, '6')], { RGB: [1, 2, 3] })] : []),
+      ),
+      layout: new Map([
+        [2, matrix4ToCf(source)],
+        [3, matrix4ToCf(new Matrix4().makeTranslation(-3, 0, 0))],
+      ]),
+    };
+    let made: number[] = [];
+    const result = transact(base, 'Mirror', (d) => {
+      made = symmetryCopies(
+        d,
+        cat,
+        computePoses(base, cat, cat.conventions),
+        [2],
+        1,
+        [transform],
+        true,
+      );
+    }).doc;
+    expect(result.parts.get(made[0])!.conns[0].target.kind).toBe(native ? 'socket' : 'point');
+    expect(validate(result, cat, DEFAULT_LIMITS, 0).filter((i) => i.severity === 'error')).toEqual(
+      [],
+    );
+    const roundtrip = fromEntries(toEntries(result));
+    if (!roundtrip.ok) throw new Error('Expected valid export');
+    const before = computePoses(result, cat, cat.conventions),
+      after = computePoses(roundtrip.doc, cat, cat.conventions);
+    before.world
+      .get(made[0])!
+      .elements.forEach((v, i) =>
+        expect(Math.abs(v - wanted.elements[i])).toBeLessThanOrEqual(0.0001),
+      );
+    // Root layouts are editor-only; exported joints must preserve placement relative to their host.
+    const host = native ? 3 : 1;
+    const relative = before.world.get(host)!.clone().invert().multiply(before.world.get(made[0])!);
+    const landed = after.world.get(host)!.clone().invert().multiply(after.world.get(made[0])!);
+    landed.elements.forEach((v, i) => expect(v).toBeCloseTo(relative.elements[i], 6));
+  },
+);

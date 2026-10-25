@@ -55,7 +55,7 @@ const MOUSE: Section = {
     {
       keys: ['Shift'],
       action:
-        'While carrying or dragging: enlarge compatible sockets and snap only to sockets. Change the enlargement percentage in Settings.',
+        'While carrying or dragging: snap only to sockets. Nearby compatible sockets show through surfaces and grow smoothly toward the cursor. Set the enlargement percentage and focus radius in Settings.',
     },
     { keys: ['Shift+Click'], action: 'Add or remove a part' },
     { keys: ['Ctrl+Click'], action: 'Remove a part' },
@@ -140,6 +140,16 @@ const USAGE: readonly Section[] = [
         keys: ['Placement'],
         action:
           'Enable Repeat new placements to copy parts, pasted builds and generated shapes as you place them. One Undo removes the whole placement.',
+      },
+      {
+        keys: ['Pending'],
+        action:
+          'With Repeat new placements off, placed parts stay in a pending hologram across selection changes. Apply pending & selection approves them together. Forget pending previews clears that list. The live mirrored cursor appears in both modes.',
+      },
+      {
+        keys: ['Sockets'],
+        action:
+          'Copies snap to free native sockets only when position and orientation align tightly. Otherwise an ephemeral attachment preserves the intended pose. Search Spinner to find Bearing.',
       },
       {
         keys: ['Visibility'],

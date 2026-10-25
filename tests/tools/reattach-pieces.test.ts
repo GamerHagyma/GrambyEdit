@@ -116,6 +116,25 @@ test('deleting a pressed part before its drag starts safely drops the press', ()
   expect(() => tool.onPointer!(pointer('move', 120))).not.toThrow();
 });
 
+test('focus availability follows shared edits without requiring a pointer move', () => {
+  loadDoc(docOf(part(1, 'Part'), part(2, 'Part'), part(4, 'Part')));
+  select([2], 'replace');
+  const tool = createTransformTool('select');
+  tool.onPointer!(pointer('down', 100));
+  tool.onPointer!({ ...pointer('move', 120), shift: true });
+  const focused = { part: 1, socket: '6' };
+  expect(socketFocusSig.value!(focused)).toBe(true);
+  const current = docSig.peek(),
+    parts = new Map(current.parts);
+  parts.set(4, part(4, 'Part', [sock('1', 1, '6')]));
+  docSig.value = { ...current, parts };
+  expect(socketFocusSig.value!(focused)).toBe(false);
+  parts.set(4, part(4, 'Part'));
+  docSig.value = { ...current, parts: new Map(parts) };
+  expect(socketFocusSig.value!(focused)).toBe(true);
+  tool.deactivate!();
+});
+
 test.each(['select', 'move'] as const)(
   '%s drags a selected Wire end onto its own other socket',
   async (id) => {

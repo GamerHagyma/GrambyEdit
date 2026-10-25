@@ -6,6 +6,8 @@ import {
   applySymmetry,
   symmetryPreviewSig,
   symmetrySelection,
+  pendingSymmetrySig,
+  clearPendingSymmetry,
 } from '../../state/symmetry';
 import { docSig, catalogSig } from '../../state/store';
 import { selectionSig } from '../../state/selection';
@@ -160,18 +162,27 @@ export function MirrorPanel(): JSX.Element {
               ? ` · ${preview.count} preview ${preview.count === 1 ? 'copy' : 'copies'}`
               : ''}
           </p>
+          {pendingSymmetrySig.value.size > 0 && (
+            <p>
+              {pendingSymmetrySig.value.size} pending placements stay in the preview until approved.{' '}
+              <button class="button small" onClick={clearPendingSymmetry}>
+                Forget pending previews
+              </button>
+            </p>
+          )}
           {preview?.error && <p role="alert">{preview.error}</p>}
           <button
             class="button primary"
             disabled={!count || collaborationReadOnlySig.value}
             onClick={applySymmetry}
           >
-            Apply to selection
+            {pendingSymmetrySig.value.size > 0 ? 'Apply pending & selection' : 'Apply to selection'}
           </button>
           <p class="muted">
-            Originals stay. Apply and automatic placement are undoable. Native asymmetric shapes
-            keep their geometry; placement positions and rotations are mirrored. Door A/B and C/D
-            variants swap.
+            The mirrored cursor preview is always shown. Repeat new placements controls whether
+            copies are placed automatically. Originals stay. Apply and automatic placement are
+            undoable. Native asymmetric shapes keep their geometry; placement positions and
+            rotations are mirrored. Door A/B and C/D variants swap.
           </p>
         </>
       ) : (

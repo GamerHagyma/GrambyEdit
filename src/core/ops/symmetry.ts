@@ -25,6 +25,8 @@ import { DEFAULT_LIMITS } from '../types';
 import { newUuid } from '../uuid';
 import { draftDoc } from './conns';
 import { addPoint, setPointCFrame } from './points';
+import { attachToMatchingSocket } from './symmetry-sockets';
+import { graphIndex } from '../graph';
 import type { Draft } from './transact';
 
 export function symmetryCopies(
@@ -59,13 +61,22 @@ export function symmetryCopies(
   const signature = (p: Part, worlds: readonly Matrix4[]) =>
     p.type +
     '|' +
-    canonical(p.props) +
+    // Orientation describes how a joint achieves its pose; the body frames already identify it.
+    canonical(
+      Object.fromEntries(
+        Object.entries(p.props).filter(
+          ([key]) => !['OrientationX', 'OrientationY', 'OrientationZ'].includes(key),
+        ),
+      ),
+    ) +
     '|' +
     worlds.map((w) => w.elements.map((n) => Math.round(n * 10000)).join(',')).join(';');
   const existing = new Map<string, { id: PartId; worlds: readonly Matrix4[] }>();
+  const knownWorlds = new Map<PartId, readonly Matrix4[]>();
   for (const p of doc.parts.values()) {
     const worlds = poses.bodies?.get(p.id) ?? [poses.world.get(p.id)!];
     existing.set(signature(p, worlds), { id: p.id, worlds });
+    knownWorlds.set(p.id, worlds);
   }
   for (const transform of transforms) {
     const reflected = transform.determinant() < 0,
@@ -206,6 +217,11 @@ export function symmetryCopies(
         conns: [{ self, target: { kind: 'point', part: parent, uuid } }, ...d.get(child.id)!.conns],
       });
     };
+    const jointWorld = (id: PartId, b: number) => {
+      const origin = origins.get(id);
+      return origin === undefined ? knownWorlds.get(id)?.[b] : planned(origin, b);
+    };
+    const usedClonedPoints: { host: PartId; uuid: string }[] = [];
     for (const id of fresh) {
       const old = doc.parts.get(id)!,
         copy = ids.get(id)!,
@@ -222,6 +238,17 @@ export function symmetryCopies(
             (c) => c.self === mappedSocket(id, original.self) && c.target.kind !== 'raw',
           );
         const world = planned(id, b);
+        if (
+          c?.target.kind === 'point' &&
+          original?.target.kind === 'point' &&
+          points.get(original.target.part)?.get(original.target.uuid) === c.target.uuid
+        )
+          usedClonedPoints.push({ host: c.target.part, uuid: c.target.uuid });
+        if (
+          c?.target.kind !== 'socket' &&
+          attachToMatchingSocket(d, cat, copy, b, world, jointWorld, c)
+        )
+          continue;
         if (c?.target.kind === 'point') {
           const h = d.get(c.target.part)!,
             point =
@@ -273,6 +300,7 @@ export function symmetryCopies(
               'A mirrored signal socket is already occupied. The build was not changed.',
             );
           if (sameFrame(expected, world) && available) continue;
+          if (attachToMatchingSocket(d, cat, copy, b, world, jointWorld, c)) continue;
         } else if (!original && b !== leadBody(def, old) && sameFrame(world, planned(id))) continue;
         const signal =
           c?.target.kind === 'socket' &&
@@ -313,6 +341,14 @@ export function symmetryCopies(
         mount(id, parent, self, world, partName);
       }
     }
+    const pointUsers = graphIndex(draftDoc(d)).pointUsers;
+    for (const { host, uuid } of usedClonedPoints)
+      if (!pointUsers.has(`${host}:${uuid}`)) {
+        const part = d.get(host)!,
+          kept = new Map(part.points);
+        kept.delete(uuid);
+        d.set({ ...part, points: kept });
+      }
     const final = computePoses(draftDoc(d), cat, cat.conventions);
     for (const id of fresh) {
       const copy = ids.get(id)!,
@@ -322,6 +358,7 @@ export function symmetryCopies(
           `Could not preserve the mirrored pose of ${doc.parts.get(id)!.type}. The build was not changed.`,
         );
       existing.set(signature(d.get(copy)!, actual), { id: copy, worlds: actual });
+      knownWorlds.set(copy, actual);
     }
   }
   if (made.length) {

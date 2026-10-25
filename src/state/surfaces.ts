@@ -5,7 +5,7 @@ import { Matrix4 } from 'three';
 import type { Vec3 } from '../core/catalog-types';
 import { cfToMatrix4 } from '../core/cframe';
 import { insertSubDoc } from '../core/ops/clipboard';
-import { addPlacementSymmetry } from './symmetry';
+import { addPlacementSymmetry, rememberSymmetryPlacements } from './symmetry';
 import {
   buildSurfaceSubDoc,
   capSize,
@@ -206,6 +206,7 @@ export function createSurface(): void {
     toast((e as Error).message, 'warn');
     return;
   }
+  rememberSymmetryPlacements(ids);
   select(ids, 'replace');
   surfaceSig.value = { ...surfaceSig.value, created: ids, selected: [] };
 }

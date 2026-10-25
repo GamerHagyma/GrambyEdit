@@ -34,6 +34,7 @@ export function partScore(part: PartDef, query: string): number {
     fuzzyScore(query, part.type),
     fuzzyScore(query, part.tooltip ?? ''),
     fuzzyScore(query, part.category),
+    part.type === 'Bearing' ? fuzzyScore(query, 'Spinner') : 0,
   );
 }
 

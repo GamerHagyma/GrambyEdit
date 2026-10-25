@@ -49,6 +49,19 @@ const initial = (): SymmetrySettings => ({
   skipCentered: true,
 });
 export const symmetrySig = signal<SymmetrySettings>(initial());
+export const pendingSymmetrySig = signal<ReadonlySet<PartId>>(new Set());
+export function clearPendingSymmetry(): void {
+  pendingSymmetrySig.value = new Set();
+}
+/** Called only after an explicit local placement successfully commits. */
+export function rememberSymmetryPlacements(ids: readonly PartId[]): void {
+  const s = symmetrySig.peek(),
+    doc = docSig.peek();
+  if (s.auto || s.anchor === null) return;
+  const pending = new Set(pendingSymmetrySig.peek());
+  for (const id of ids) if (id !== s.anchor && doc.parts.has(id)) pending.add(id);
+  pendingSymmetrySig.value = pending;
+}
 export const symmetryFrameSig = computed(() => {
   const s = symmetrySig.value,
     anchor = s.anchor === null ? null : committedPosesSig.value.world.get(s.anchor);
@@ -63,9 +76,11 @@ export function chooseSymmetryAnchor(): void {
     return;
   }
   symmetrySig.value = { ...symmetrySig.peek(), anchor: id, offset: 0, rotation: [0, 0, 0] };
+  clearPendingSymmetry();
 }
 export function clearSymmetry(): void {
   symmetrySig.value = initial();
+  clearPendingSymmetry();
 }
 export function startSymmetryLifecycle(): () => void {
   let workspace = workspaceVersionSig.peek();
@@ -79,12 +94,19 @@ export function startSymmetryLifecycle(): () => void {
     )
       clearSymmetry();
     workspace = current;
+    const pending = pendingSymmetrySig.value;
+    if ([...pending].some((id) => !doc.parts.has(id)))
+      pendingSymmetrySig.value = new Set([...pending].filter((id) => doc.parts.has(id)));
   });
 }
-export function symmetrySelection(): PartId[] {
+export function symmetrySelection(includeSelection = true): PartId[] {
   const s = symmetrySig.value,
     doc = docSig.value,
-    chosen = new Set([...selectionSig.value.parts].filter((id) => id !== s.anchor));
+    chosen = new Set(
+      [...pendingSymmetrySig.value, ...(includeSelection ? selectionSig.value.parts : [])].filter(
+        (id) => id !== s.anchor && doc.parts.has(id),
+      ),
+    );
   if (s.children)
     for (const id of [...chosen])
       for (const child of poseDescendants(doc, id)) if (child !== s.anchor) chosen.add(child);
@@ -135,6 +157,7 @@ export function applySymmetry(): void {
     toast((e as Error).message, 'warn');
     return;
   }
+  clearPendingSymmetry();
   if (made.length) {
     select(made, 'replace');
     toast(`Created ${made.length} symmetry ${made.length === 1 ? 'copy' : 'copies'}.`);
@@ -144,8 +167,8 @@ export const symmetryPreviewSig = computed(() => {
   const s = symmetrySig.value,
     cat = catalogSig.value,
     doc = docSig.value;
-  if (inspectorTabSig.value !== 'mirror' || !s.preview || s.anchor === null || !cat) return null;
-  const ids = symmetrySelection();
+  if (!s.preview || s.anchor === null || !cat) return null;
+  const ids = symmetrySelection(inspectorTabSig.value === 'mirror');
   if (!ids.length) return null;
   if (ids.length * (s.mode === 'plane' ? 1 : s.count - 1) > 500)
     return { error: 'Preview hidden above 500 copies. Apply is still available.', shown: null };
@@ -179,7 +202,7 @@ export function placementSymmetryGhosts(
   worlds: ReadonlyMap<PartId, Matrix4>,
 ): { type: string; world: Matrix4 }[] {
   const s = symmetrySig.value;
-  if (!s.auto || s.anchor === null) return [];
+  if (s.anchor === null) return [];
   return transforms().flatMap((t) =>
     sub.order.flatMap((id) => {
       const w = worlds.get(id),

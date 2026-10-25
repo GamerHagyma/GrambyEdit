@@ -16,7 +16,7 @@ import {
 import { CollaboratorsLayer } from './collaborators';
 import { SymmetryGuide } from './symmetry-guide';
 import { symmetrySig, symmetryFrameSig, symmetryPreviewSig } from '../state/symmetry';
-import { shiftSocketSig, socketFocusSig } from '../state/socket-focus';
+import { shiftSocketSig, socketFocusSig, socketCursorSig } from '../state/socket-focus';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
@@ -486,11 +486,13 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   };
   const onHover = (e: PointerEvent) => {
     ctx.pointer = { x: e.clientX, y: e.clientY };
+    socketCursorSig.value = ndc(e);
     // Runs before a gizmo drag's own move handler, so Ctrl decides this move's snapping.
     transformGizmo.setSnapping(e.ctrlKey || e.metaKey);
     if (e.buttons === 0) toolPointer(toTool(e, 'move', -1));
   };
   const onLeave = () => {
+    socketCursorSig.value = null;
     if (hoverSig.value !== null) hoverSig.value = null;
     if (hoverPieceSig.value !== null) hoverPieceSig.value = null;
   };
@@ -692,6 +694,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     shiftSocketSig.value;
     socketFocusSig.value;
     settingsSig.value.shiftSocketEnlargement;
+    settingsSig.value.shiftSocketRadius;
+    socketCursorSig.value;
     request();
   });
   const stopSymmetry = effect(() => {
@@ -859,6 +863,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     stopSocketFocus();
     shiftSocketSig.value = false;
     socketFocusSig.value = null;
+    socketCursorSig.value = null;
     collaborators.dispose();
     stopSymmetry();
     symmetryGuide.dispose();

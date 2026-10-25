@@ -32,9 +32,13 @@ import { select } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { statusHintSig } from '../state/ui';
-import { shiftSocketSig, socketFocusSig } from '../state/socket-focus';
+import { shiftSocketSig, socketFocusSig, socketCursorSig } from '../state/socket-focus';
 import { hoverSig } from '../state/selection';
-import { addPlacementSymmetry, placementSymmetryGhosts } from '../state/symmetry';
+import {
+  addPlacementSymmetry,
+  placementSymmetryGhosts,
+  rememberSymmetryPlacements,
+} from '../state/symmetry';
 import { getViewport } from '../viewport/context';
 import { cursorRay, pickPart, pickPoint, pickSocketWhere } from '../viewport/raycast';
 import { setTool, type Tool, type ToolPointer } from './manager';
@@ -61,11 +65,12 @@ function attachable(cat: Catalog, doc: Doc, type: string, s: { part: PartId; soc
 
 /** The spot under the cursor for a sub-doc whose first root is `root`. */
 function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
+  socketCursorSig.value = ndc.clone();
   const doc = docSig.value;
   const poses = posesSig.value;
   const conv = cat.conventions;
   const { type, props } = root;
-  const accepts = (s: { part: PartId; socket: string }) => attachable(cat, doc, type, s);
+  const accepts = (s: { part: PartId; socket: string }) => attachable(cat, docSig.peek(), type, s);
   socketFocusSig.value = accepts;
   const sock = pickSocketWhere(ndc, accepts, 12);
   if (sock && attachable(cat, doc, type, sock)) {
@@ -182,6 +187,7 @@ export function createPlaceTool(): Tool {
       toast((e as Error).message, 'warn');
       return;
     }
+    rememberSymmetryPlacements(ids);
     select(ids, 'replace');
     if (source?.kind === 'part') pushRecent(source.type);
     if (cursor) aim(cursor);

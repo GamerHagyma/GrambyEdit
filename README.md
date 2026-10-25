@@ -25,7 +25,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | --- | --- |
 | **Import and export** | Read share codes or JSON, display native part meshes and textures, and export edited creations. |
 | **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
-| **Socket dragging** | Reattach parts, pieces or selections with Select or the Move center handle. Hold Shift for larger compatible sockets and socket-only snapping; adjust the percentage in Settings. |
+| **Socket dragging** | Reattach parts, pieces or selections with Select or the Move center handle. Hold Shift for nearby compatible sockets to show through surfaces, grow toward the cursor and snap exclusively; adjust size and radius in Settings. |
 | **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
 | **Mirroring and radial copies** | Anchor a mirror plane or radial axis to a Part or Connector, preview copies, and repeat new placements automatically. Guides stay local during collaboration; created parts sync. |
 | **Servo preview** | Hold red/blue simulation buttons or enable Sustain, inspect the live angle, and choose whether remembered rotations are exported. |
@@ -94,7 +94,7 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 
 **Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls for the selection. Hidden parts remain selectable in the Outliner and can be shown again from the same menu.
 
-**Socket dragging:** use Select or the Move center handle to drag one part or a selection onto another socket. The other selected parts keep their relative placement. Hold **Shift** while carrying or dragging for compatible sockets only; surface and ground placement resume on release. **Settings → Editing → Socket enlargement while holding Shift (%)** controls the increase (100% doubles size). Orange/red markers distinguish mechanical connection points.
+**Socket dragging:** use Select or the Move center handle to drag one part or a selection onto another socket. The other selected parts keep their relative placement. Hold **Shift** while carrying or dragging for compatible sockets only; surface and ground placement resume on release. Nearby compatible sockets show through surfaces, with enlargement fading smoothly to normal at the edge of the cursor radius. **Settings → Editing** controls **Socket enlargement while holding Shift (%)** (100% doubles size at the cursor) and **Shift socket focus radius (px)** (default 150). Outside that radius, sockets keep normal size and depth visibility. Orange/red markers distinguish mechanical connection points. Search **Spinner** to find the native **Bearing** part.
 
 **Surfaces:** Shift-click corner buttons or viewport dots to select multiple corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
 
@@ -105,11 +105,13 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 3. Select the parts to copy and click **Apply to selection**. **Include attached children** copies their branches too; the anchor is excluded and the originals stay in place.
 4. Enable **Repeat new placements** to copy new parts, pasted builds, picker placements, generated shapes and surfaces automatically. A placement and its copies are one Undo action.
 
+The mirrored cursor ghost appears with **Repeat new placements** on or off. With it off, new placements accumulate as pending holograms even after selecting another part. Use **Apply pending & selection** to approve them together, or **Forget pending previews** to discard only the pending list. The source parts remain in the build.
+
 For circular patterns, choose **Radial**, select an axis and set **Total sectors** (2–16, including the original). Turn off **Skip centered parts** when you want rotated copies of a part centered on the axis.
 
 **Show guide** and **Preview selection** control the local display. In collaboration, each builder has an independent setup: only actual part placement is shared. **Clear mirror**, deleting the anchor, or replacing the workspace clears that setup.
 
-Copies use native attachment points so their placement survives export. Mirroring reflects placement positions and rotations; the game format cannot apply negative scale to arbitrary asymmetric meshes. Door A/B and C/D variants swap automatically. Copies keep properties and remap internal connections; external joints are not duplicated. If a part cannot be mounted without damaging its internal wiring, the operation reports why and leaves the build unchanged. See [mirroring details](docs/SYMMETRY.md).
+Copies prefer free, compatible native sockets whose position and orientation align within a tight tolerance. If none fit, they use ephemeral attachment points so their placement survives export. Mirroring reflects placement positions and rotations; the game format cannot apply negative scale to arbitrary asymmetric meshes. Door A/B and C/D variants swap automatically. Copies keep properties and remap internal connections; external joints are not duplicated. If a part cannot be mounted without damaging its internal wiring, the operation reports why and leaves the build unchanged. See [mirroring details](docs/SYMMETRY.md).
 
 ## GitHub Pages
 

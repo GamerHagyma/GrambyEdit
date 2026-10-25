@@ -2,7 +2,7 @@
 // (Shift+click gathers several targets to place one part on each), or join two existing sockets by
 // dragging from one to the other or clicking one, then the other.
 import { signal } from '@preact/signals';
-import { addPlacementSymmetry } from '../state/symmetry';
+import { addPlacementSymmetry, rememberSymmetryPlacements } from '../state/symmetry';
 import {
   BufferGeometry,
   Line,
@@ -185,7 +185,11 @@ export function placeParts(type: string, targets: readonly PlaceTarget[]): void 
         placed = tryAll(d).placed;
         placed.push(...addPlacementSymmetry(d, placed));
       });
-    } catch(e) {toast((e as Error).message,'warn');return;}
+    } catch (e) {
+      toast((e as Error).message, 'warn');
+      return;
+    }
+    rememberSymmetryPlacements(placed);
     select(placed, 'replace');
     pushRecent(type);
   }

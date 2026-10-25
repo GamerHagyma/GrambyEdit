@@ -18,6 +18,7 @@ export interface Settings {
   activeColor: RGB;
   maxSockets: number;
   shiftSocketEnlargement: number;
+  shiftSocketRadius: number;
   genPosDecimals: number;
   genRotDecimals: number;
   xray: boolean;
@@ -39,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   activeColor: [163, 162, 165],
   maxSockets: 3000,
   shiftSocketEnlargement: 100,
+  shiftSocketRadius: 150,
   genPosDecimals: 4,
   genRotDecimals: 5,
   xray: false,
@@ -64,6 +66,7 @@ export const NUMBER_RANGES = {
   snapRotate: { min: 0.1 },
   maxSockets: { min: 1, integer: true },
   shiftSocketEnlargement: { min: 0, max: 400 },
+  shiftSocketRadius: { min: 20, max: 1000 },
   genPosDecimals: { min: 0, max: 10, integer: true },
   genRotDecimals: { min: 0, max: 10, integer: true },
 } as const satisfies Partial<Record<keyof Settings, NumberRange>>;
