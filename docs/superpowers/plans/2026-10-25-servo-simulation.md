@@ -3,9 +3,9 @@
 Execution is approved: the user verified the property/wire tweaks and confirmed the defaults.
 The prerequisites were committed separately as `5107fea`.
 
-- Red = negative, blue = positive. Most recently pressed direction wins; releasing an older button cannot release a newer one.
+- Red = positive, blue = negative (user correction, 2026-10-25). Most recently pressed direction wins; releasing an older button cannot release a newer one.
 - Speed defaults to 45 degrees/s; LimitAngle defaults to a symmetric ±45 degrees; Rotation/rest position is 0 degrees.
-- Missing Rest and LimitEnabled use true, matching the supplied example. Explicit false/zero values must survive.
+- Missing Rest and LimitEnabled default to false, as confirmed by the user. Explicit false/zero values must survive.
 - Return to zero at configured Speed when Rest is enabled; otherwise retain Rotation. No wrapping at 360.
 - One selected servo at a time receives a Simulate section with momentary red/blue buttons and Sustain toggles. Stop on blur, cancellation, selection/tab change, or real document replacement/edit.
 - Keep a transient angle during animation, render and display it from the same preview document, then record one undoable Rotation edit when the run ends. A normal edit cancels the transient run rather than overwriting the edit.
@@ -25,4 +25,4 @@ Verification notes:
 - Inputs already outside newly enabled limits move inward at configured speed; outward activation holds position, without teleporting across turns.
 - Unrelated modifier/camera navigation does not finish a run. Escape releases input and allows the Rest return. Typing a field then pointer-holding commits the field before starting the run.
 - The Kamaz neutral hinge assertion now clears only saved servo angles in its local test document, because those nonzero captured angles are rendered rather than ignored.
-- Missing booleans remain the stated assumption (Rest=true, LimitEnabled=true), matching the supplied real property sample.
+- The user corrected the missing boolean defaults to Rest=false and LimitEnabled=false; explicit imported values remain unchanged.

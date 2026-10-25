@@ -60,15 +60,15 @@ export function ServoControls({ id }: { readonly id: PartId }): JSX.Element {
         if (!sustain) releaseServo(directionValue);
       }}
     >
-      {directionValue < 0 ? 'Red −' : 'Blue +'}
+      {`${color === 'red' ? 'Red' : 'Blue'} ${directionValue < 0 ? '−' : '+'}`}
     </button>
   );
   return (
     <section class="properties-section servo-controls" role="group" aria-label="Simulate">
       <h3>Simulate</h3>
       <div class="servo-buttons">
-        {button(-1, 'Red — negative', 'red')}
-        {button(1, 'Blue — positive', 'blue')}
+        {button(1, 'Red — positive', 'red')}
+        {button(-1, 'Blue — negative', 'blue')}
       </div>
       <label class="servo-sustain">
         <input

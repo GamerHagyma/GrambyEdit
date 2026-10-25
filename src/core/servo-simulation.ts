@@ -3,8 +3,8 @@ import type { Json } from './types';
 
 export const SERVO_DEFAULTS = {
   Speed: 45,
-  Rest: true,
-  LimitEnabled: true,
+  Rest: false,
+  LimitEnabled: false,
   LimitAngle: 45,
   Rotation: 0,
 } as const;
@@ -30,8 +30,9 @@ export function servoSettings(props: Readonly<Record<string, Json>>): ServoSetti
     Speed: number('Speed'),
     LimitAngle: number('LimitAngle'),
     Rotation: number('Rotation'),
-    Rest: typeof props.Rest === 'boolean' ? props.Rest : true,
-    LimitEnabled: typeof props.LimitEnabled === 'boolean' ? props.LimitEnabled : true,
+    Rest: typeof props.Rest === 'boolean' ? props.Rest : SERVO_DEFAULTS.Rest,
+    LimitEnabled:
+      typeof props.LimitEnabled === 'boolean' ? props.LimitEnabled : SERVO_DEFAULTS.LimitEnabled,
   };
 }
 export function stepServo(

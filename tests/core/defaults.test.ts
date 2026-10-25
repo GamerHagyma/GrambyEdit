@@ -36,7 +36,7 @@ test.each(['Servo', 'Servo_Physics'])('%s spawns with confirmed servo defaults',
     Speed: 45,
     LimitAngle: 45,
     Rotation: 0,
-    Rest: true,
-    LimitEnabled: true,
+    Rest: false,
+    LimitEnabled: false,
   });
 });

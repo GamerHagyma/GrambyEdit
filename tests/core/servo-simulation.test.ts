@@ -1,26 +1,26 @@
 import { servoSettings, stepServo } from '../../src/core/servo-simulation';
 
-test('defaults use 45 degrees/s, ±45 degrees and rest at zero; explicit false and zero survive', () => {
+test('defaults keep Rest and limits off; explicit settings and zero survive', () => {
   expect(servoSettings({})).toEqual({
     Speed: 45,
     LimitAngle: 45,
     Rotation: 0,
-    Rest: true,
-    LimitEnabled: true,
+    Rest: false,
+    LimitEnabled: false,
   });
   expect(
     servoSettings({ Speed: 0, LimitAngle: 0, Rotation: -721.5, Rest: false, LimitEnabled: false }),
   ).toEqual({ Speed: 0, LimitAngle: 0, Rotation: -721.5, Rest: false, LimitEnabled: false });
 });
 test('fractional speeds advance by elapsed seconds in either direction and stop at symmetric limits', () => {
-  const s = servoSettings({ Speed: 47.2, LimitAngle: 36.9 });
+  const s = servoSettings({ Speed: 47.2, LimitAngle: 36.9, LimitEnabled: true });
   expect(stepServo(0, 1, s, 0.25)).toBeCloseTo(11.8);
   expect(stepServo(0, -1, s, 0.25)).toBeCloseTo(-11.8);
   expect(stepServo(30, 1, s, 1)).toBe(36.9);
   expect(stepServo(-30, -1, s, 1)).toBe(-36.9);
 });
 test('rest returns at configured speed without overshooting, while disabled rest holds', () => {
-  const s = servoSettings({ Speed: 45 });
+  const s = servoSettings({ Speed: 45, Rest: true });
   expect(stepServo(30, 0, s, 0.5)).toBe(7.5);
   expect(stepServo(-7, 0, s, 0.5)).toBe(0);
   expect(stepServo(30, 0, { ...s, Rest: false }, 10)).toBe(30);
@@ -34,9 +34,19 @@ test('unlimited angles do not wrap and invalid elapsed time does not corrupt the
 });
 
 test('enabling limits after multiple turns never teleports or exceeds the configured speed', () => {
-  const s = servoSettings({ Speed: 45, LimitAngle: 45 });
+  const s = servoSettings({ Speed: 45, LimitAngle: 45, LimitEnabled: true });
   expect(stepServo(720, -1, s, 0.01)).toBeCloseTo(719.55);
   expect(stepServo(720, 1, s, 0.01)).toBe(720);
   expect(stepServo(-720, 1, s, 0.01)).toBeCloseTo(-719.55);
   expect(stepServo(-720, -1, s, 0.01)).toBe(-720);
+});
+
+test('missing flags permit rotation beyond 45 degrees and hold on release; explicit true survives', () => {
+  const defaults = servoSettings({});
+  expect(stepServo(0, 1, defaults, 2)).toBe(90);
+  expect(stepServo(90, 0, defaults, 2)).toBe(90);
+  expect(servoSettings({ Rest: true, LimitEnabled: true })).toMatchObject({
+    Rest: true,
+    LimitEnabled: true,
+  });
 });

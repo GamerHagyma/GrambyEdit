@@ -64,7 +64,7 @@ test('red/blue switch direction; an old release does not stop the new direction;
   expect(docSig.value.parts.get(1)!.props.Rotation).toBe(-4.5);
 });
 test('Rest returns to zero at configured speed with no per-frame undo entries', () => {
-  loadDoc(docOf(part(1, 'Servo_Physics')));
+  loadDoc(docOf(part(1, 'Servo_Physics', [], { Rest: true })));
   select([1], 'replace');
   activateServo(1, 1, false);
   advanceServoSimulation(0.5);
