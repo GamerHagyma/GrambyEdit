@@ -1,7 +1,7 @@
 // The undo history (spec §13.6 and the Task 31 list): every state since the file opened. A click jumps to that state.
 import type { JSX } from 'preact';
 import { batch } from '@preact/signals';
-import { historySig, redo, undo } from '../../state/store';
+import { historySig, historyAvailabilitySig, redo, undo } from '../../state/store';
 
 /**
  * Row r is the state after r edits. Row 0 is Opened, the state before the first entry; the past
@@ -25,18 +25,26 @@ export function HistoryPanel(): JSX.Element {
   };
 
   return (
-    <ol class="history">
-      {rows.map((row, r) => (
-        <li key={r}>
-          <button
-            class={row.future ? 'history-row future' : 'history-row'}
-            aria-current={r === current ? 'step' : undefined}
-            onClick={() => jumpTo(r)}
-          >
-            {row.label}
-          </button>
-        </li>
-      ))}
-    </ol>
+    <>
+      {historyAvailabilitySig.value !== null && (
+        <p class="muted">
+          Shared history is informational. Undo and Redo affect only your own unchanged edits.
+        </p>
+      )}
+      <ol class="history">
+        {rows.map((row, r) => (
+          <li key={r}>
+            <button
+              disabled={historyAvailabilitySig.value !== null}
+              class={row.future ? 'history-row future' : 'history-row'}
+              aria-current={r === current ? 'step' : undefined}
+              onClick={() => jumpTo(r)}
+            >
+              {row.label}
+            </button>
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }

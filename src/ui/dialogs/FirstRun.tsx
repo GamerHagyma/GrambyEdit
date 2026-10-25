@@ -15,7 +15,7 @@ const PREF = 'firstRunDone';
  */
 export function FirstRun(): JSX.Element | null {
   const [done, setDone] = useState(() => loadPref(PREF, false));
-  if (done) return null;
+  if (done || new URLSearchParams(window.location.hash.slice(1)).has('collab')) return null;
 
   const finish = () => {
     savePref(PREF, true);

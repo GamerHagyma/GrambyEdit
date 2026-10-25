@@ -14,6 +14,7 @@ import { StatusBar } from './StatusBar';
 import { Tabs } from './Tabs';
 import { Toasts } from './Toasts';
 import { Toolbar } from './Toolbar';
+import { roomSig, membersSig } from '../../state/collaboration';
 
 interface MenuItem {
   label: string;
@@ -179,6 +180,18 @@ export function Shell({
           ]}
         />
         <span class="sep" />
+        <button
+          class="button collab-open"
+          aria-label="Collaboration"
+          onClick={() => openDialog('collaboration')}
+        >
+          {roomSig.value.mode === 'hosting'
+            ? `Hosting · ${membersSig.value.length}`
+            : roomSig.value.mode === 'guest'
+              ? `Room · ${membersSig.value.length}`
+              : 'Collaborate'}
+          {membersSig.value.some((m) => m.pending) ? ' · Waiting' : ''}
+        </button>
         <Toolbar />
       </header>
       <main class="main">

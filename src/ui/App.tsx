@@ -56,6 +56,8 @@ import { StatsPanel } from './panels/StatsPanel';
 import { SurfacePanel } from './panels/SurfacePanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
 import { ContextMenu } from './widgets/ContextMenu';
+import { CollaborationDialog } from './dialogs/CollaborationDialog';
+import { readCollaborationInvite, leaveCollaboration } from '../state/collaboration';
 import { PickerHost } from './widgets/PickerHost';
 import './tokens.css';
 
@@ -65,6 +67,7 @@ function Dialogs(): JSX.Element {
   return (
     <>
       <NewDialog open={name === 'new'} onClose={closeDialog} />
+      <CollaborationDialog open={name === 'collaboration'} onClose={closeDialog} />
       <ImportDialog open={name === 'import'} onClose={closeDialog} />
       <ExportDialog open={name === 'export'} onClose={closeDialog} />
       <SettingsDialog open={name === 'settings'} onClose={closeDialog} />
@@ -232,6 +235,10 @@ function onPaste(e: ClipboardEvent): void {
 }
 
 export function App(): JSX.Element {
+  useEffect(() => {
+    if (readCollaborationInvite()) dialogSig.value = 'collaboration';
+    return () => leaveCollaboration();
+  }, []);
   useEffect(startServoLifecycle, []);
   useEffect(() => {
     setStorageErrorReporter((message) => toast(message, 'error'));

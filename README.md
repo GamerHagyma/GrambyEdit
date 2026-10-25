@@ -31,6 +31,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
 | **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |
 | **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
+| **Collaboration** | Host a shared workspace, invite up to seven guests, assign viewer/editor permissions, and see colored cameras with names. Changes sync directly between browsers. |
 | **Reference images** | Paste images or direct image links into the Reference tab, or choose local files. Pop the viewer out into a pinned, movable, resizable window over the editor. |
 
 ## Compatibility and limitations
@@ -52,7 +53,19 @@ Keep a copy of the original share code before editing a creation.
 
 The creation library and preferences are stored in your browser. Export a library backup before moving to another browser or computer.
 
-**Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and its bottom-right corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
+**Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Zoom and pan the image, or use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and any corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
+
+## Build together
+
+1. Open **Collaboration** in the top bar, choose your name and camera color, then **Host workspace**.
+2. Share the invite link. Guests open it and click **Join (replace workspace)**; they should save their existing work first.
+3. Approve each guest for viewing or editing. You can change permissions or remove people from the same panel.
+
+Edits sync as small changes. Moving cameras are throttled; stationary cameras send nothing. A small consistency check runs every 15 seconds, with a full build sent on joining or when needed to repair a mismatch. Undo/redo applies to your own changes and protects newer changes from others. Reference images, selections and servo previews stay local.
+
+The host must keep the page open. When the room ends, everyone keeps their current local copy and can export it. Leave the room before using New/Open to replace the whole blueprint. A room supports eight people total, with matching part catalogs and socket settings.
+
+GitHub Pages serves the editor; the default public PeerJS signaling service establishes WebRTC connections between browsers. Some networks require a TURN relay: **Connection settings** accepts a custom HTTPS PeerServer and ICE/TURN settings. TURN credentials are session-only and are not included in invite links. See [collaboration details](docs/COLLABORATION.md) for limits and synchronization behavior.
 
 ## Controls
 

@@ -6,6 +6,14 @@ import { parseShareText } from '../core/share';
 import { poseTargets, type Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
+import {
+  camerasSig,
+  currentPeerId,
+  membersSig,
+  publishCamera,
+  roomSig,
+} from '../state/collaboration';
+import { CollaboratorsLayer } from './collaborators';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
@@ -177,6 +185,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const grid = createGrid();
   scene.add(grid.mesh);
   const rig = new CameraRig();
+  const collaborators = new CollaboratorsLayer();
+  scene.add(collaborators.group);
   const sockets = new SocketsLayer();
   scene.add(sockets.group);
   const points = new PointsLayer();
@@ -299,7 +309,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     workbench.setCamera(rig.camera);
     transformGizmo.setCamera(rig.camera);
     if (!wb) updateMarkers();
+    collaborators.group.visible = !wb;
+    const cameraMoving = collaborators.update(rig.camera);
+    publishCamera(rig.camera.position.toArray(), rig.camera.quaternion.toArray());
     renderer.render(scene, rig.camera);
+    if (cameraMoving) request();
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
     for (const after of ctx.afterRender) after();
     handles.placeBadges(rig.camera, canvas);
@@ -643,6 +657,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     );
     request();
   });
+  const stopCollaborators = effect(() => {
+    roomSig.value;
+    collaborators.sync(membersSig.value, camerasSig.value, currentPeerId());
+    request();
+  });
 
   const stopGuide = effect(() => {
     guide.set(modalGuideSig.value);
@@ -798,6 +817,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     offView();
     stopSync();
     stopHighlight();
+    stopCollaborators();
+    collaborators.dispose();
     stopGizmo();
     stopPreview();
     stopHandles();

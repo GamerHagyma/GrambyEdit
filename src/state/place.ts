@@ -12,7 +12,7 @@ import { setTool, toolSig, type ToolId } from '../tools/manager';
 import { creationDoc } from './library';
 import { settingsSig } from './settings';
 import { select } from './selection';
-import { catalogSig, commit, docSig, viewBus } from './store';
+import { canEditWorkspace, catalogSig, commit, docSig, viewBus } from './store';
 
 export type PlaceSource =
   | { kind: 'part'; type: string }
@@ -27,6 +27,7 @@ export const dragTypeSig = signal<string | null>(null);
 let before: ToolId = 'select';
 
 export function arm(src: PlaceSource): void {
+  if (!canEditWorkspace()) return;
   if (toolSig.value !== 'place') before = toolSig.value;
   placeSig.value = src;
   setTool('place');
@@ -39,6 +40,7 @@ export function disarm(): void {
 
 /** Starts an empty build immediately; normal placement remains armed in a nonempty build. */
 export function placeFirstPart(type: string): boolean {
+  if (!canEditWorkspace()) return false;
   const cat = catalogSig.value;
   if (docSig.value.parts.size !== 0 || !cat || !Object.hasOwn(cat.parts, type)) return false;
   const props = newPartProps(cat, type, settingsSig.value);

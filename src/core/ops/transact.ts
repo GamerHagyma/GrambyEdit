@@ -42,6 +42,7 @@ export function transact(
   doc: Doc,
   label: string,
   fn: (d: Draft) => void,
+  allocate?: () => PartId,
 ): { doc: Doc; patch: Patch | null } {
   let parts: Map<PartId, Part> | null = null;
   let order: PartId[] | null = null;
@@ -97,7 +98,11 @@ export function transact(
       if (cf !== null) writeLayout(id).set(id, cf);
       else if (readLayout().has(id)) writeLayout(id).delete(id);
     },
-    allocId: () => nextId++,
+    allocId: () => {
+      const id = allocate ? allocate() : nextId;
+      nextId = Math.max(nextId, id + 1);
+      return id;
+    },
   });
 
   const partChanges: [PartId, Part | undefined, Part | undefined][] = [];

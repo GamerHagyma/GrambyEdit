@@ -41,7 +41,7 @@ function ImportBody({ onClose }: { onClose(): void }): JSX.Element {
   };
   const replace = () => {
     if (!result || !result.ok) return;
-    loadDoc(result.doc);
+    if (!loadDoc(result.doc)) return;
     viewBus.emit({ kind: 'frame-all' });
     onClose();
   };

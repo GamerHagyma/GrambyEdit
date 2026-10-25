@@ -24,6 +24,7 @@ import { Icon } from '../icons';
 import { JsonField } from '../widgets/JsonField';
 import { PropField } from '../widgets/PropField';
 import { ServoControls } from '../widgets/ServoControls';
+import { collaborationReadOnlySig } from '../../state/collaboration';
 import { isServo } from '../../core/servo-simulation';
 import { servoPreviewSig, withServoPreview } from '../../state/servo-preview';
 
@@ -263,7 +264,13 @@ export function Properties(): JSX.Element {
   return (
     <div class="properties" data-app-undo>
       <Header doc={doc} ids={ids} />
-      <fieldset class="property-fields" disabled={servoPreviewSig.value !== null}>
+      {collaborationReadOnlySig.value && (
+        <p class="muted">View only — the host can grant editing permission.</p>
+      )}
+      <fieldset
+        class="property-fields"
+        disabled={servoPreviewSig.value !== null || collaborationReadOnlySig.value}
+      >
         {unionProps(doc, cat, ids).map((row) => (
           <PropField
             key={row.key}

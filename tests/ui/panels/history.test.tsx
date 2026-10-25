@@ -66,3 +66,11 @@ test('clicking Opened undoes every edit', () => {
   redo();
   expect(docSig.value.parts.get(1)!.props).toEqual({ OrientationY: 1 });
 });
+
+test('a shared history cannot jump backward through other participants edits', async () => {
+  const { historyAvailabilitySig } = await import('../../../src/state/store');
+  editThree();
+  historyAvailabilitySig.value = { undo: true, redo: false };
+  render(<HistoryPanel />);
+  expect(screen.getAllByRole('button').every((b) => (b as HTMLButtonElement).disabled)).toBe(true);
+});

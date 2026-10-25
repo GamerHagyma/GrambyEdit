@@ -132,7 +132,7 @@ export async function openCreation(id: string): Promise<void> {
   const record = await getCreation(id);
   if (workspaceVersionSig.value !== workspace) return;
   if (!record) throw new Error('That creation is no longer in the library.');
-  loadDoc(creationDoc(record));
+  if (!loadDoc(creationDoc(record))) return;
   openCreationIdSig.value = record.id;
   const camera = record.editorMeta.camera;
   viewBus.emit(camera ? { kind: 'look', ...camera } : { kind: 'frame-all' });

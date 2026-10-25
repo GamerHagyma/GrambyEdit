@@ -8,11 +8,12 @@ import { openCreationIdSig } from './library';
 import { disarm } from './place';
 import { hiddenSig, hoverPieceSig, hoverPointSig, hoverSig } from './selection';
 import { clearSurface } from './surfaces';
-import { loadDoc, viewBus } from './store';
+import { canReplaceWorkspace, loadDoc, viewBus } from './store';
 import { contextMenuSig, statusHintSig } from './ui';
 
 /** Called only after confirmation; references, preferences and saved creations are preserved. */
 export function newBlueprint(): void {
+  if (!canReplaceWorkspace()) return;
   cancelModal();
   cancelPick();
   disarm();

@@ -1,6 +1,6 @@
 # Mirror and collaboration — assessment only
 
-Proposed directions for discussion, 2026-10-25. Neither feature is implemented in this change. No backend, networking dependency or mirror tool has been added.
+Original assessment, 2026-10-25. The mirror tool remains deferred. Collaboration was subsequently authorized and implemented inline; see [the implementation details](../../COLLABORATION.md). The proposals below preserve the reasoning that preceded implementation.
 
 ## Mirror
 

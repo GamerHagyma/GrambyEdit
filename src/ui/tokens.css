@@ -2246,3 +2246,58 @@ kbd {
   align-items: center;
   margin-top: 10px;
 }
+
+.collab-open {
+  white-space: nowrap;
+}
+.collab-identity {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.collab-identity label,
+.collab-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.collab-field {
+  margin: 14px 0;
+}
+.collab-field textarea {
+  width: 100%;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+.collab-member {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.collab-member > span:nth-child(2) {
+  flex: 1;
+  min-width: 80px;
+}
+.collab-member small {
+  display: block;
+  opacity: 0.7;
+}
+.collab-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.collab-member-actions {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.collab-network {
+  margin-top: 16px;
+  font-size: 12px;
+}

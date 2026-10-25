@@ -16,6 +16,52 @@ export const docSig = signal<Doc>(EMPTY_DOC);
 /** Changes on workspace replacement, so pending library operations cannot revive an old workspace. */
 export const workspaceVersionSig = signal(0);
 export const historySig = signal<History>(emptyHistory());
+export const historyAvailabilitySig = signal<{ undo: boolean; redo: boolean } | null>(null);
+/** The optional room boundary. Solo editing has no adapter and retains the ordinary history. */
+export interface StoreAdapter {
+  canEdit(): boolean;
+  canReplace(): boolean;
+  allocate(): number;
+  changed(before: Doc, after: Doc): void;
+  undo(redo: boolean): boolean;
+}
+let adapter: StoreAdapter | null = null;
+export function setStoreAdapter(next: StoreAdapter | null): void {
+  adapter = next;
+}
+export function canEditWorkspace(): boolean {
+  return adapter?.canEdit() ?? true;
+}
+export function canReplaceWorkspace(): boolean {
+  return adapter?.canReplace() ?? true;
+}
+
+/** Installs an authoritative shared state without feeding it back into the network. */
+export function installSharedDoc(doc: Doc, replace = false): void {
+  const before = docSig.peek();
+  batch(() => {
+    if (replace) {
+      workspaceVersionSig.value++;
+      historySig.value = emptyHistory();
+      clearSelection();
+    } else {
+      const patch: Patch = {
+        label: 'Shared update',
+        parts: [...new Set([...before.parts.keys(), ...doc.parts.keys()])]
+          .filter((id) => before.parts.get(id) !== doc.parts.get(id))
+          .map((id) => [id, before.parts.get(id), doc.parts.get(id)] as const),
+        order: before.order === doc.order ? null : [before.order, doc.order],
+        layout: [...new Set([...before.layout.keys(), ...doc.layout.keys()])]
+          .filter((id) => before.layout.get(id) !== doc.layout.get(id))
+          .map((id) => [id, before.layout.get(id), doc.layout.get(id)] as const),
+        nextId: [before.nextId, doc.nextId],
+      };
+      historySig.value = record(historySig.value, patch);
+    }
+    docSig.value = doc;
+    sanitizeSelection(doc);
+  });
+}
 /** The loaded mesh pack and catalog; null until `loadAssets` resolves. */
 export const assetsSig = signal<Assets | null>(null);
 export const baseCatalogSig = signal<Catalog | null>(null);
@@ -28,17 +74,26 @@ export const catalogSig: ReadonlySignal<Catalog | null> = computed(() => {
 
 /** Runs one undoable edit. Returns null, and records nothing, when the edit changed nothing. */
 export function commit(label: string, fn: (d: Draft) => void): Patch | null {
-  const { doc, patch } = transact(docSig.value, label, fn);
+  if (!canEditWorkspace()) return null;
+  const before = docSig.value;
+  const { doc, patch } = transact(
+    before,
+    label,
+    fn,
+    adapter ? () => adapter!.allocate() : undefined,
+  );
   if (!patch) return null;
   batch(() => {
     docSig.value = doc;
     historySig.value = record(historySig.value, patch);
     sanitizeSelection(doc);
   });
+  adapter?.changed(before, doc);
   return patch;
 }
 
 export function undo(): boolean {
+  if (adapter) return adapter.canEdit() && adapter.undo(false);
   const r = undoStep(historySig.value, docSig.value);
   if (!r) return false;
   batch(() => {
@@ -50,6 +105,7 @@ export function undo(): boolean {
 }
 
 export function redo(): boolean {
+  if (adapter) return adapter.canEdit() && adapter.undo(true);
   const r = redoStep(historySig.value, docSig.value);
   if (!r) return false;
   batch(() => {
@@ -61,13 +117,15 @@ export function redo(): boolean {
 }
 
 /** Replaces the doc; clears history and selection. */
-export function loadDoc(doc: Doc): void {
+export function loadDoc(doc: Doc): boolean {
+  if (!canReplaceWorkspace()) return false;
   batch(() => {
     workspaceVersionSig.value++;
     docSig.value = doc;
     historySig.value = emptyHistory();
     clearSelection();
   });
+  return true;
 }
 
 export type ViewEvent =
@@ -98,6 +156,8 @@ export const viewBus = {
 };
 
 export function resetStoreForTests(): void {
+  adapter = null;
+  historyAvailabilitySig.value = null;
   batch(() => {
     docSig.value = EMPTY_DOC;
     historySig.value = emptyHistory();

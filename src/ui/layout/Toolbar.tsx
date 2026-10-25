@@ -8,7 +8,7 @@ import {
   updateSettings,
   type NumberRange,
 } from '../../state/settings';
-import { historySig } from '../../state/store';
+import { historySig, historyAvailabilitySig } from '../../state/store';
 import { toast } from '../../state/toasts';
 import { keysFor } from '../../state/keymap';
 import { setTool, toolSig, type ToolId } from '../../tools/manager';
@@ -84,7 +84,9 @@ export function Toolbar(): JSX.Element {
         class="icon-button"
         aria-label="Undo"
         title={`Undo (${keysFor('edit.undo', s.cameraScheme).join(', ')})`}
-        disabled={past.length === 0}
+        disabled={
+          historyAvailabilitySig.value ? !historyAvailabilitySig.value.undo : past.length === 0
+        }
         onClick={() => runCommand('edit.undo')}
       >
         <Icon name="undo" />
@@ -93,7 +95,9 @@ export function Toolbar(): JSX.Element {
         class="icon-button"
         aria-label="Redo"
         title={`Redo (${keysFor('edit.redo', s.cameraScheme).join(', ')})`}
-        disabled={future.length === 0}
+        disabled={
+          historyAvailabilitySig.value ? !historyAvailabilitySig.value.redo : future.length === 0
+        }
         onClick={() => runCommand('edit.redo')}
       >
         <Icon name="redo" />
