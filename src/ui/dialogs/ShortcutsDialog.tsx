@@ -102,6 +102,114 @@ const TOOL_KEYS: Section = {
   ],
 };
 
+const USAGE: readonly Section[] = [
+  {
+    title: 'Mirroring and radial copies',
+    note: 'Mirror settings, guides and previews are local to your browser. Only created parts sync with collaborators.',
+    rows: [
+      {
+        keys: ['Anchor'],
+        action:
+          'Select a Part or Connector, open the Mirror tab, then Use selected Part / Connector.',
+      },
+      {
+        keys: ['Plane'],
+        action:
+          'Choose YZ, XZ or XY in the anchor’s axes. Offset it, use Top face, or expand Rotate guide for an arbitrary plane.',
+      },
+      {
+        keys: ['Radial'],
+        action: 'Choose Radial, an axis and 2–16 total sectors. The total includes the original.',
+      },
+      {
+        keys: ['Apply'],
+        action:
+          'Select source parts and Apply to selection. Include attached children copies the branch; the anchor stays in place.',
+      },
+      {
+        keys: ['Placement'],
+        action:
+          'Enable Repeat new placements to copy parts, pasted builds and generated shapes as you place them. One Undo removes the whole placement.',
+      },
+      {
+        keys: ['Visibility'],
+        action:
+          'Show guide and Preview selection affect only this browser. Clear mirror removes the setup; deleting the anchor or opening another build also clears it.',
+      },
+    ],
+  },
+  {
+    title: 'Collaborative workspaces',
+    rows: [
+      {
+        keys: ['Host'],
+        action:
+          'Open Collaborate, choose a name and camera color, then Host workspace and share the invite link.',
+      },
+      {
+        keys: ['Join'],
+        action:
+          'Save your current build first. Open the invite, click Join (replace workspace), and wait for host approval.',
+      },
+      {
+        keys: ['Permissions'],
+        action:
+          'The host approves viewers or editors, changes roles and removes people in the Collaboration panel.',
+      },
+      {
+        keys: ['Undo / redo'],
+        action:
+          'Only your own unchanged edits are undone. The shared History tab is informational.',
+      },
+      {
+        keys: ['Leave'],
+        action:
+          'The host must keep the page open. Everyone keeps their latest local copy when the room ends. Leave before New/Open.',
+      },
+      {
+        keys: ['Connection'],
+        action:
+          'Edits sync in small batches; cameras send only while moving. Consistency checks run every 15 seconds. Connection settings accepts custom signaling and ICE/TURN settings.',
+      },
+    ],
+  },
+  {
+    title: 'References and building helpers',
+    rows: [
+      {
+        keys: ['Reference'],
+        action:
+          'Paste an image or direct image link, or choose a file. Wheel/buttons zoom; drag pans. Collapse the source controls for more image space.',
+      },
+      {
+        keys: ['Pop out'],
+        action:
+          'Keep the reference above the editor, drag its title bar to move, and resize from any corner. Dock returns it to the panel. References stay local.',
+      },
+      {
+        keys: ['Servo'],
+        action:
+          'In Properties, hold red/blue to simulate opposite directions. Sustain makes the buttons toggle. Rotation shows the live angle and is remembered when simulation finishes.',
+      },
+      {
+        keys: ['Export'],
+        action:
+          'Include servo rotation values controls whether remembered angles appear in the exported build.',
+      },
+      {
+        keys: ['Color'],
+        action:
+          'Generators and Surfaces have a coloring checkbox. Turn it off to use native default colors.',
+      },
+      {
+        keys: ['New'],
+        action:
+          'File → New starts an empty blueprint after confirmation. In an empty workspace, double-click a Parts card to place it at the center and focus it.',
+      },
+    ],
+  },
+];
+
 /** Keymap groups by command id prefix, in this order. */
 const GROUPS: readonly [string, readonly string[]][] = [
   ['Tools', ['tool.']],
@@ -172,10 +280,10 @@ export function ShortcutsDialog({
   onClose(): void;
 }): JSX.Element | null {
   const scheme = settingsSig.value.cameraScheme;
-  const sections = [...keymapSections(scheme), MODAL, TOOL_KEYS, MOUSE, CAMERA[scheme]];
+  const sections = [...USAGE, ...keymapSections(scheme), MODAL, TOOL_KEYS, MOUSE, CAMERA[scheme]];
   return (
     <Dialog
-      title={`Keyboard shortcuts (${scheme === 'blender' ? 'Blender' : 'Studio'} controls)`}
+      title={`Help & controls (${scheme === 'blender' ? 'Blender' : 'Studio'})`}
       open={open}
       onClose={onClose}
     >

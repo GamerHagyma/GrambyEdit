@@ -16,6 +16,7 @@ import {
   type ShapeInput,
 } from '../core/generators';
 import { insertSubDoc } from '../core/ops/clipboard';
+import { addPlacementSymmetry } from './symmetry';
 import { transact } from '../core/ops/transact';
 import { isRgb } from '../core/palette';
 import { EMPTY_POSES } from '../core/pose';
@@ -381,6 +382,7 @@ export function generate(): void {
         onto: host.id,
       });
       ids = [...made.values()].filter((id) => id !== host.id);
+      ids.push(...addPlacementSymmetry(d, ids));
     });
   } catch (e) {
     toast((e as Error).message, 'warn');

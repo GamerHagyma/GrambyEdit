@@ -53,6 +53,8 @@ import { PartBrowser } from './panels/PartBrowser';
 import { Properties } from './panels/Properties';
 import { ReferencePanel, ReferenceWindow } from './panels/ReferencePanel';
 import { StatsPanel } from './panels/StatsPanel';
+import { MirrorPanel } from './panels/MirrorPanel';
+import { startSymmetryLifecycle } from '../state/symmetry';
 import { SurfacePanel } from './panels/SurfacePanel';
 import { WorkbenchPanel } from './panels/WorkbenchPanel';
 import { ContextMenu } from './widgets/ContextMenu';
@@ -235,6 +237,7 @@ function onPaste(e: ClipboardEvent): void {
 }
 
 export function App(): JSX.Element {
+  useEffect(startSymmetryLifecycle, []);
   useEffect(() => {
     if (readCollaborationInvite()) dialogSig.value = 'collaboration';
     return () => leaveCollaboration();
@@ -284,6 +287,7 @@ export function App(): JSX.Element {
         inspector={{
           properties: <Properties />,
           reference: <ReferencePanel />,
+          mirror: <MirrorPanel />,
           outliner: <Outliner />,
           stats: <StatsPanel />,
           issues: <IssuesPanel />,

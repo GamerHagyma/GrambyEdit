@@ -2,6 +2,7 @@
 // (Shift+click gathers several targets to place one part on each), or join two existing sockets by
 // dragging from one to the other or clicking one, then the other.
 import { signal } from '@preact/signals';
+import { addPlacementSymmetry } from '../state/symmetry';
 import {
   BufferGeometry,
   Line,
@@ -179,9 +180,12 @@ export function placeParts(type: string, targets: readonly PlaceTarget[]): void 
   if (trial.ok.length > 0) {
     let placed: PartId[] = [];
     const n = trial.ok.length;
-    commit(n === 1 ? `Add ${type}` : `Add ${n} × ${type}`, (d) => {
-      placed = tryAll(d).placed;
-    });
+    try {
+      commit(n === 1 ? `Add ${type}` : `Add ${n} × ${type}`, (d) => {
+        placed = tryAll(d).placed;
+        placed.push(...addPlacementSymmetry(d, placed));
+      });
+    } catch(e) {toast((e as Error).message,'warn');return;}
     select(placed, 'replace');
     pushRecent(type);
   }

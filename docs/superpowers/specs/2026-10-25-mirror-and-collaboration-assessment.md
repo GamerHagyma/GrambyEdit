@@ -1,6 +1,6 @@
 # Mirror and collaboration — assessment only
 
-Original assessment, 2026-10-25. The mirror tool remains deferred. Collaboration was subsequently authorized and implemented inline; see [the implementation details](../../COLLABORATION.md). The proposals below preserve the reasoning that preceded implementation.
+Original assessment, 2026-10-25. Collaboration and the initial mirror/radial placement tools were subsequently authorized and implemented inline; see [collaboration](../../COLLABORATION.md) and [symmetry](../../SYMMETRY.md). The proposals below preserve the reasoning that preceded implementation.
 
 ## Mirror
 

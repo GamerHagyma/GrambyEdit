@@ -26,6 +26,8 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Import and export** | Read share codes or JSON, display native part meshes and textures, and export edited creations. |
 | **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
 | **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
+| **Mirroring and radial copies** | Anchor a mirror plane or radial axis to a Part or Connector, preview copies, and repeat new placements automatically. Guides stay local during collaboration; created parts sync. |
+| **Servo preview** | Hold red/blue simulation buttons or enable Sustain, inspect the live angle, and choose whether remembered rotations are exported. |
 | **Logic-part wires** | Thin internal wires follow moving pieces, turn orange beyond 10 studs, and report overstretched parts in the Issues tab. |
 | **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
 | **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
@@ -47,11 +49,13 @@ Keep a copy of the original share code before editing a creation.
 ## Getting started
 
 1. Open the editor and choose **Start empty**, or use **File → Import code** to load an existing creation.
-2. Select a part from the **Parts** tab and click in the viewport to place it. Right-click to return to the Select tool when finished.
+2. Select a part from the **Parts** tab and click in the viewport to place it. Double-click a Parts card in an empty workspace to place it at the center and focus the camera. Right-click to return to the Select tool when finished.
 3. Use the transform and paint tools to edit parts, or the **Generators** and **Surfaces** tabs to create geometry. Live previews show the result before it is added.
 4. Use **File → Export code** and load the result in Road to Gramby's.
 
 The creation library and preferences are stored in your browser. Export a library backup before moving to another browser or computer.
+
+**Starting over:** **File → New** clears the workspace after confirmation. **Generators** and **Surfaces** have a coloring checkbox; turn it off to keep each part's native default color.
 
 **Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Zoom and pan the image, or use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and any corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
 
@@ -71,6 +75,8 @@ GitHub Pages serves the editor; the default public PeerJS signaling service esta
 
 The editor supports **Blender** controls for orbiting around a build and **Studio** controls for flying through it. Switch between them in the toolbar.
 
+Open **View → Help & controls** or press **?** for usage instructions, collaboration, mirroring, references, servo controls and the current keyboard bindings.
+
 | Shortcut | Action |
 | --- | --- |
 | `G` / `R` | Move / rotate the selection |
@@ -80,11 +86,24 @@ The editor supports **Blender** controls for orbiting around a build and **Studi
 | `Enter` / `Esc` | Confirm / cancel a transform |
 | `Ctrl+Z` | Undo |
 | `1` to `6` | Select, Move, Rotate, Connect, Point, Paint |
-| `?` | Open the full shortcut guide |
+| `?` | Open Help & controls |
 
 **Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls for the selection. Hidden parts remain selectable in the Outliner and can be shown again from the same menu.
 
 **Surfaces:** Shift-click corner buttons or viewport dots to select multiple corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
+
+## Mirror and radial placement
+
+1. Select a **Part** or **Connector** and open the right panel's **Mirror** tab. Click **Use selected Part / Connector** to attach the guide to it.
+2. Choose **Mirror plane** and its local YZ/XZ/XY plane. Adjust the offset, use **Top face**, or expand **Rotate guide** to turn the plane. **Center** resets the offset and rotation. Moving the anchor moves the guide with it.
+3. Select the parts to copy and click **Apply to selection**. **Include attached children** copies their branches too; the anchor is excluded and the originals stay in place.
+4. Enable **Repeat new placements** to copy new parts, pasted builds, picker placements, generated shapes and surfaces automatically. A placement and its copies are one Undo action.
+
+For circular patterns, choose **Radial**, select an axis and set **Total sectors** (2–16, including the original). Turn off **Skip centered parts** when you want rotated copies of a part centered on the axis.
+
+**Show guide** and **Preview selection** control the local display. In collaboration, each builder has an independent setup: only actual part placement is shared. **Clear mirror**, deleting the anchor, or replacing the workspace clears that setup.
+
+Copies use native attachment points so their placement survives export. Mirroring reflects placement positions and rotations; the game format cannot apply negative scale to arbitrary asymmetric meshes. Door A/B and C/D variants swap automatically. Copies keep properties and remap internal connections; external joints are not duplicated. If a part cannot be mounted without damaging its internal wiring, the operation reports why and leaves the build unchanged. See [mirroring details](docs/SYMMETRY.md).
 
 ## GitHub Pages
 

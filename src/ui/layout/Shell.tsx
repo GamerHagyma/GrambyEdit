@@ -93,6 +93,7 @@ function IssueBadge(): JSX.Element {
 const RIGHT_TABS = [
   { id: 'properties', label: 'Properties' },
   { id: 'reference', label: 'Reference' },
+  { id: 'mirror', label: 'Mirror' },
   { id: 'outliner', label: 'Outliner' },
   { id: 'stats', label: 'Stats' },
   { id: 'issues', label: 'Issues' },
@@ -175,7 +176,7 @@ export function Shell({
             cmd('view.hide', 'Hide selected'),
             cmd('view.unhide', 'Show all'),
             cmd('view.isolate', 'Isolate selected'),
-            cmd('app.shortcuts', 'Keyboard shortcuts'),
+            cmd('app.shortcuts', 'Help & controls…'),
             { label: 'About GrambyEdit', run: () => openDialog('about') },
           ]}
         />

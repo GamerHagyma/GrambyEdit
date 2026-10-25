@@ -1,0 +1,12 @@
+# Local planar and radial mirroring
+
+User authorizes implementation inline. Both automatic new-placement symmetry and Apply to selection are required. No subagents.
+
+- A Mirror inspector tab anchors to one selected native Part or Connector. Track its committed world frame locally; local X/Y/Z normal, normal offset, Euler adjustments, center/top-face shortcuts and guide size. Radial mode uses an axis and 2–16 total sectors including the original.
+- Automatic copies are opt-in. Apply selection includes descendants by default, excludes the anchor, leaves originals intact, and is one undoable edit. Preview and guide are local. Clear on workspace replacement or deleted anchor. Actual copies use the ordinary store/collaboration path and ID allocator, with no remote edit hooks or synced settings.
+- Reflect placement frames with a local reflection correction to keep proper rotations. Swap DoorA/B and DoorC/D; servo local Y reflection negates remembered Rotation. Native asymmetric meshes retain native geometry: there is no negative-scale export support. Do not claim arbitrary mesh reflection.
+- Clone IDs and all point UUIDs; internal connections remap, external joints do not duplicate. Radial copies preserve rigid internal joints. Planar copies remap corresponding sockets and recompute point mounts. Keep valid internal signal joints; refuse a copy that cannot preserve its wiring/pose safely. Attach copy roots to the original symmetry anchor, making positions survive share-code export. Handle each independently placed body, reject cycles/unknown mounts, and verify final poses before committing. Atomic failure leaves the build unchanged.
+- Skip centered coincident copies by default; allow disabling that option. Cap an operation at 8,000 additional parts and a resulting document at 32,000. Preview uses no real allocation/commits.
+- README and in-app Help/Controls cover collaboration, references, servo controls, New/default-color generation and mirroring.
+
+Checks: geometry/attachment tests for arbitrary planes, radial sectors, fresh IDs/UUIDs, export/reimport poses, hierarchy, multiple bodies, rollback, caps and centered parts; state/UI tests for anchor and workspace lifecycle, local-only settings/preview, permissions and one-step undo; actual browser guide, auto-placement, selection Apply, radial mode, collaboration isolation and synced results; full suite/types/format/build and published site smoke test.

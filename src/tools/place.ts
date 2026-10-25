@@ -32,6 +32,7 @@ import { select } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { statusHintSig } from '../state/ui';
+import { addPlacementSymmetry, placementSymmetryGhosts } from '../state/symmetry';
 import { getViewport } from '../viewport/context';
 import { cursorRay, pickPart, pickPoint, pickSocket } from '../viewport/raycast';
 import { setTool, type Tool, type ToolPointer } from './manager';
@@ -134,7 +135,7 @@ export function createPlaceTool(): Tool {
     else {
       const worlds = new Map<PartId, Matrix4>();
       for (const [id, w] of subWorld) worlds.set(id, spot.world.clone().multiply(w));
-      vp.ghost.show(sub, worlds);
+      vp.ghost.show(sub, worlds, placementSymmetryGhosts(sub, worlds));
     }
     vp.request();
   };
@@ -161,6 +162,7 @@ export function createPlaceTool(): Tool {
     try {
       commit(`Place ${label}`, (d) => {
         ids = [...insertSubDoc(d, cat, cat.conventions, posesSig.value, what, at).values()];
+        ids.push(...addPlacementSymmetry(d, ids));
       });
     } catch (e) {
       toast((e as Error).message, 'warn');

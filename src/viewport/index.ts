@@ -14,6 +14,8 @@ import {
   roomSig,
 } from '../state/collaboration';
 import { CollaboratorsLayer } from './collaborators';
+import { SymmetryGuide } from './symmetry-guide';
+import { symmetrySig, symmetryFrameSig, symmetryPreviewSig } from '../state/symmetry';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
@@ -187,6 +189,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const rig = new CameraRig();
   const collaborators = new CollaboratorsLayer();
   scene.add(collaborators.group);
+  const symmetryGuide = new SymmetryGuide();
+  scene.add(symmetryGuide.group);
   const sockets = new SocketsLayer();
   scene.add(sockets.group);
   const points = new PointsLayer();
@@ -310,6 +314,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     transformGizmo.setCamera(rig.camera);
     if (!wb) updateMarkers();
     collaborators.group.visible = !wb;
+    symmetryGuide.group.visible =
+      !wb && symmetrySig.peek().guide && symmetryFrameSig.peek() !== null;
     const cameraMoving = collaborators.update(rig.camera);
     publishCamera(rig.camera.position.toArray(), rig.camera.quaternion.toArray());
     renderer.render(scene, rig.camera);
@@ -662,6 +668,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     collaborators.sync(membersSig.value, camerasSig.value, currentPeerId());
     request();
   });
+  const stopSymmetry = effect(() => {
+    symmetryGuide.set(symmetryFrameSig.value, symmetrySig.value);
+    request();
+  });
 
   const stopGuide = effect(() => {
     guide.set(modalGuideSig.value);
@@ -676,11 +686,13 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const assets = assetsSig.value;
     const tab = shownTab();
     const shown =
-      tab === 'generators'
-        ? genPreviewSig.value
-        : tab === 'surfaces'
-          ? surfacePreviewSig.value
-          : null;
+      tab === null
+        ? null
+        : tab === 'generators'
+          ? genPreviewSig.value
+          : tab === 'surfaces'
+            ? surfacePreviewSig.value
+            : (symmetryPreviewSig.value?.shown ?? null);
     if (assets && preview?.assets !== assets) {
       if (preview) {
         scene.remove(preview.group);
@@ -819,6 +831,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     stopHighlight();
     stopCollaborators();
     collaborators.dispose();
+    stopSymmetry();
+    symmetryGuide.dispose();
     stopGizmo();
     stopPreview();
     stopHandles();

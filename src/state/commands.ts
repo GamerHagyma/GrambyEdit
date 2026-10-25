@@ -374,7 +374,7 @@ registerCommand({
 });
 registerCommand({
   id: 'app.shortcuts',
-  label: 'Keyboard shortcuts',
+  label: 'Help & controls',
   run: () => openDialog('shortcuts'),
 });
 registerCommand({

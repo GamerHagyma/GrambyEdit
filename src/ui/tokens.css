@@ -2301,3 +2301,35 @@ kbd {
   margin-top: 16px;
   font-size: 12px;
 }
+.mirror-panel {
+  padding: 10px;
+}
+.mirror-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 12px 0;
+}
+.mirror-field select,
+.mirror-field input {
+  width: 100%;
+}
+.mirror-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 0;
+}
+.mirror-actions,
+.mirror-rotation {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+.mirror-rotation label {
+  min-width: 0;
+  flex: 1;
+}
+.mirror-rotation input {
+  width: 100%;
+}

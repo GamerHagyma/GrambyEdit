@@ -20,7 +20,11 @@ export class GhostLayer {
   }
 
   /** Shows `sub`'s parts at the given world matrices (keyed by sub id); null hides the ghost. */
-  show(sub: Doc | null, worlds: ReadonlyMap<PartId, Matrix4>): void {
+  show(
+    sub: Doc | null,
+    worlds: ReadonlyMap<PartId, Matrix4>,
+    extra: readonly { type: string; world: Matrix4 }[] = [],
+  ): void {
     this.group.visible = sub !== null;
     if (!sub) return;
     const byType = new Map<string, Matrix4[]>();
@@ -30,6 +34,11 @@ export class GhostLayer {
       const type = sub.parts.get(id)!.type;
       const list = byType.get(type) ?? [];
       list.push(m);
+      byType.set(type, list);
+    }
+    for (const { type, world } of extra) {
+      const list = byType.get(type) ?? [];
+      list.push(world);
       byType.set(type, list);
     }
     for (const [type, mesh] of this.meshes) if (!byType.has(type)) mesh.count = 0;

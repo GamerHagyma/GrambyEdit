@@ -5,6 +5,7 @@ import { Matrix4 } from 'three';
 import type { Vec3 } from '../core/catalog-types';
 import { cfToMatrix4 } from '../core/cframe';
 import { insertSubDoc } from '../core/ops/clipboard';
+import { addPlacementSymmetry } from './symmetry';
 import {
   buildSurfaceSubDoc,
   capSize,
@@ -199,6 +200,7 @@ export function createSurface(): void {
         onto: host.id,
       });
       ids = [...made.values()].filter((id) => id !== host.id);
+      ids.push(...addPlacementSymmetry(d, ids));
     });
   } catch (e) {
     toast((e as Error).message, 'warn');
