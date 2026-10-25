@@ -144,6 +144,7 @@ export function Shell({
         <Menu
           label="File"
           items={[
+            cmd('file.new', 'New'),
             cmd('file.import', 'Import code…'),
             cmd('file.export', 'Export code…'),
             cmd('file.library', 'Library…'),

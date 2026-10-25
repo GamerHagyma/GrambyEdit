@@ -61,6 +61,7 @@ export interface SurfaceSpec {
   /** In the host's part space. */
   readonly corners: Corners;
   readonly color: SurfaceColor;
+  readonly colorEnabled?: boolean;
 }
 
 /**
@@ -87,7 +88,7 @@ export function buildSurfaceSubDoc(
   const tiling = tileQuad(spec.corners, cap, opts.maxElements);
   if (!tiling.ok) return tiling;
   const { tiles } = tiling;
-  const staggered = spec.color.mode !== 'single';
+  const staggered = spec.colorEnabled !== false && spec.color.mode !== 'single';
   const toCenter = new Matrix4().makeTranslation(-cap.center[0], -cap.center[1], -cap.center[2]);
   const out = new Vector3();
   const frames = tiles.map(({ col, row, frame }) => {
@@ -100,9 +101,10 @@ export function buildSurfaceSubDoc(
     }
     return f.multiply(toCenter);
   });
-  const tints = def.paintable
-    ? tintColors(spec.color, tiles.length, (axis, i) => tiles[i][axis])
-    : null;
+  const tints =
+    def.paintable && spec.colorEnabled !== false
+      ? tintColors(spec.color, tiles.length, (axis, i) => tiles[i][axis])
+      : null;
   const hostDef = Object.hasOwn(cat.parts, spec.hostType) ? cat.parts[spec.hostType] : undefined;
   const sub = mountSubDoc(
     cat,

@@ -38,6 +38,7 @@ export interface SurfaceState {
   /** The corners the gizmo moves, ascending; empty while none is chosen. */
   readonly selected: readonly number[];
   readonly color: SurfaceColor;
+  readonly colorEnabled: boolean;
   /** The caps the last Create made, until the surface changes. */
   readonly created: readonly PartId[] | null;
 }
@@ -56,6 +57,7 @@ function startState(): SurfaceState {
     home: ORIGIN,
     selected: [],
     color: { mode: 'single', rgb: settingsSig.value.activeColor },
+    colorEnabled: true,
     created: null,
   };
 }
@@ -127,6 +129,10 @@ export function setSurfaceColor(color: SurfaceColor): void {
   change({ color });
 }
 
+export function setSurfaceColorEnabled(colorEnabled: boolean): void {
+  change({ colorEnabled });
+}
+
 export function resetCorners(): void {
   change({ corners: surfaceSig.value.home });
 }
@@ -139,14 +145,19 @@ export function clearSurface(): void {
 export const surfaceBuildSig = computed(() => {
   const cat = catalogSig.value;
   const host = surfaceHostSig.value;
-  const { corners, color } = surfaceSig.value;
+  const { corners, color, colorEnabled } = surfaceSig.value;
   if (!cat || !host || surfaceCreatedSig.value !== null) return null;
   const s = settingsSig.value;
-  return buildSurfaceSubDoc({ hostType: host.type, corners, color }, cat, cat.conventions, {
-    posDecimals: s.genPosDecimals,
-    rotDecimals: s.genRotDecimals,
-    maxElements: MAX_CAPS,
-  });
+  return buildSurfaceSubDoc(
+    { hostType: host.type, corners, color, colorEnabled },
+    cat,
+    cat.conventions,
+    {
+      posDecimals: s.genPosDecimals,
+      rotDecimals: s.genRotDecimals,
+      maxElements: MAX_CAPS,
+    },
+  );
 });
 
 /** What Create would add to the build. */

@@ -16,6 +16,32 @@ import { realCatalog } from '../../helpers/real-catalog';
 const OPTS = { posDecimals: 6, rotDecimals: 8, maxElements: 1000 };
 const position = (m: Matrix4) => new Vector3().setFromMatrixPosition(m);
 
+test('disabled surface coloring writes no RGB and uses unstaggered geometry despite a retained gradient', async () => {
+  const cat = await realCatalog();
+  const corners = defaultCorners(new Matrix4().makeTranslation(0, 0.5, 0), capSize(cat)!);
+  const spec = {
+    hostType: 'Part',
+    corners,
+    color: {
+      mode: 'gradient' as const,
+      from: [255, 0, 0] as const,
+      to: [0, 0, 255] as const,
+      axis: 'u' as const,
+    },
+    colorEnabled: false,
+  };
+  const result = buildSurfaceSubDoc(spec, cat, cat.conventions, OPTS);
+  if (!result.ok) throw new Error(result.error);
+  expect([...result.sub.parts.values()].every((part) => !Object.hasOwn(part.props, 'RGB'))).toBe(
+    true,
+  );
+  const plain = build(cat, corners, { mode: 'single', rgb: [255, 255, 255] });
+  const a = computePoses(result.sub, cat, cat.conventions),
+    b = computePoses(plain.sub, cat, cat.conventions);
+  for (const id of result.sub.order)
+    expect(a.world.get(id)!.elements).toEqual(b.world.get(id)!.elements);
+});
+
 function build(cat: Catalog, corners: Corners, color: SurfaceColor) {
   const r = buildSurfaceSubDoc({ hostType: 'Part', corners, color }, cat, cat.conventions, OPTS);
   if (!r.ok) throw new Error(r.error);

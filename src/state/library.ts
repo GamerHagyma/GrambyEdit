@@ -17,7 +17,7 @@ import {
 import { getViewport } from '../viewport/context';
 import { posesSig } from './derived';
 import { selectionSig } from './selection';
-import { docSig, historySig, loadDoc, viewBus } from './store';
+import { docSig, historySig, loadDoc, viewBus, workspaceVersionSig } from './store';
 import { toast } from './toasts';
 
 export const creationsSig = signal<readonly CreationRecord[]>([]);
@@ -71,6 +71,7 @@ export async function saveCurrent(
   extra: SaveExtra = {},
 ): Promise<CreationRecord> {
   const doc = docSig.value;
+  const workspace = workspaceVersionSig.value;
   const thumb = (await getViewport()?.snapshot()) ?? null;
   const record = await saveCreation({
     id,
@@ -81,9 +82,11 @@ export async function saveCurrent(
     editorMeta: { ...editorMetaOf(doc), camera: cameraMeta() },
     ...extra,
   });
-  openCreationIdSig.value = record.id;
-  // The build is saved: no unsaved work to restore after a crash.
-  await clearAutosave();
+  if (workspaceVersionSig.value === workspace) {
+    openCreationIdSig.value = record.id;
+    // Edits made during the save still need crash recovery.
+    if (docSig.value === doc) await clearAutosave();
+  }
   await askPersistence();
   await refreshCreations();
   return record;
@@ -125,7 +128,9 @@ export function creationDoc(record: CreationRecord): Doc {
 
 /** Opens a creation in place of the current build, with its layout and camera. */
 export async function openCreation(id: string): Promise<void> {
+  const workspace = workspaceVersionSig.value;
   const record = await getCreation(id);
+  if (workspaceVersionSig.value !== workspace) return;
   if (!record) throw new Error('That creation is no longer in the library.');
   loadDoc(creationDoc(record));
   openCreationIdSig.value = record.id;

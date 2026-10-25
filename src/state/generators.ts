@@ -57,6 +57,7 @@ function startRequest(): GenRequest {
     element: 'Part',
     host: 'Connector',
     color: { mode: 'single', rgb: s.activeColor },
+    colorEnabled: true,
     transform: IDENTITY_CF,
     posDecimals: s.genPosDecimals,
     rotDecimals: s.genRotDecimals,
@@ -215,6 +216,7 @@ function readRequest(v: unknown): GenRequest | null {
   const { shape, input, element, host, color, transform, posDecimals, rotDecimals, maxElements } =
     v;
   if (!isShapeId(shape)) return null;
+  if (v.colorEnabled !== undefined && typeof v.colorEnabled !== 'boolean') return null;
   const readIn = readInput(SHAPES[shape], input);
   const readCol = readColor(color);
   if (
@@ -234,6 +236,7 @@ function readRequest(v: unknown): GenRequest | null {
     element,
     host,
     color: readCol,
+    ...(v.colorEnabled === undefined ? {} : { colorEnabled: v.colorEnabled }),
     transform,
     posDecimals,
     rotDecimals,

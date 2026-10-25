@@ -35,6 +35,22 @@ test('form follows the chosen shape and Generate arms place mode', () => {
   expect(placeSig.value?.kind).toBe('generated');
 });
 
+test('Apply coloring disables the color settings and generates default-colored parts', () => {
+  baseCatalogSig.value = MINI;
+  render(<GeneratorsPanel />);
+  fireEvent.click(screen.getByLabelText('Apply coloring'));
+  expect(screen.getByLabelText('Color mode').matches(':disabled')).toBe(true);
+  expect(screen.getByLabelText('Color').matches(':disabled')).toBe(true);
+  fireEvent.click(screen.getByText('Generate'));
+  const source = placeSig.value;
+  if (source?.kind !== 'generated') throw new Error('no shape');
+  expect([...source.sub.parts.values()].every((part) => !Object.hasOwn(part.props, 'RGB'))).toBe(
+    true,
+  );
+  fireEvent.click(screen.getByLabelText('Apply coloring'));
+  expect(screen.getByLabelText('Color mode').matches(':disabled')).toBe(false);
+});
+
 test('Generate arms the Place tool with the sub-doc the cost line describes', () => {
   baseCatalogSig.value = MINI;
   render(<GeneratorsPanel />);

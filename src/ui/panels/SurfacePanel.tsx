@@ -14,6 +14,7 @@ import {
   selectCorner,
   setCorner,
   setSurfaceColor,
+  setSurfaceColorEnabled,
   surfaceBuildSig,
   surfaceCostSig,
   surfaceCreatedSig,
@@ -36,7 +37,7 @@ function withCoord(at: Vec3, k: number, v: number): Vec3 {
 export function SurfacePanel(): JSX.Element {
   const cat = catalogSig.value;
   const host = surfaceHostSig.value;
-  const { corners, selected, color } = surfaceSig.value;
+  const { corners, selected, color, colorEnabled } = surfaceSig.value;
   const built = surfaceBuildSig.value;
   const cost = surfaceCostSig.value;
   const created = surfaceCreatedSig.value;
@@ -161,15 +162,25 @@ export function SurfacePanel(): JSX.Element {
             )
           )}
           <div class="gen-form">
-            <ColorFields
-              idPrefix="surf"
-              color={color}
-              axes={[
-                { id: 'u', label: 'Corner 1 → 2' },
-                { id: 'v', label: 'Corner 1 → 4' },
-              ]}
-              onChange={setSurfaceColor}
-            />
+            <label class="gen-color-toggle" title="Turn off to use default part colors">
+              <input
+                type="checkbox"
+                checked={colorEnabled}
+                onChange={(e) => setSurfaceColorEnabled(e.currentTarget.checked)}
+              />
+              Apply coloring
+            </label>
+            <fieldset class="color-settings" aria-label="Color settings" disabled={!colorEnabled}>
+              <ColorFields
+                idPrefix="surf"
+                color={color}
+                axes={[
+                  { id: 'u', label: 'Corner 1 → 2' },
+                  { id: 'v', label: 'Corner 1 → 4' },
+                ]}
+                onChange={setSurfaceColor}
+              />
+            </fieldset>
           </div>
           <button class="button primary" disabled={!built?.ok} onClick={createSurface}>
             Create

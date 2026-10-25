@@ -25,6 +25,8 @@ export interface GenRequest {
   element: string;
   host: string;
   color: GenColor;
+  /** False leaves RGB unset, using native part colors. Missing retains existing preset behavior. */
+  colorEnabled?: boolean;
   /** Where the shape's origin sits on the host. */
   transform: CFrame12;
   posDecimals: number;
@@ -159,9 +161,10 @@ export function buildGeneratedSubDoc(
 
   const origin = cfToMatrix4(req.transform);
   const worlds = frames.map((f) => origin.clone().multiply(cfToMatrix4(f)));
-  const tints = element.paintable
-    ? tintColors(req.color, frames.length, (axis, i) => frames[i][AXIS[axis]])
-    : null;
+  const tints =
+    element.paintable && req.colorEnabled !== false
+      ? tintColors(req.color, frames.length, (axis, i) => frames[i][AXIS[axis]])
+      : null;
   const sub = mountSubDoc(cat, conv, host, { type: element.type, mount }, worlds, tints, {
     pos: req.posDecimals,
     rot: req.rotDecimals,

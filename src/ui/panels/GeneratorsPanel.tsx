@@ -257,16 +257,30 @@ export function GeneratorsPanel(): JSX.Element {
             </>
           )}
         </div>
-        <ColorFields
-          idPrefix="gen"
-          color={c}
-          axes={[
-            { id: 'x', label: 'X' },
-            { id: 'y', label: 'Y' },
-            { id: 'z', label: 'Z' },
-          ]}
-          onChange={(color) => updateRequest({ color })}
-        />
+        <label class="gen-color-toggle" title="Turn off to use default part colors">
+          <input
+            type="checkbox"
+            checked={req.colorEnabled !== false}
+            onChange={(e) => updateRequest({ colorEnabled: e.currentTarget.checked })}
+          />
+          Apply coloring
+        </label>
+        <fieldset
+          class="color-settings"
+          aria-label="Color settings"
+          disabled={req.colorEnabled === false}
+        >
+          <ColorFields
+            idPrefix="gen"
+            color={c}
+            axes={[
+              { id: 'x', label: 'X' },
+              { id: 'y', label: 'Y' },
+              { id: 'z', label: 'Z' },
+            ]}
+            onChange={(color) => updateRequest({ color })}
+          />
+        </fieldset>
       </div>
 
       {cost.ok ? (

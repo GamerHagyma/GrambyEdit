@@ -365,6 +365,7 @@ registerCommand({
 });
 registerCommand({ id: 'file.library', label: 'Open library', run: () => openDialog('library') });
 registerCommand({ id: 'file.import', label: 'Import code', run: () => openDialog('import') });
+registerCommand({ id: 'file.new', label: 'New blueprint', run: () => openDialog('new') });
 registerCommand({ id: 'file.export', label: 'Export code', run: () => openDialog('export') });
 registerCommand({
   id: 'app.palette',

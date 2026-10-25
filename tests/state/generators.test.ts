@@ -29,6 +29,8 @@ import {
   setParam,
   setShape,
   updateInput,
+  updateRequest,
+  genBuildSig,
 } from '../../src/state/generators';
 import { placeSig } from '../../src/state/place';
 import { selectionSig } from '../../src/state/selection';
@@ -52,6 +54,27 @@ function lineOf(length: number): GenRequest {
     input: { params: { length }, fill: 'solid', orient: 'fixed', spacing: 1 },
   };
 }
+
+test('disabling coloring omits RGB and restores the selected palette when enabled again', () => {
+  baseCatalogSig.value = MINI;
+  genRequestSig.value = lineOf(2);
+  const color = genRequestSig.value.color;
+  updateRequest({ colorEnabled: false });
+  const built = genBuildSig.value;
+  if (!built?.ok) throw new Error('generation failed');
+  expect([...built.sub.parts.values()].every((part) => !Object.hasOwn(part.props, 'RGB'))).toBe(
+    true,
+  );
+  savePreset('Default colors', genRequestSig.value);
+  expect(loadPresets()['Default colors'].colorEnabled).toBe(false);
+  updateRequest({ colorEnabled: true });
+  expect(genRequestSig.value.color).toEqual(color);
+  const colored = genBuildSig.value;
+  if (!colored?.ok) throw new Error('generation failed');
+  expect([...colored.sub.parts.values()].some((part) => Object.hasOwn(part.props, 'RGB'))).toBe(
+    true,
+  );
+});
 
 /** The code characters of an empty build once `req` is inserted at the origin. */
 function codeCharsWith(req: GenRequest): number {

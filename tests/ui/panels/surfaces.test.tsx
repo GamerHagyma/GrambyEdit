@@ -50,6 +50,17 @@ function renderPicked(): void {
   pickTop();
 }
 
+test('Apply coloring disables all surface color controls and creates caps without RGB', () => {
+  renderPicked();
+  fireEvent.click(screen.getByLabelText('Apply coloring'));
+  expect(screen.getByLabelText('Color mode').matches(':disabled')).toBe(true);
+  expect(screen.getByLabelText('Color').matches(':disabled')).toBe(true);
+  fireEvent.click(screen.getByText('Create'));
+  const caps = [...docSig.value.parts.values()].filter((part) => part.type === 'GasCap');
+  expect(caps.length).toBeGreaterThan(0);
+  expect(caps.every((part) => !Object.hasOwn(part.props, 'RGB'))).toBe(true);
+});
+
 test('without GasCaps it says so', () => {
   baseCatalogSig.value = MINI;
   render(<SurfacePanel />);

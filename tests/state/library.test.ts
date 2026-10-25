@@ -6,6 +6,7 @@ import {
   creationsSig,
   editorMetaOf,
   openCreation,
+  openCreationIdSig,
   persistentSig,
   refreshCreations,
   saveCurrent,
@@ -13,6 +14,7 @@ import {
   startAutosave,
 } from '../../src/state/library';
 import { select } from '../../src/state/selection';
+import { newBlueprint } from '../../src/state/new-blueprint';
 import { baseCatalogSig, commit, docSig, loadDoc, resetStoreForTests } from '../../src/state/store';
 import { readAutosave } from '../../src/storage/autosave';
 import { MINI } from '../helpers/catalog';
@@ -47,6 +49,25 @@ test('save and reopen keep the code and the root layout', async () => {
   loadDoc(EMPTY_DOC);
   await openCreation(rec.id);
   expect(docSig.value.layout.get(2)).toEqual(AT7);
+});
+
+test('a save finishing after New cannot associate the new workspace with the old creation', async () => {
+  loadDoc(chainDoc(1));
+  const pending = saveCurrent('Previous workspace');
+  newBlueprint();
+  await pending;
+  expect(docSig.value.order).toEqual([]);
+  expect(openCreationIdSig.value).toBeNull();
+});
+
+test('an open finishing after New cannot replace the new workspace', async () => {
+  loadDoc(chainDoc(1));
+  const record = await saveCurrent('Previous workspace');
+  const pending = openCreation(record.id);
+  newBlueprint();
+  await pending;
+  expect(docSig.value.order).toEqual([]);
+  expect(openCreationIdSig.value).toBeNull();
 });
 
 test('autosave writes once, 2 s after the last commit', async () => {

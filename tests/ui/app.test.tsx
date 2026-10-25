@@ -5,8 +5,16 @@ import { App } from '../../src/ui/App';
 import { CREDITS } from '../../src/ui/credits';
 import { loadPref, savePref } from '../../src/storage/prefs';
 import { inspectorTabSig, showInspectorTab, showLeftTab } from '../../src/state/ui';
-import { clearReferences, referenceFloatingSig, referencesSig } from '../../src/state/references';
-import { select } from '../../src/state/selection';
+import {
+  addReferenceUrl,
+  clearReferences,
+  referenceFloatingSig,
+  referencesSig,
+} from '../../src/state/references';
+import { hiddenSig, select, selectionSig } from '../../src/state/selection';
+import { genHostPickSig } from '../../src/state/generators';
+import { surfaceSig } from '../../src/state/surfaces';
+import { openCreationIdSig } from '../../src/state/library';
 import { disarm, placeSig } from '../../src/state/place';
 import {
   baseCatalogSig,
@@ -29,6 +37,47 @@ beforeEach(() => {
   baseCatalogSig.value = MINI;
   // The first-run dialog is modal and would keep every key.
   savePref('firstRunDone', true);
+});
+
+test('File New requires confirmation and resets the workspace without erasing references or preferences', () => {
+  clearReferences();
+  render(<App />);
+  commit('Add Part', (d) => {
+    addPart(d, 'Part', {});
+  });
+  select([1], 'replace');
+  hiddenSig.value = new Set([1]);
+  genHostPickSig.value = { part: 1, type: 'Part' };
+  surfaceSig.value = { ...surfaceSig.value, host: { part: 1, type: 'Part' } };
+  openCreationIdSig.value = 'existing-creation';
+  placeSig.value = { kind: 'part', type: 'Part' };
+  addReferenceUrl('https://example.com/reference.png');
+  const doc = docSig.value,
+    history = historySig.value;
+  fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'New', exact: true }));
+  expect(screen.getByRole('dialog', { name: 'New blueprint' }).textContent).toContain(
+    'Are you sure',
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel', exact: true }));
+  expect(docSig.value).toBe(doc);
+  expect(historySig.value).toBe(history);
+  fireEvent.click(screen.getByRole('button', { name: 'File', exact: true }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'New', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'New blueprint', exact: true }));
+  expect(docSig.value.order).toEqual([]);
+  expect(docSig.value.nextId).toBe(1);
+  expect(historySig.value.past).toEqual([]);
+  expect(historySig.value.future).toEqual([]);
+  expect(selectionSig.value.parts.size).toBe(0);
+  expect(hiddenSig.value.size).toBe(0);
+  expect(genHostPickSig.value).toBeNull();
+  expect(surfaceSig.value.host).toBeNull();
+  expect(placeSig.value).toBeNull();
+  expect(openCreationIdSig.value).toBeNull();
+  expect(referencesSig.value).toHaveLength(1);
+  expect(loadPref('firstRunDone', false)).toBe(true);
+  clearReferences();
 });
 
 test('shell shows the product name and the Mumble Games credit', () => {

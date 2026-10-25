@@ -265,6 +265,25 @@ button:disabled {
   flex-shrink: 0;
 }
 
+/* Optional coloring keeps its palette settings while native disabled controls gray out. */
+.gen-color-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.color-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.color-settings:disabled {
+  opacity: 0.45;
+}
+
 /* Reference images belong to the UI; the pinned window stays below modal dialogs. */
 .reference-panel {
   display: flex;

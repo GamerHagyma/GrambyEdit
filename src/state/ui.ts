@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import { loadPref, savePref } from '../storage/prefs';
 
 export type DialogName =
+  | 'new'
   | 'import'
   | 'export'
   | 'library'

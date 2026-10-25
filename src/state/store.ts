@@ -13,6 +13,8 @@ import { emptyHistory, record, redoStep, undoStep, type History } from './histor
 import { clearSelection, resetSelectionForTests, sanitizeSelection } from './selection';
 
 export const docSig = signal<Doc>(EMPTY_DOC);
+/** Changes on workspace replacement, so pending library operations cannot revive an old workspace. */
+export const workspaceVersionSig = signal(0);
 export const historySig = signal<History>(emptyHistory());
 /** The loaded mesh pack and catalog; null until `loadAssets` resolves. */
 export const assetsSig = signal<Assets | null>(null);
@@ -61,6 +63,7 @@ export function redo(): boolean {
 /** Replaces the doc; clears history and selection. */
 export function loadDoc(doc: Doc): void {
   batch(() => {
+    workspaceVersionSig.value++;
     docSig.value = doc;
     historySig.value = emptyHistory();
     clearSelection();

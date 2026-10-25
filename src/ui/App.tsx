@@ -31,6 +31,7 @@ import { PointDeleteDialog } from './dialogs/PointDeleteDialog';
 import { RestorePrompt } from './dialogs/RestorePrompt';
 import { SaveDialog } from './dialogs/SaveDialog';
 import { ImportDialog } from './dialogs/ImportDialog';
+import { NewDialog } from './dialogs/NewDialog';
 import { LibraryDialog } from './dialogs/LibraryDialog';
 import { SettingsDialog } from './dialogs/SettingsDialog';
 import { ShortcutsDialog } from './dialogs/ShortcutsDialog';
@@ -57,6 +58,7 @@ function Dialogs(): JSX.Element {
   const name = dialogSig.value;
   return (
     <>
+      <NewDialog open={name === 'new'} onClose={closeDialog} />
       <ImportDialog open={name === 'import'} onClose={closeDialog} />
       <ExportDialog open={name === 'export'} onClose={closeDialog} />
       <SettingsDialog open={name === 'settings'} onClose={closeDialog} />
