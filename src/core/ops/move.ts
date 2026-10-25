@@ -77,7 +77,7 @@ function pointAtCurrentPose(
   const partName = cat.parts[h.type]?.mainPartName ?? h.type;
   const cf = pointFrameFor(
     poses.world.get(host)!,
-    subPartMatrix(cat, h.type, partName).m,
+    subPartMatrix(cat, h.type, partName, h.props).m,
     poses.world.get(id)!,
     childSocketMatrix(cat, part.type, socket, 'point').m,
     part.props,
@@ -154,7 +154,7 @@ export function setWorldPose(
   if (!point) throw new Error(`setWorldPose: point ${pc.target.uuid} is missing`);
   const cf = pointFrameFor(
     poses.world.get(host.id)!,
-    subPartMatrix(cat, host.type, point.partName).m,
+    subPartMatrix(cat, host.type, point.partName, host.props).m,
     world,
     childSocketMatrix(cat, part.type, pc.self, 'point').m,
     part.props,
@@ -257,7 +257,7 @@ export function retargetPose(
       const cf = matrix4ToCf(
         new Matrix4()
           .copy(poses.world.get(target.part)!)
-          .multiply(subPartMatrix(cat, h.type, target.partName).m)
+          .multiply(subPartMatrix(cat, h.type, target.partName, h.props).m)
           .invert()
           .multiply(target.frame),
       );
@@ -411,7 +411,7 @@ export function retargetBody(
       const cf = matrix4ToCf(
         new Matrix4()
           .copy(hostWorld)
-          .multiply(subPartMatrix(cat, h.type, target.partName).m)
+          .multiply(subPartMatrix(cat, h.type, target.partName, h.props).m)
           .invert()
           .multiply(target.frame),
       );
@@ -592,7 +592,7 @@ export function transformPiece(
     uuid !== null ? h.points!.get(uuid)!.partName : (cat.parts[h.type]?.mainPartName ?? h.type);
   const cf = pointFrameFor(
     poses.world.get(host)!,
-    subPartMatrix(cat, h.type, partName).m,
+    subPartMatrix(cat, h.type, partName, h.props).m,
     delta.clone().multiply(before),
     childSocketMatrix(cat, part.type, self, 'point').m,
     part.props,

@@ -4,6 +4,12 @@ import { useEffect } from 'preact/hooks';
 import { loadAssets } from '../assets/load';
 import { settingsSig } from '../state/settings';
 import { pasteReference, referenceFloatingSig } from '../state/references';
+import {
+  startServoLifecycle,
+  finishServoSimulation,
+  releaseServo,
+} from '../state/servo-simulation';
+import { servoPreviewSig } from '../state/servo-preview';
 import { copyPayload, pasteText, rememberCopy } from '../state/clipboard';
 import { hasCommand, runCommand } from '../state/commands';
 import { creationsSig, refreshCreations, startAutosave } from '../state/library';
@@ -157,6 +163,11 @@ const referenceTarget = (target: EventTarget | null) =>
  */
 function onKey(e: KeyboardEvent): void {
   if (e.defaultPrevented || dialogOpen() || referenceTarget(e.target)) return;
+  if (e.key === 'Escape' && servoPreviewSig.peek()) {
+    releaseServo();
+    e.preventDefault();
+    return;
+  }
   if (isTypingTarget(e.target)) {
     const field = e.target as HTMLElement;
     const id = resolveKey(e, settingsSig.value.cameraScheme);
@@ -170,11 +181,12 @@ function onKey(e: KeyboardEvent): void {
   const t = e.target;
   const control = t instanceof HTMLElement && t !== document.body && t.tagName !== 'CANVAS';
   if (control && FOCUS_KEYS.has(e.key)) return;
+  const id = resolveKey(e, settingsSig.value.cameraScheme);
+  if (id !== null && /^(edit|transform|tool)\./.test(id)) finishServoSimulation();
   if (getViewport()?.onKey(e)) {
     e.preventDefault();
     return;
   }
-  const id = resolveKey(e, settingsSig.value.cameraScheme);
   if (id === null || NATIVE.has(id) || !hasCommand(id)) return;
   e.preventDefault();
   runCommand(id);
@@ -218,6 +230,7 @@ function onPaste(e: ClipboardEvent): void {
 }
 
 export function App(): JSX.Element {
+  useEffect(startServoLifecycle, []);
   useEffect(() => {
     setStorageErrorReporter((message) => toast(message, 'error'));
     const stopTheme = effect(() => {

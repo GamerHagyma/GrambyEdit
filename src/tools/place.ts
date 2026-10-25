@@ -67,7 +67,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
     const self = defaultChildSocket(cat, type, host.type, sock.socket)!;
     const world = childWorldViaSocket(
       bodyWorld(poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
-      socketMatrix(cat, host.type, sock.socket).m,
+      socketMatrix(cat, host.type, sock.socket, host.props).m,
       childSocketMatrix(cat, type, self, { type: host.type, socket: sock.socket }).m,
       ignoresOrientation(cat, host.type, sock.socket) ? {} : props,
       conv,
@@ -83,7 +83,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
       const point = host.points!.get(p.uuid)!;
       const world = childWorldViaPoint(
         poses.world.get(p.host)!,
-        subPartMatrix(cat, host.type, point.partName).m,
+        subPartMatrix(cat, host.type, point.partName, host.props).m,
         cfToMatrix4(point.cframe),
         childSocketMatrix(cat, type, mount, 'point').m,
         props,

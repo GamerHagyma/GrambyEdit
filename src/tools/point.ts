@@ -81,7 +81,7 @@ function pointWorld(
   if (!part || !point || !world) return null;
   return world
     .clone()
-    .multiply(subPartMatrix(cat, part.type, point.partName).m)
+    .multiply(subPartMatrix(cat, part.type, point.partName, part.props).m)
     .multiply(cfToMatrix4(point.cframe));
 }
 
@@ -104,7 +104,7 @@ export function pointGizmoPlacement(): { position: Vector3; quaternion: Quaterni
   poses.world
     .get(sel.host)!
     .clone()
-    .multiply(subPartMatrix(cat, host.type, host.points!.get(sel.uuid)!.partName).m)
+    .multiply(subPartMatrix(cat, host.type, host.points!.get(sel.uuid)!.partName, host.props).m)
     .decompose(new Vector3(), quaternion, new Vector3());
   return { position: new Vector3().setFromMatrixPosition(m), quaternion };
 }
@@ -155,7 +155,7 @@ export const pointGizmoHandlers = {
     const hostFrame = d.poses.world
       .get(d.host)!
       .clone()
-      .multiply(subPartMatrix(cat, host.type, point.partName).m);
+      .multiply(subPartMatrix(cat, host.type, point.partName, host.props).m);
     const moved = originDelta(d, delta).multiply(d.world);
     const cf = roundCf(matrix4ToCf(hostFrame.invert().multiply(moved)), 4, 6);
     const patch = commit('Move point', (draft) => setPointCFrame(draft, d.host, d.uuid, cf));
@@ -179,7 +179,7 @@ function addPointAt(ndc: Vector2): void {
   }
   const doc = docSig.value;
   const host = doc.parts.get(hit.part)!;
-  const sub = subPartMatrix(cat, host.type, hit.subPart).m;
+  const sub = subPartMatrix(cat, host.type, hit.subPart, host.props).m;
   const cf = surfacePointFrame(posesSig.value.world.get(host.id)!, sub, hit.point, hit.normal);
   let uuid: Uuid = '';
   commit('Add point', (d) => {

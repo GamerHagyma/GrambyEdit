@@ -8,6 +8,7 @@ import { cfToMatrix4, IDENTITY_CF } from './cframe';
 import { matingMatrix, orientationMatrix } from './conventions';
 import { topoPose } from './graph';
 import type { CFrame12, Conn, ConnTarget, Doc, Part, PartId, PointKey, SocketId } from './types';
+import { isServo, servoSettings } from './servo-simulation';
 
 export const POSE_APPROX = 1,
   POSE_CYCLE = 2,
@@ -81,7 +82,14 @@ export function socketWorld(
   if (!part) return null;
   const def = Object.hasOwn(cat.parts, part.type) ? cat.parts[part.type] : undefined;
   const w = bodyWorld(poses, id, bodyOfSocket(def, socket));
-  return w ? w.clone().multiply(socketFrame(cat, part.type, socket, 'parent').m) : null;
+  if (!w) return null;
+  const m = w.clone().multiply(socketMatrix(cat, part.type, socket, part.props).m);
+  return m;
+}
+
+/** Socket 2 is the rotating output: its captured local +Y is the servo axis. */
+function servoTurn(props: Part['props']): Matrix4 {
+  return new Matrix4().makeRotationY(((servoSettings(props).Rotation % 360) * Math.PI) / 180);
 }
 
 interface Frame {
@@ -150,9 +158,12 @@ export function socketMatrix(
   cat: Catalog,
   type: string,
   socket: SocketId,
+  props?: Part['props'],
 ): { m: Matrix4; approx: boolean } {
   const { m, approx } = socketFrame(cat, type, socket, 'parent');
-  return { m: m.clone(), approx };
+  const frame = m.clone();
+  if (props && isServo(type) && socket === '2') frame.multiply(servoTurn(props));
+  return { m: frame, approx };
 }
 
 /** What a child socket mounts onto: another part's socket, or a point. */
@@ -235,11 +246,16 @@ export function subPartMatrix(
   cat: Catalog,
   type: string,
   partName: string,
+  props?: Part['props'],
 ): { m: Matrix4; approx: boolean } {
   const def = cat.parts[type];
   const sub = def?.subParts[partName];
-  if (sub && !sub.approx) return { m: cfToMatrix4(sub.cframe), approx: false };
-  return { m: new Matrix4(), approx: def?.mainPartName !== partName };
+  const m = sub && !sub.approx ? cfToMatrix4(sub.cframe) : new Matrix4();
+  if (props && isServo(type) && partName === 'Spinner') {
+    const output = socketFrame(cat, type, '2', 'parent').m;
+    m.premultiply(output.clone().multiply(servoTurn(props)).multiply(output.clone().invert()));
+  }
+  return { m, approx: sub && !sub.approx ? false : def?.mainPartName !== partName };
 }
 
 export type PoseConn = Conn & { readonly target: Exclude<ConnTarget, { kind: 'raw' }> };
@@ -500,11 +516,12 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
         const ps = socketFrame(cat, parent.type, t.socket, 'parent');
         if (ps.approx) flag |= POSE_APPROX;
         m.multiply(ps.m);
+        if (isServo(parent.type) && t.socket === '2') m.multiply(servoTurn(parent.props));
       } else {
         const point = parent.points?.get(t.uuid);
         // An undeclared uuid (E-UUID) seats the child at the host origin, flagged approximate.
         if (point) {
-          const sub = subPartMatrix(cat, parent.type, point.partName);
+          const sub = subPartMatrix(cat, parent.type, point.partName, parent.props);
           if (sub.approx) flag |= POSE_APPROX;
           m.multiply(sub.m).multiply(cfToMatrix4(point.cframe));
         } else {

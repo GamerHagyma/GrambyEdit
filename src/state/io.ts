@@ -4,7 +4,8 @@ import { parseShareText, toShareCode } from '../core/share';
 import { codeSize } from '../core/size';
 import { buildStats } from '../core/stats';
 import type { Doc, Issue } from '../core/types';
-import { issuesSig } from './derived';
+import { isServo } from '../core/servo-simulation';
+import { withServoPreview } from './servo-preview';
 import { settingsSig } from './settings';
 import { catalogSig, docSig } from './store';
 
@@ -45,8 +46,25 @@ export function importText(
 }
 
 /** The current build as a share code, with its issues. */
-export function exportCurrent(): { code: string; issues: Issue[] } {
-  return { code: toShareCode(docSig.value), issues: issuesSig.value };
+export function exportCurrent(
+  includeRotation = true,
+  source = withServoPreview(docSig.value),
+): { doc: Doc; code: string; issues: Issue[] } {
+  let doc = source;
+  if (!includeRotation) {
+    const parts = new Map(source.parts);
+    for (const [id, part] of parts) {
+      if (!isServo(part.type) || !Object.hasOwn(part.props, 'Rotation')) continue;
+      const props = { ...part.props };
+      delete props.Rotation;
+      parts.set(id, { ...part, props });
+    }
+    doc = { ...source, parts };
+  }
+  const code = toShareCode(doc);
+  const cat = catalogSig.value;
+  const issues = cat ? validate(doc, cat, settingsSig.value.limits, code.length) : [];
+  return { doc, code, issues };
 }
 
 /** Codes over 400 characters show their first and last 200 characters only; the DOM never holds a whole code. */

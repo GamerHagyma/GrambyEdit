@@ -2162,3 +2162,38 @@ kbd {
       3 21,
     crosshair;
 }
+
+.property-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.servo-buttons {
+  display: flex;
+  gap: 8px;
+}
+.servo-activation {
+  flex: 1;
+  touch-action: none;
+}
+.servo-activation.red {
+  border-color: #df665e;
+}
+.servo-activation.blue {
+  border-color: #529de0;
+}
+.servo-activation.red[aria-pressed='true'] {
+  background: #8b302a;
+  color: #fff;
+}
+.servo-activation.blue[aria-pressed='true'] {
+  background: #205c91;
+  color: #fff;
+}
+.servo-sustain {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}

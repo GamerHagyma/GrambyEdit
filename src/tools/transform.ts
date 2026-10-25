@@ -564,7 +564,7 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
     const host = doc.parts.get(sock.part)!;
     const self = selfFor(sock)!;
     const at = bodyWorld(r.poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!;
-    const frame = socketMatrix(cat, host.type, sock.socket).m;
+    const frame = socketMatrix(cat, host.type, sock.socket, host.props).m;
     const world = childWorldViaSocket(
       at,
       frame,

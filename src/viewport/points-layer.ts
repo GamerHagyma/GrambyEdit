@@ -91,7 +91,7 @@ export class PointsLayer {
       if (!part || !p || !world) return null;
       const m = world
         .clone()
-        .multiply(subPartMatrix(cat, part.type, p.partName).m)
+        .multiply(subPartMatrix(cat, part.type, p.partName, part.props).m)
         .multiply(cfToMatrix4(p.cframe));
       const at = new Vector3().setFromMatrixPosition(m);
       const used = users.has(`${host}:${uuid}`);

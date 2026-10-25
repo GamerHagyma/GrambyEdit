@@ -1,4 +1,8 @@
 // @vitest-environment jsdom
+vi.mock('../../../src/ui/download', () => ({
+  downloadText: vi.fn(),
+  dateStamp: () => '2026-10-25',
+}));
 import { render, screen, fireEvent } from '@testing-library/preact';
 import { ExportDialog } from '../../../src/ui/dialogs/ExportDialog';
 import { ImportDialog } from '../../../src/ui/dialogs/ImportDialog';
@@ -48,4 +52,25 @@ test('import opens directly when the build has no history', () => {
   fireEvent.click(screen.getByText('Open (replace)'));
   expect(screen.queryByText('Replace the current build? Unsaved changes are lost.')).toBeNull();
   expect(docSig.value.order).toHaveLength(12);
+});
+
+test('export checkbox changes copied code and JSON together without editing the blueprint', async () => {
+  const { downloadText } = await import('../../../src/ui/download');
+  const { parseShareText } = await import('../../../src/core/share');
+  loadDoc(docOf(part(1, 'Servo', [], { Rotation: 36.9, Rest: false })));
+  const original = docSig.value;
+  render(<ExportDialog open onClose={() => {}} />);
+  const include = screen.getByLabelText('Include servo rotation values');
+  expect((include as HTMLInputElement).checked).toBe(true);
+  fireEvent.click(include);
+  fireEvent.click(screen.getByText('Download .txt'));
+  const code = vi.mocked(downloadText).mock.calls.at(-1)![1];
+  const parsed = parseShareText(code);
+  expect(parsed.ok && parsed.doc.parts.get(1)!.props.Rotation).toBeUndefined();
+  fireEvent.click(screen.getByText('Download .json'));
+  expect(JSON.parse(vi.mocked(downloadText).mock.calls.at(-1)![1])[0][2]).toEqual({ Rest: false });
+  fireEvent.click(include);
+  fireEvent.click(screen.getByText('Download .json'));
+  expect(JSON.parse(vi.mocked(downloadText).mock.calls.at(-1)![1])[0][2].Rotation).toBe(36.9);
+  expect(docSig.value).toBe(original);
 });

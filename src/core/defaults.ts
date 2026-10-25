@@ -1,6 +1,7 @@
 // Smart defaults for new joints and new parts (spec §12.2 step 3, §12.5 auto-color).
 import { pairKey, type Catalog, type PartDef, type SocketRole } from './catalog-types';
 import type { Json, RGB, SocketId } from './types';
+import { isServo, SERVO_DEFAULTS } from './servo-simulation';
 
 const defOf = (cat: Catalog, type: string): PartDef | undefined =>
   Object.hasOwn(cat.parts, type) ? cat.parts[type] : undefined;
@@ -60,5 +61,8 @@ export function newPartProps(
   type: string,
   s: { autoColor: boolean; activeColor: RGB },
 ): Record<string, Json> {
-  return s.autoColor && defOf(cat, type)?.paintable === true ? { RGB: [...s.activeColor] } : {};
+  return {
+    ...(isServo(type) ? SERVO_DEFAULTS : {}),
+    ...(s.autoColor && defOf(cat, type)?.paintable === true ? { RGB: [...s.activeColor] } : {}),
+  };
 }

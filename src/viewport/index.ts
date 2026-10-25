@@ -6,6 +6,8 @@ import { parseShareText } from '../core/share';
 import { poseTargets, type Poses } from '../core/pose';
 import type { Doc, PartId } from '../core/types';
 import { posesSig } from '../state/derived';
+import { withServoPreview } from '../state/servo-preview';
+import { finishServoSimulation } from '../state/servo-simulation';
 import {
   hiddenSig,
   hoverPieceSig,
@@ -216,7 +218,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const updateMarkers = () => {
     const cat = catalogSig.value;
     if (!cat) return;
-    const doc = docSig.value;
+    const doc = withServoPreview(docSig.value);
     const poses = posesSig.value;
     const s = settingsSig.value;
     const sel = selectionSig.value;
@@ -376,7 +378,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
 
   /** Fits the given parts (all parts when null) in view. */
   const frameParts = (ids: Iterable<PartId> | null) => {
-    const doc = docSig.value;
+    const doc = withServoPreview(docSig.value);
     const poses = posesSig.value;
     const cat = catalogSig.value;
     const box = new Box3();
@@ -434,6 +436,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.focus({ preventScroll: true });
     if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
     if (controls().onPointerDown(e) || e.button !== 0) return;
+    finishServoSimulation();
     canvas.setPointerCapture(e.pointerId);
     toolPointer(toTool(e, 'down', 0));
     const move = (ev: PointerEvent) => toolPointer(toTool(ev, 'move', 0));
@@ -564,7 +567,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
 
   const stopSync = effect(() => {
     const assets = assetsSig.value;
-    const doc = docSig.value;
+    const doc = withServoPreview(docSig.value);
     const poses = posesSig.value;
     const hidden = hiddenSig.value;
     const s = settingsSig.value;

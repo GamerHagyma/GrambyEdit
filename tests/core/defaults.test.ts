@@ -29,3 +29,14 @@ test('eligibility and auto-color props', () => {
   expect(newPartProps(MINI, 'Mag', { autoColor: true, activeColor: [1, 2, 3] })).toEqual({});
   expect(newPartProps(MINI, 'Part', { autoColor: false, activeColor: [1, 2, 3] })).toEqual({});
 });
+
+test.each(['Servo', 'Servo_Physics'])('%s spawns with confirmed servo defaults', async (type) => {
+  const cat = await realCatalog();
+  expect(newPartProps(cat, type, { autoColor: false, activeColor: [1, 2, 3] })).toEqual({
+    Speed: 45,
+    LimitAngle: 45,
+    Rotation: 0,
+    Rest: true,
+    LimitEnabled: true,
+  });
+});

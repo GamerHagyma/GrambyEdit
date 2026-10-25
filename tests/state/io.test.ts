@@ -34,3 +34,25 @@ test('previews of huge codes stay short', () => {
 test('codes of 400 characters or fewer are previewed whole', () => {
   expect(codePreview('B'.repeat(400))).toBe('B'.repeat(400));
 });
+
+test('export can omit only servo Rotation without changing stored properties', async () => {
+  const { exportCurrent } = await import('../../src/state/io');
+  const { loadDoc, docSig } = await import('../../src/state/store');
+  const { parseShareText } = await import('../../src/core/share');
+  loadDoc(
+    docOf(
+      part(1, 'Servo', [], { Rotation: 36.9, Speed: 47.2 }),
+      part(2, 'Servo_Physics', [], { Rotation: -720 }),
+      part(3, 'Part', [], { Rotation: 12 }),
+    ),
+  );
+  const original = docSig.value;
+  const withAngle = parseShareText(exportCurrent().code),
+    without = parseShareText(exportCurrent(false).code);
+  if (!withAngle.ok || !without.ok) throw new Error('invalid export');
+  expect(withAngle.doc.parts.get(1)!.props.Rotation).toBe(36.9);
+  expect(without.doc.parts.get(1)!.props).toEqual({ Speed: 47.2 });
+  expect(without.doc.parts.get(2)!.props.Rotation).toBeUndefined();
+  expect(without.doc.parts.get(3)!.props.Rotation).toBe(12);
+  expect(docSig.value).toBe(original);
+});

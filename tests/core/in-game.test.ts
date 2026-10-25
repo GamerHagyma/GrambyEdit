@@ -164,7 +164,20 @@ test('Kamaz: the cab doors on Connector sockets hang unturned, as in game', asyn
   // socket 3s and stand upright in the cab's sides.
   const cat = await realCatalog();
   const doc: Doc = importCode(readFileSync('tests/fixtures/kamaz_truck.txt', 'utf8'));
-  const poses = computePoses(doc, cat, cat.conventions);
+  // This checks neutral hinge calibration. The capture contains tiny live servo angles,
+  // now rendered faithfully, so remove only those angles for this neutral-pose assertion.
+  const neutral = {
+    ...doc,
+    parts: new Map(
+      [...doc.parts].map(([id, part]) => [
+        id,
+        part.type === 'Servo' || part.type === 'Servo_Physics'
+          ? { ...part, props: { ...part.props, Rotation: 0 } }
+          : part,
+      ]),
+    ),
+  };
+  const poses = computePoses(neutral, cat, cat.conventions);
   expectSpan(span(cat, doc, poses, 716), [-5.145, 0.84, -4.29], [-2.1, 5.6, -3.388]);
   expectSpan(span(cat, doc, poses, 971), [-5.146, 0.84, 3.388], [-2.1, 5.6, 4.29]);
   for (const id of [716, 971]) {

@@ -34,7 +34,7 @@ test.each(['Servo', 'Servo_Physics'])(
       'Rotation (°)',
     ]);
     expect(screen.queryByLabelText('Forwards')).toBeNull();
-    expect(screen.queryByText('Simulate')).toBeNull();
+    expect(screen.getByRole('group', { name: 'Simulate' })).toBeTruthy();
     for (const [label, value] of [
       ['Speed (°/s)', '720.5'],
       ['Limit angle (°)', '1080'],
@@ -105,7 +105,9 @@ test('clicking a type chip narrows the selection to that type', () => {
   loadDoc(docOf(part(1, 'Mag'), part(2, 'Mag'), part(3, 'ShortStick')));
   select([1, 2, 3], 'replace');
   render(<Properties />);
-  expect(screen.getByRole('group').textContent).toBe('3 parts — 2 Mag, 1 ShortStick');
+  expect(screen.getByRole('group', { name: /parts? —/ }).textContent).toBe(
+    '3 parts — 2 Mag, 1 ShortStick',
+  );
   fireEvent.click(screen.getByRole('button', { name: '2 Mag' }));
   expect([...selectionSig.value.parts]).toEqual([1, 2]);
 });

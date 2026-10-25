@@ -5,6 +5,7 @@ import { formatPercent } from '../../core/size';
 import { codePreview, exportCurrent } from '../../state/io';
 import { settingsSig } from '../../state/settings';
 import { docSig } from '../../state/store';
+import { withServoPreview } from '../../state/servo-preview';
 import { toast } from '../../state/toasts';
 import { dateStamp, downloadText } from '../download';
 import { Dialog } from '../layout/Dialog';
@@ -23,7 +24,9 @@ export function ExportDialog({
 
 /** Mounted only while open, so each opening encodes the build again and asks about errors again. */
 function ExportBody({ onClose }: { onClose(): void }): JSX.Element {
-  const [{ code, issues }] = useState(exportCurrent);
+  const [source] = useState(() => withServoPreview(docSig.value));
+  const [includeRotation, setIncludeRotation] = useState(true);
+  const { doc, code, issues } = exportCurrent(includeRotation, source);
   const [confirmed, setConfirmed] = useState(false);
   const errors = issues.filter((i) => i.severity === 'error');
   if (errors.length > 0 && !confirmed) {
@@ -33,7 +36,7 @@ function ExportBody({ onClose }: { onClose(): void }): JSX.Element {
   }
 
   const { limits } = settingsSig.value;
-  const parts = docSig.value.order.length;
+  const parts = doc.order.length;
   const warnings = issues.filter((i) => i.severity === 'warning').length;
   const summary =
     `Parts ${parts.toLocaleString('en-US')} / ${limits.partSoftCap.toLocaleString('en-US')} · ` +
@@ -62,7 +65,7 @@ function ExportBody({ onClose }: { onClose(): void }): JSX.Element {
             onClick={() =>
               downloadText(
                 `GrambyEdit-${dateStamp()}.json`,
-                JSON.stringify(toEntries(docSig.value), null, 2),
+                JSON.stringify(toEntries(doc), null, 2),
                 'application/json',
               )
             }
@@ -73,6 +76,14 @@ function ExportBody({ onClose }: { onClose(): void }): JSX.Element {
       }
     >
       <p>{summary}</p>
+      <label class="servo-sustain">
+        <input
+          type="checkbox"
+          checked={includeRotation}
+          onChange={(e) => setIncludeRotation(e.currentTarget.checked)}
+        />
+        Include servo rotation values
+      </label>
       <code class="mono" style={{ display: 'block', overflowWrap: 'anywhere' }}>
         {codePreview(code)}
       </code>

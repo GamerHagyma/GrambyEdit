@@ -224,7 +224,7 @@ function attachCopy(
   const partName = cat.parts[host.type]?.mainPartName ?? host.type;
   const cf = pointFrameFor(
     poses.world.get(host.id)!,
-    subPartMatrix(cat, host.type, partName).m,
+    subPartMatrix(cat, host.type, partName, host.props).m,
     world,
     childSocketMatrix(cat, type, self, 'point').m,
     props,

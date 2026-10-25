@@ -3,6 +3,7 @@
 import type { Catalog, PropMeta } from './catalog-types';
 import { propApplies } from './ops/props';
 import type { Doc, Json, Part, PartId } from './types';
+import { isServo, SERVO_DEFAULTS } from './servo-simulation';
 
 export interface PropRow {
   readonly key: string;
@@ -63,7 +64,11 @@ export function unionProps(doc: Doc, cat: Catalog, ids: readonly PartId[]): Prop
     );
     if (applicable.length === 0) continue;
     const values = applicable.map((part) =>
-      Object.hasOwn(part.props, key) ? part.props[key] : undefined,
+      Object.hasOwn(part.props, key)
+        ? part.props[key]
+        : isServo(part.type) && Object.hasOwn(SERVO_DEFAULTS, key)
+          ? SERVO_DEFAULTS[key as keyof typeof SERVO_DEFAULTS]
+          : undefined,
     );
     const set = values.filter((v): v is Json => v !== undefined);
     // Unset counts as different from any set value, so a partly set key is mixed.

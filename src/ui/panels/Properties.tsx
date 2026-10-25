@@ -23,6 +23,9 @@ import { toast } from '../../state/toasts';
 import { Icon } from '../icons';
 import { JsonField } from '../widgets/JsonField';
 import { PropField } from '../widgets/PropField';
+import { ServoControls } from '../widgets/ServoControls';
+import { isServo } from '../../core/servo-simulation';
+import { servoPreviewSig, withServoPreview } from '../../state/servo-preview';
 
 const EPHEMERAL = 'EphemeralAttachments';
 
@@ -245,7 +248,7 @@ export function Properties(): JSX.Element {
       </div>
     );
   }
-  const doc = docSig.value;
+  const doc = withServoPreview(docSig.value);
   const selected = selectionSig.value.parts;
   const ids = doc.order.filter((id) => selected.has(id));
   if (ids.length === 0) {
@@ -260,14 +263,17 @@ export function Properties(): JSX.Element {
   return (
     <div class="properties" data-app-undo>
       <Header doc={doc} ids={ids} />
-      {unionProps(doc, cat, ids).map((row) => (
-        <PropField
-          key={row.key}
-          cat={cat}
-          row={row}
-          ids={ids.filter((id) => visibleProperty(doc.parts.get(id)!.type, row.key))}
-        />
-      ))}
+      <fieldset class="property-fields" disabled={servoPreviewSig.value !== null}>
+        {unionProps(doc, cat, ids).map((row) => (
+          <PropField
+            key={row.key}
+            cat={cat}
+            row={row}
+            ids={ids.filter((id) => visibleProperty(doc.parts.get(id)!.type, row.key))}
+          />
+        ))}
+      </fieldset>
+      {single && isServo(single.type) && <ServoControls key={single.id} id={single.id} />}
       {single && (
         <>
           <OtherProps cat={cat} doc={doc} part={single} />

@@ -201,3 +201,23 @@ test('placeholder and floating header controls cannot delete, copy, or paste blu
   expect(placeSig.value).toBeNull();
   clearReferences();
 });
+
+test('Escape releases a sustained servo and lets Rest return to zero', async () => {
+  const { activateServo, advanceServoSimulation, cancelServoSimulation } =
+    await import('../../src/state/servo-simulation');
+  const { servoPreviewSig } = await import('../../src/state/servo-preview');
+  inspectorTabSig.value = 'properties';
+  render(<App />);
+  commit('Add Servo', (d) => {
+    addPart(d, 'Servo', { Rest: true });
+  });
+  select([1], 'replace');
+  activateServo(1, 1, true);
+  advanceServoSimulation(0.2);
+  fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
+  expect(servoPreviewSig.value?.direction).toBe(0);
+  advanceServoSimulation(0.2);
+  expect(servoPreviewSig.value).toBeNull();
+  expect(docSig.value.parts.get(1)!.props.Rotation ?? 0).toBe(0);
+  cancelServoSimulation();
+});
