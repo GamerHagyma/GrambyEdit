@@ -1,16 +1,30 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/preact';
 import { favouritesSig, recentsSig } from '../../../src/state/favourites';
-import { baseCatalogSig, resetStoreForTests } from '../../../src/state/store';
+import { arm, disarm, placeSig } from '../../../src/state/place';
+import { selectionSig } from '../../../src/state/selection';
+import {
+  baseCatalogSig,
+  docSig,
+  historySig,
+  loadDoc,
+  resetStoreForTests,
+} from '../../../src/state/store';
+import { registerTool, toolSig } from '../../../src/tools/manager';
 import { PartBrowser } from '../../../src/ui/panels/PartBrowser';
 import { PartPicker } from '../../../src/ui/widgets/PartPicker';
 import { MINI } from '../../helpers/catalog';
+import { docOf, part } from '../../helpers/doc';
 
 beforeEach(() => {
   resetStoreForTests();
   localStorage.clear();
   favouritesSig.value = [];
   recentsSig.value = [];
+  disarm();
+  toolSig.value = 'select';
+  registerTool({ id: 'select', activate() {}, deactivate() {} });
+  registerTool({ id: 'place', activate() {}, deactivate() {} });
 });
 
 test('sections in order and search filters', () => {
@@ -47,11 +61,27 @@ test('the star files a part under favourites', () => {
 });
 test('clicking a card arms it and makes it recent', () => {
   baseCatalogSig.value = MINI;
+  loadDoc(docOf(part(7, 'Part')));
   const onArm = vi.fn();
   render(<PartBrowser onArm={onArm} />);
   fireEvent.click(screen.getByText('Connector'));
   expect(onArm).toHaveBeenCalledWith({ kind: 'part', type: 'Connector' });
   expect(recentsSig.value).toEqual(['Connector']);
+});
+
+test('arming in an empty workspace keeps Recent stable until double-click completes', () => {
+  baseCatalogSig.value = MINI;
+  render(<PartBrowser onArm={arm} />);
+  const button = screen.getByText('Part', { exact: true }).closest('button')!;
+  fireEvent.click(button, { detail: 1 });
+  expect(placeSig.value).toEqual({ kind: 'part', type: 'Part' });
+  // A new Recent card here moves the category card away from the pointer between clicks.
+  expect(recentsSig.value).toEqual([]);
+  expect(screen.getAllByText('Part', { exact: true })).toHaveLength(1);
+  fireEvent.click(button, { detail: 2 });
+  fireEvent.dblClick(button);
+  expect(docSig.value.parts.get(1)?.type).toBe('Part');
+  expect(recentsSig.value).toEqual(['Part']);
 });
 test('the card tooltip gives the socket count', () => {
   baseCatalogSig.value = MINI;
@@ -88,4 +118,55 @@ test('dropping a favourite card on another reorders the favourites', () => {
   const favCards = document.querySelectorAll('.part-section')[0].querySelectorAll('.part-card');
   fireEvent.drop(favCards[0], { dataTransfer: { getData: () => 'Connector' } });
   expect(favouritesSig.value).toEqual(['Connector', 'Part']);
+});
+
+test.each(['Structure', '★ Favourites', 'Recent'])(
+  'double-clicking a part in %s creates exactly one part and clears the two clicks placement',
+  (section) => {
+    baseCatalogSig.value = MINI;
+    favouritesSig.value = ['Part'];
+    recentsSig.value = ['Part'];
+    render(<PartBrowser onArm={arm} />);
+    const group = screen.getByRole('heading', { name: section }).closest('section')!;
+    const button = group.querySelector<HTMLButtonElement>('.part-card-arm')!;
+    const type = button.querySelector('.part-card-name')!.textContent;
+    fireEvent.click(button, { detail: 1 });
+    expect(docSig.value.parts.size).toBe(0);
+    expect(toolSig.value).toBe('place');
+    fireEvent.click(button, { detail: 2 });
+    fireEvent.dblClick(button);
+    expect(docSig.value.parts.size).toBe(1);
+    expect(docSig.value.parts.get(1)?.type).toBe(type);
+    expect([...selectionSig.value.parts]).toEqual([1]);
+    expect(historySig.value.past).toHaveLength(1);
+    expect(placeSig.value).toBeNull();
+    expect(toolSig.value).toBe('select');
+    expect(recentsSig.value[0]).toBe(type);
+  },
+);
+
+test('double-clicking a part in a nonempty workspace keeps normal armed placement', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc(docOf(part(7, 'Part')));
+  render(<PartBrowser onArm={arm} />);
+  const button = screen.getByText('Connector').closest('button')!;
+  fireEvent.click(button, { detail: 1 });
+  fireEvent.click(button, { detail: 2 });
+  fireEvent.dblClick(button);
+  expect(docSig.value.order).toEqual([7]);
+  expect(historySig.value.past).toHaveLength(0);
+  expect(placeSig.value).toEqual({ kind: 'part', type: 'Connector' });
+  expect(toolSig.value).toBe('place');
+});
+
+test('double-clicking the favourite star or a creation never inserts a first part', () => {
+  baseCatalogSig.value = MINI;
+  render(<PartBrowser onArm={arm} creations={[{ id: 'saved', name: 'Saved build' }]} />);
+  fireEvent.dblClick(screen.getByLabelText('Favourite Connector'));
+  const creation = screen.getByText('Saved build').closest('button')!;
+  fireEvent.click(creation, { detail: 1 });
+  fireEvent.click(creation, { detail: 2 });
+  fireEvent.dblClick(creation);
+  expect(docSig.value.parts.size).toBe(0);
+  expect(placeSig.value).toEqual({ kind: 'creation', id: 'saved' });
 });

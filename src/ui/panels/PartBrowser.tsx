@@ -4,7 +4,8 @@ import { useState } from 'preact/hooks';
 import { CATEGORIES, type PartDef } from '../../core/catalog-types';
 import { statsSig } from '../../state/derived';
 import { favouritesSig, moveFavourite, pushRecent, recentsSig } from '../../state/favourites';
-import { catalogSig } from '../../state/store';
+import { catalogSig, docSig } from '../../state/store';
+import { placeFirstPart } from '../../state/place';
 import { Icon } from '../icons';
 import { fuzzyScore, partScore, rankParts } from '../widgets/fuzzy';
 import { PartCard } from '../widgets/PartCard';
@@ -63,8 +64,13 @@ export function PartBrowser({ onArm, creations = [] }: PartBrowserProps): JSX.El
         count={counts.get(p.type) ?? 0}
         favourite={favourites.includes(p.type)}
         onArm={() => {
-          pushRecent(p.type);
+          // Updating Recent can move this card between the two clicks of a double-click.
+          // Empty builds record the type when placement succeeds instead.
+          if (docSig.value.parts.size !== 0) pushRecent(p.type);
           onArm({ kind: 'part', type: p.type });
+        }}
+        onDoubleClick={() => {
+          if (placeFirstPart(p.type)) pushRecent(p.type);
         }}
         onDropPart={onDropPart}
       />

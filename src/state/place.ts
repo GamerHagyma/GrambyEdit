@@ -4,13 +4,15 @@ import { signal } from '@preact/signals';
 import { Matrix4 } from 'three';
 import { cfToMatrix4, IDENTITY_CF, matrix4ToCf } from '../core/cframe';
 import { newPartProps } from '../core/defaults';
+import { addPart } from '../core/ops/parts';
 import { poseConn } from '../core/pose';
 import type { CFrame12, Doc, PartId } from '../core/types';
 import { getCreation } from '../storage/library';
 import { setTool, toolSig, type ToolId } from '../tools/manager';
 import { creationDoc } from './library';
 import { settingsSig } from './settings';
-import { catalogSig } from './store';
+import { select } from './selection';
+import { catalogSig, commit, docSig, viewBus } from './store';
 
 export type PlaceSource =
   | { kind: 'part'; type: string }
@@ -33,6 +35,22 @@ export function arm(src: PlaceSource): void {
 export function disarm(): void {
   placeSig.value = null;
   if (toolSig.value === 'place') setTool(before);
+}
+
+/** Starts an empty build immediately; normal placement remains armed in a nonempty build. */
+export function placeFirstPart(type: string): boolean {
+  const cat = catalogSig.value;
+  if (docSig.value.parts.size !== 0 || !cat || !Object.hasOwn(cat.parts, type)) return false;
+  const props = newPartProps(cat, type, settingsSig.value);
+  let id: PartId = 0;
+  commit(`Place ${type}`, (d) => {
+    id = addPart(d, type, props);
+    d.setLayout(id, IDENTITY_CF);
+  });
+  select([id], 'replace');
+  disarm();
+  viewBus.emit({ kind: 'frame-selection' });
+  return true;
 }
 
 /** The roots' layouts made relative to the first root, which moves to the origin. */

@@ -17,6 +17,8 @@ export interface PartCardProps {
   count: number;
   favourite: boolean;
   onArm(): void;
+  /** Starts a build immediately when the Parts workspace is empty. */
+  onDoubleClick?(): void;
   /** Set on favourite cards: receives the type of a part card dropped onto this one. */
   onDropPart?(type: string): void;
 }
@@ -32,6 +34,7 @@ export function PartCard({
   count,
   favourite,
   onArm,
+  onDoubleClick,
   onDropPart,
 }: PartCardProps): JSX.Element {
   const [thumb, setThumb] = useState<string | null>(null);
@@ -71,7 +74,7 @@ export function PartCard({
       onDragOver={onDropPart ? allowDrop : undefined}
       onDrop={onDropPart ? dropOnto : undefined}
     >
-      <button class="part-card-arm" onClick={onArm}>
+      <button class="part-card-arm" onClick={onArm} onDblClick={onDoubleClick}>
         <span class="part-thumb">
           {thumb ? (
             <img src={thumb} width={64} height={64} alt="" />

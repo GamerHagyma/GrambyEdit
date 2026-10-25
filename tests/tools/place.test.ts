@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { Vector2 } from 'three';
+import { recentsSig } from '../../src/state/favourites';
 import { arm, placeSig } from '../../src/state/place';
 import { baseCatalogSig, docSig, historySig, resetStoreForTests } from '../../src/state/store';
 import { createPlaceTool } from '../../src/tools/place';
 import { registerTool, setTool, toolPointer, toolSig } from '../../src/tools/manager';
 import { MINI } from '../helpers/catalog';
+import { fakeViewport } from '../helpers/viewport';
+import { setViewport } from '../../src/viewport/context';
 
 beforeEach(() => {
   resetStoreForTests();
@@ -32,4 +35,23 @@ test('a right click also cancels a generated shape before it is placed', () => {
   toolPointer({ kind: 'up', button: 2, x: 10, y: 10, ndc: new Vector2(), shift: false, ctrl: false, alt: false });
   expect(toolSig.value).toBe('select');
   expect(placeSig.value).toBeNull();
+});
+
+test('a part armed in an empty build becomes recent when actually placed', async () => {
+  recentsSig.value = [];
+  const viewport = fakeViewport();
+  setViewport(viewport);
+  try {
+    arm({ kind: 'part', type: 'Part' });
+    await Promise.resolve();
+    toolPointer({
+      kind: 'up', button: 0, x: 400, y: 300, ndc: new Vector2(),
+      shift: false, ctrl: false, alt: false,
+    });
+    expect(docSig.value.parts.size).toBe(1);
+    expect(recentsSig.value).toEqual(['Part']);
+  } finally {
+    setViewport(null);
+    viewport.canvas.parentElement?.remove();
+  }
 });

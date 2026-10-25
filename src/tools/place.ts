@@ -26,6 +26,7 @@ import { canBeParent, canTakeChild } from '../core/rules';
 import type { Doc, Part, PartId } from '../core/types';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { posesSig } from '../state/derived';
+import { pushRecent } from '../state/favourites';
 import { disarm, placeSig, resolveSub } from '../state/place';
 import { select } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
@@ -150,6 +151,7 @@ export function createPlaceTool(): Tool {
     const cat = catalogSig.value;
     const what = sub;
     const where = spot;
+    const source = placeSig.value;
     if (!cat || !what || !where) return;
     const at =
       where.kind === 'root' ? { root: matrix4ToCf(where.world) } : { target: where.target };
@@ -165,6 +167,7 @@ export function createPlaceTool(): Tool {
       return;
     }
     select(ids, 'replace');
+    if (source?.kind === 'part') pushRecent(source.type);
     if (cursor) aim(cursor);
   };
 
