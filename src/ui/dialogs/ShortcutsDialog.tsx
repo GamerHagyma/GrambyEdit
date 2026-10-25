@@ -47,13 +47,23 @@ const MOUSE: Section = {
       action: 'Select a piece of a Wire, Switch, Button or other multi-piece part',
     },
     { keys: ['Double-click'], action: 'Select the whole multi-piece part' },
+    {
+      keys: ['Drag'],
+      action:
+        'Select or Move: drag a part, selected group, or the Move center handle onto a compatible socket. Arrows and planes still transform normally.',
+    },
+    {
+      keys: ['Shift'],
+      action:
+        'While carrying or dragging: enlarge compatible sockets and snap only to sockets. Change the enlargement percentage in Settings.',
+    },
     { keys: ['Shift+Click'], action: 'Add or remove a part' },
     { keys: ['Ctrl+Click'], action: 'Remove a part' },
     { keys: ['Drag'], action: 'Box select from empty space' },
     {
       keys: ['Drag'],
       action:
-        'Move tool: drag a part or piece onto a socket (within 20 px) or surface to re-attach it; the Select tool drags pieces too',
+        'Select/Move: drag a part, piece or selection onto a socket (within 20 px) or surface to re-attach it',
     },
     {
       keys: ['Drag'],
@@ -162,6 +172,11 @@ const USAGE: readonly Section[] = [
           'Only your own unchanged edits are undone. The shared History tab is informational.',
       },
       {
+        keys: ['G / R'],
+        action:
+          'Your move or rotation stays active while others edit. It applies to the latest shared pose; deleting its target cancels safely.',
+      },
+      {
         keys: ['Leave'],
         action:
           'The host must keep the page open. Everyone keeps their latest local copy when the room ends. Leave before New/Open.',
@@ -176,6 +191,16 @@ const USAGE: readonly Section[] = [
   {
     title: 'References and building helpers',
     rows: [
+      {
+        keys: ['Sockets'],
+        action:
+          'Orange/red markers indicate mechanical mounts (bearings, servos, doors, suspension). Purple highlights the selection’s attachment target; used sockets fade.',
+      },
+      {
+        keys: ['Unavailable'],
+        action:
+          'The Parts browser keeps non-spawnable templates in a separate Unavailable category for importing and inspection.',
+      },
       {
         keys: ['Reference'],
         action:

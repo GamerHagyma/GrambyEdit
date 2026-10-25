@@ -76,11 +76,23 @@ function selfJointSockets(conn: Conn): readonly SocketId[] {
 }
 
 /** §7: a socket of `part` is used when a conn has it as `self`, a joint targets it, or a self-joint names it. */
-export function isSocketUsed(doc: Doc, part: PartId, socket: SocketId): boolean {
+export function isSocketUsed(
+  doc: Doc,
+  part: PartId,
+  socket: SocketId,
+  side?: 'child' | 'parent',
+): boolean {
   const owner = doc.parts.get(part);
   if (owner === undefined) return false;
-  const onOwn = owner.conns.some((c) => c.self === socket || selfJointSockets(c).includes(socket));
-  return onOwn || (graphIndex(doc).socketUsers.get(`${part}:${socket}`)?.length ?? 0) > 0;
+  const onOwn = owner.conns.some((c) =>
+    side === 'parent'
+      ? selfJointSockets(c)[1] === socket
+      : c.self === socket || selfJointSockets(c).includes(socket),
+  );
+  return (
+    onOwn ||
+    (side !== 'child' && (graphIndex(doc).socketUsers.get(`${part}:${socket}`)?.length ?? 0) > 0)
+  );
 }
 
 /** §7: a signal joint joins output to input, or a conductor to any signal socket. */
@@ -133,7 +145,8 @@ export function canBeChild(
       message: `Socket ${socket} is not a child-side socket of ${type}.`,
     };
   }
-  if (isSocketUsed(doc, part, socket)) return socketUsed(type, socket);
+  if (isSocketUsed(doc, part, socket, def?.sockets[socket]?.childFrame ? 'child' : undefined))
+    return socketUsed(type, socket);
   const clear = pieceClear(doc, def, part, socket);
   if (!clear.ok || kind === 'joint') return clear;
   for (const other of pieceSockets(def, socket)) {
@@ -159,7 +172,8 @@ export function canBeParent(doc: Doc, cat: Catalog, part: PartId, socket: Socket
       message: `Socket ${socket} is not a parent-side socket of ${type}.`,
     };
   }
-  if (isSocketUsed(doc, part, socket)) return socketUsed(type, socket);
+  if (isSocketUsed(doc, part, socket, def?.sockets[socket]?.childFrame ? 'parent' : undefined))
+    return socketUsed(type, socket);
   return pieceClear(doc, def, part, socket);
 }
 
@@ -393,8 +407,10 @@ function connIssues(doc: Doc, cat: Catalog): Issue[] {
 /** E-MATE and E-TEAR, from the joints that land on each socket of each part. */
 function jointIssues(doc: Doc, cat: Catalog): Issue[] {
   const uses = new Map<string, { part: PartId; socket: SocketId; joints: number }>();
-  const touch = (part: PartId, socket: SocketId): void => {
-    const key = `${part}:${socket}`;
+  const useKey = (part: PartId, socket: SocketId, side: 'child' | 'parent') =>
+    `${part}:${socket}${cat.parts[doc.parts.get(part)!.type]?.sockets[socket]?.childFrame ? ':' + side : ''}`;
+  const touch = (part: PartId, socket: SocketId, side: 'child' | 'parent' = 'child'): void => {
+    const key = useKey(part, socket, side);
     const use = uses.get(key);
     if (use === undefined) uses.set(key, { part, socket, joints: 1 });
     else use.joints += 1;
@@ -404,7 +420,7 @@ function jointIssues(doc: Doc, cat: Catalog): Issue[] {
       const { target } = conn;
       if (target.kind === 'socket') {
         touch(id, conn.self);
-        if (doc.parts.has(target.part)) touch(target.part, target.socket);
+        if (doc.parts.has(target.part)) touch(target.part, target.socket, 'parent');
       } else if (target.kind === 'raw') {
         for (const socket of new Set(selfJointSockets(conn))) touch(id, socket);
       }
@@ -426,7 +442,7 @@ function jointIssues(doc: Doc, cat: Catalog): Issue[] {
   for (const id of doc.order) {
     const def = defOf(cat, doc.parts.get(id)!.type);
     for (const mount of mountSockets(doc, id)) {
-      const joint = pieceSockets(def, mount).find((s) => uses.has(`${id}:${s}`));
+      const joint = pieceSockets(def, mount).find((s) => uses.has(useKey(id, s, 'child')));
       if (joint !== undefined) {
         out.push(
           issue(

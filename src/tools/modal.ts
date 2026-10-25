@@ -13,7 +13,7 @@ import { settingsSig } from '../state/settings';
 import { surfaceSig } from '../state/surfaces';
 import { getViewport } from '../viewport/context';
 import { toolSig } from './manager';
-import { pointGizmoHandlers, pointGizmoPlacement } from './point';
+import { pointGizmoHandlers, pointGizmoPlacement, selectedPoint } from './point';
 import { surfaceGizmoHandlers, surfaceGizmoPlacement } from './surface';
 import {
   beginSession,
@@ -38,6 +38,7 @@ const AXES: Readonly<Record<Axis, Vector3>> = {
 
 /** What a modal transforms: the selected parts (a transform session) or the one selected point. */
 interface Target {
+  alive?(): boolean;
   readonly pivot: Vector3;
   /** The active part's orientation (a point's: its host's), for local axes. */
   readonly local: Quaternion;
@@ -59,6 +60,7 @@ function partsTarget(): Target | null {
   return {
     pivot: pivotOf(session.poses, ids, pivotModeSig.value, active, originOf),
     local,
+    alive: () => [...session.selection.parts].some((id) => docSig.peek().parts.has(id)),
     preview: (d) => previewSession(session, d),
     finish: (d) => finishSession(session, d),
     cancel: () => cancelSession(session),
@@ -67,11 +69,13 @@ function partsTarget(): Target | null {
 
 function pointTarget(): Target | null {
   const at = pointGizmoPlacement();
+  const point = selectedPoint();
   if (!at) return null;
   pointGizmoHandlers.start();
   return {
     pivot: at.position,
     local: at.quaternion,
+    alive: () => !!point && !!docSig.peek().parts.get(point.host)?.points?.has(point.uuid),
     preview: (d) => pointGizmoHandlers.change(d),
     finish: (d) => pointGizmoHandlers.end(d),
     cancel: () => pointGizmoHandlers.cancel(),
@@ -366,4 +370,10 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
 /** Ends a modal transform without committing (tool switch, viewport teardown). */
 export function cancelModal(): void {
   end(false);
+}
+/** A shared update redraws authoritative instances; reapply the active local gesture afterwards. */
+export function refreshModal(): void {
+  if (!modal) return;
+  if (modal.target.alive && !modal.target.alive()) end(false);
+  else update(modal);
 }

@@ -33,6 +33,7 @@ function RoomBody({ onClose }: { onClose(): void }): JSX.Element {
     [ice, setIce] = useState(''),
     [error, setError] = useState('');
   const room = roomSig.value,
+    invited = !!joinCodeSig.value.trim(),
     active = !['offline', 'disconnected'].includes(room.mode),
     hosting = room.mode === 'hosting',
     stats = networkStatsSig.value;
@@ -102,16 +103,24 @@ function RoomBody({ onClose }: { onClose(): void }): JSX.Element {
       {!active ? (
         <>
           <p>
-            Host your current blueprint, or join someone else's room. The host approves who can view
-            or edit.
+            {invited ? (
+              'You have been invited to a shared workspace. Join below, then wait for the host’s approval.'
+            ) : (
+              <>
+                Host your current blueprint, or join someone else's room. The host approves who can
+                view or edit.
+              </>
+            )}
           </p>
-          <button
-            class="button primary"
-            disabled={!catalogSig.value}
-            onClick={() => void perform('host')}
-          >
-            Host workspace
-          </button>
+          {!invited && (
+            <button
+              class="button primary"
+              disabled={!catalogSig.value}
+              onClick={() => void perform('host')}
+            >
+              Host workspace
+            </button>
+          )}
           <label class="collab-field">
             Room invitation
             <textarea
@@ -129,12 +138,24 @@ function RoomBody({ onClose }: { onClose(): void }): JSX.Element {
             </p>
           )}
           <button
-            class="button"
+            class={invited ? 'button primary collab-join' : 'button'}
             disabled={!invite.trim() || !catalogSig.value}
             onClick={() => void perform('join')}
           >
             Join (replace workspace)
           </button>
+          {invited && (
+            <details class="collab-network">
+              <summary>Host your own room instead</summary>
+              <button
+                class="button"
+                disabled={!catalogSig.value}
+                onClick={() => void perform('host')}
+              >
+                Host workspace
+              </button>
+            </details>
+          )}
           <details class="collab-network">
             <summary>Connection settings</summary>
             <p>

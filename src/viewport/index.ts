@@ -16,6 +16,7 @@ import {
 import { CollaboratorsLayer } from './collaborators';
 import { SymmetryGuide } from './symmetry-guide';
 import { symmetrySig, symmetryFrameSig, symmetryPreviewSig } from '../state/symmetry';
+import { shiftSocketSig, socketFocusSig } from '../state/socket-focus';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
@@ -44,7 +45,7 @@ import { partsInDisc, partsInRect, pickPart } from './raycast';
 import { SocketsLayer } from './sockets-layer';
 import { registerTool, toolKey, toolPointer, type ToolPointer } from '../tools/manager';
 import { createConnectTool } from '../tools/connect';
-import { cancelModal, modalActiveSig, modalGuideSig } from '../tools/modal';
+import { cancelModal, modalActiveSig, modalGuideSig, refreshModal } from '../tools/modal';
 import { createPaintTool } from '../tools/paint';
 import { createPickTool } from '../tools/pick';
 import { createPlaceTool } from '../tools/place';
@@ -54,6 +55,7 @@ import {
   pointGizmoModeSig,
   pointGizmoPlacement,
   selectedPoint,
+  refreshPointPreview,
 } from '../tools/point';
 import {
   cornerWorlds,
@@ -70,6 +72,7 @@ import {
   pivotModeSig,
   spaceSig,
   transformStateSig,
+  refreshTransformPreview,
 } from '../tools/transform';
 import { createWorkbenchTool } from '../tools/workbench';
 import { toolSig } from '../tools/manager';
@@ -248,8 +251,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const drag = reattachSig.value;
     if (state === 'reattach') {
       socketParts = drag ? dragSocketParts(doc, poses, hover, drag, hidden, DRAG_PARTS) : [];
-    } else if (state === 'idle' && (tool === 'connect' || tool === 'place')) socketParts = near!;
-    else if (state === 'idle') {
+    } else if (state === 'idle' && (tool === 'connect' || tool === 'place')) {
+      socketParts = near!;
+      if (hover !== null && !hidden.has(hover) && !socketParts.includes(hover))
+        socketParts = [hover, ...socketParts];
+    } else if (state === 'idle') {
       socketParts = [...sel.parts].filter((id) => !hidden.has(id));
       if (hover !== null && !socketParts.includes(hover)) socketParts.unshift(hover);
       // A selected piece also shows the sockets around it: where a drag can join it (D25).
@@ -546,13 +552,24 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   };
   /** Ctrl turns gizmo snapping on wherever focus is; the other keys reach the viewport through `ctx.onKey`. */
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Shift') {
+      shiftSocketSig.value = true;
+      toolKey(e);
+      request();
+    }
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(true);
   };
   const onKeyUp = (e: KeyboardEvent) => {
+    if (e.key === 'Shift') {
+      shiftSocketSig.value = false;
+      toolKey(e);
+      request();
+    }
     if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(false);
     studio.onKeyUp(e);
   };
   const onBlur = () => {
+    shiftSocketSig.value = false;
     rightDown = null;
     studio.releaseAll();
   };
@@ -571,8 +588,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   canvas.addEventListener('dragover', onDragOver);
   canvas.addEventListener('drop', onDrop);
   canvas.addEventListener('webglcontextlost', onLost);
-  window.addEventListener('keydown', onKeyDown);
-  window.addEventListener('keyup', onKeyUp);
+  window.addEventListener('keydown', onKeyDown, true);
+  window.addEventListener('keyup', onKeyUp, true);
   window.addEventListener('blur', onBlur);
 
   const offView = viewBus.on((e) => {
@@ -625,6 +642,9 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       scene.add(ctx.ghost.group);
     }
     ctx.layer?.sync(doc, poses, hidden, s.desaturateApprox);
+    refreshModal();
+    refreshTransformPreview();
+    refreshPointPreview();
     request();
   });
   let framedType: string | null = null;
@@ -666,6 +686,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const stopCollaborators = effect(() => {
     roomSig.value;
     collaborators.sync(membersSig.value, camerasSig.value, currentPeerId());
+    request();
+  });
+  const stopSocketFocus = effect(() => {
+    shiftSocketSig.value;
+    socketFocusSig.value;
+    settingsSig.value.shiftSocketEnlargement;
     request();
   });
   const stopSymmetry = effect(() => {
@@ -823,13 +849,16 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.removeEventListener('dragover', onDragOver);
     canvas.removeEventListener('drop', onDrop);
     canvas.removeEventListener('webglcontextlost', onLost);
-    window.removeEventListener('keydown', onKeyDown);
-    window.removeEventListener('keyup', onKeyUp);
+    window.removeEventListener('keydown', onKeyDown, true);
+    window.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('blur', onBlur);
     offView();
     stopSync();
     stopHighlight();
     stopCollaborators();
+    stopSocketFocus();
+    shiftSocketSig.value = false;
+    socketFocusSig.value = null;
     collaborators.dispose();
     stopSymmetry();
     symmetryGuide.dispose();

@@ -18,6 +18,40 @@ ROOT = Path(__file__).resolve().parent.parent
 SPACE = 'roblox-primary-part-v1'
 
 
+def outward_y(socket):
+    if 'outwardYPrimaryPartLocalCFrame' in socket:
+        return socket['outwardYPrimaryPartLocalCFrame']
+    frame = socket['primaryPartLocalCFrame']
+    sign = 1 if socket['name'] == 'BallAttachment' else -1
+    rotation = frame[3:]
+    return frame[:3] + [v for i in range(3) for v in
+                        (rotation[3*i], sign*rotation[3*i+2], -sign*rotation[3*i+1])]
+
+
+def socket_inventory(model):
+    groups = {}
+    for socket in [*model['sockets'].values(), *model['unmappedSockets']]:
+        sid = str(int(float(socket['attributes']['Id'])))
+        groups.setdefault(sid, []).append(socket)
+    sockets, blocked = {}, []
+    for sid, entries in groups.items():
+        child = [s for s in entries if s['name'] == 'BallAttachment']
+        parent = [s for s in entries if s['name'] == 'CupAttachment']
+        if len(entries) == 1:
+            s = entries[0]
+            sockets[sid] = {'side': 'child' if child else 'parent', 'cframe': outward_y(s),
+                            'parentPath': s['parentPath'], 'attributes': s['attributes']}
+        elif len(child) == len(parent) == 1 and child[0]['parentPath'] == parent[0]['parentPath']:
+            # A native ID can name a bottom ball and a top cup on the same body (Spoiler).
+            s = parent[0]
+            sockets[sid] = {'side': 'both', 'cframe': outward_y(s),
+                            'childCFrame': outward_y(child[0]),
+                            'parentPath': s['parentPath'], 'attributes': s['attributes']}
+        else:
+            blocked.append(sid)
+    return sockets, sorted(blocked)
+
+
 def main(capture):
     capture = Path(capture).resolve()
     manifest = json.loads((capture / 'parts/manifest.json').read_text(encoding='utf-8'))
@@ -43,7 +77,6 @@ def main(capture):
         model = raw['parts'][name]
         copy_file(capture / 'parts' / meta['obj'], destination / 'parts' / meta['obj'])
         copy_file(capture / 'parts' / meta['mtl'], destination / 'parts' / meta['mtl'])
-        duplicate_ids = {str(int(float(s['attributes']['Id']))) for s in model['unmappedSockets']}
         subparts = {}
         counts = Counter(p['name'] for p in model['baseParts'].values())
         for path, p in meta['subparts'].items():
@@ -54,17 +87,12 @@ def main(capture):
         groups = {}
         for index, (path, p) in enumerate((x for x in meta['subparts'].items() if x[1]['status'] == 'exported')):
             groups[f'material_{index}'] = model['baseParts'][path]['name']
-        sockets = {
-            sid: {'side': 'child' if s['name'] == 'BallAttachment' else 'parent',
-                  'cframe': s['outwardYPrimaryPartLocalCFrame'],
-                  'parentPath': s['parentPath'], 'attributes': s['attributes']}
-            for sid, s in model['sockets'].items() if sid not in duplicate_ids
-        }
+        sockets, blocked = socket_inventory(model)
         parts[name] = {
             'obj': f'meshes/runtime/parts/{meta["obj"]}',
             'mtl': f'meshes/runtime/parts/{meta["mtl"]}',
             'primaryPart': model['primaryPart'], 'subParts': subparts,
-            'groups': groups, 'sockets': sockets, 'blockedSockets': sorted(duplicate_ids),
+            'groups': groups, 'sockets': sockets, 'blockedSockets': blocked,
             'textureAlphaBlend': {},
             'warnings': meta['warnings'],
         }

@@ -10,6 +10,8 @@ import { docOf, part, mount, pt, sock } from '../../helpers/doc';
 import type { CFrame12 } from '../../../src/core/types';
 import { realCatalog } from '../../helpers/real-catalog';
 import { copyFrame } from '../../../src/core/symmetry';
+import { validate } from '../../../src/core/rules';
+import { DEFAULT_LIMITS } from '../../../src/core/types';
 const C = MINI.conventions;
 const scene = () =>
   docOf(
@@ -208,4 +210,107 @@ test('cyclic selections and excessive copy counts reject atomically', () => {
     ),
   ).toThrow(/too large/);
   expect(large.parts.size).toBe(802);
+});
+
+test('a reused matching parent never gets a second child on an occupied socket', () => {
+  const base = {
+    ...docOf(
+      part(1, 'Part'),
+      part(2, 'Part'),
+      part(3, 'Part', [sock('1', 2, '6')], { RGB: [255, 0, 0] }),
+      part(4, 'Part'),
+      part(5, 'Part', [sock('1', 4, '6')], { RGB: [0, 0, 255] }),
+    ),
+    layout: new Map<number, CFrame12>([
+      [1, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [2, [3, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [4, [-3, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1]],
+    ]),
+  };
+  const poses = computePoses(base, MINI, C);
+  const { doc } = transact(base, 'radial', (d) =>
+    symmetryCopies(
+      d,
+      MINI,
+      poses,
+      [2, 3],
+      1,
+      symmetryTransforms(new Matrix4(), 'radial', 'y', 2),
+      false,
+    ),
+  );
+  expect(validate(doc, MINI, DEFAULT_LIMITS, 0).filter((i) => i.severity === 'error')).toEqual([]);
+});
+test('deduplication also reuses parts created by earlier radial sectors', () => {
+  const base = {
+    ...docOf(part(1, 'Part'), part(2, 'Part'), part(3, 'Part')),
+    layout: new Map<number, CFrame12>([
+      [1, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [2, [3, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [3, [-3, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1]],
+    ]),
+  };
+  expect(copies(base, 'radial', [2, 3]).made).toHaveLength(2);
+});
+test('an occupied reused signal target refuses the entire operation instead of adding a second wire', () => {
+  const base = {
+    ...docOf(
+      part(1, 'Part'),
+      part(2, 'Gate-AND'),
+      part(3, 'Switch', [sock('1', 2, '2')], { RGB: [255, 0, 0] }),
+      part(4, 'Gate-AND'),
+      part(5, 'Switch', [sock('1', 4, '2')], { RGB: [0, 0, 255] }),
+    ),
+    layout: new Map<number, CFrame12>([
+      [1, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [2, [3, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [4, [-3, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1]],
+    ]),
+  };
+  const poses = computePoses(base, MINI, C);
+  expect(() =>
+    transact(base, 'radial', (d) =>
+      symmetryCopies(
+        d,
+        MINI,
+        poses,
+        [2, 3],
+        1,
+        symmetryTransforms(new Matrix4(), 'radial', 'y', 2),
+        false,
+      ),
+    ),
+  ).toThrow(/signal socket.*occupied/);
+  expect(base.parts.size).toBe(5);
+});
+test('secondary signal joints on reused occupied targets are also rejected atomically', () => {
+  const base = {
+    ...docOf(
+      part(1, 'Part', [], {}, [pt('{a}'), pt('{b}')]),
+      part(2, 'Gate-AND'),
+      part(3, 'Switch', [mount('3', 1, '{a}'), sock('1', 2, '2')], { RGB: [255, 0, 0] }),
+      part(4, 'Gate-AND'),
+      part(5, 'Switch', [mount('3', 1, '{b}'), sock('1', 4, '2')], { RGB: [0, 0, 255] }),
+    ),
+    layout: new Map<number, CFrame12>([
+      [1, [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [2, [3, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      [4, [-3, 0, 0, -1, 0, 0, 0, 1, 0, 0, 0, -1]],
+    ]),
+  };
+  const poses = computePoses(base, MINI, C);
+  expect(() =>
+    transact(base, 'radial', (d) =>
+      symmetryCopies(
+        d,
+        MINI,
+        poses,
+        [2, 3],
+        1,
+        symmetryTransforms(new Matrix4(), 'radial', 'y', 2),
+        false,
+      ),
+    ),
+  ).toThrow(/Cannot preserve mirrored connections/);
+  expect(base.parts.size).toBe(5);
 });

@@ -93,8 +93,8 @@ function pointAt(ndc: Vector2): PointKey | null {
 }
 
 /**
- * What a press lands on: a point marker, else a part. A piece's own mount point yields to the piece
- * under it, so a click or drag there takes the piece, not its point (D25).
+ * What a press lands on: a point marker, else a part. A part's own mount point yields to its mesh,
+ * so Select/Move can carry ordinary parts as well as multi-piece bodies.
  */
 export function pressAt(ndc: Vector2): { point: PointKey | null; hit: Hit | null } {
   const p = pickPoint(ndc);
@@ -102,7 +102,6 @@ export function pressAt(ndc: Vector2): { point: PointKey | null; hit: Hit | null
   if (!p) return { point: null, hit };
   const own =
     hit !== null &&
-    hasPieces(hit.part) &&
     (docSig.value.parts.get(hit.part)?.conns ?? []).some(
       (c) => c.target.kind === 'point' && c.target.part === p.host && c.target.uuid === p.uuid,
     );

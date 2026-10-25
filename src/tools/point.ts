@@ -33,9 +33,7 @@ const AXES = [
 
 export const pointGizmoModeSig = signal<'translate' | 'rotate'>('translate');
 /** A delete waiting for the user's choice, because parts hang from the point. */
-export const pointDeleteSig = signal<{ host: PartId; uuid: Uuid; children: PartId[] } | null>(
-  null,
-);
+export const pointDeleteSig = signal<{ host: PartId; uuid: Uuid; children: PartId[] } | null>(null);
 
 /**
  * The host-local frame of a new point at a surface hit: +Y along the normal (snapped onto a host axis
@@ -110,6 +108,7 @@ export function pointGizmoPlacement(): { position: Vector3; quaternion: Quaterni
 }
 
 interface PointDrag {
+  readonly doc: Doc;
   readonly host: PartId;
   readonly uuid: Uuid;
   readonly world: Matrix4;
@@ -119,6 +118,26 @@ interface PointDrag {
 }
 
 let drag: PointDrag | null = null;
+let lastDelta: TransformDelta | null = null;
+function rebasePointDrag(d: PointDrag): boolean {
+  const doc = docSig.peek(),
+    cat = catalogSig.peek(),
+    poses = posesSig.peek();
+  const world = cat && pointWorld(doc, poses, cat, d.host, d.uuid);
+  if (!world) return false;
+  if (d.doc !== doc) {
+    const moving = new Map<PartId, PartId>();
+    for (const child of childrenOf(doc, d.host, d.uuid)) {
+      moving.set(child, child);
+      for (const id of poseDescendants(doc, child)) moving.set(id, child);
+    }
+    Object.assign(d, { doc, world, poses, moving });
+  }
+  return true;
+}
+export function refreshPointPreview(): void {
+  if (drag && lastDelta) pointGizmoHandlers.change(lastDelta);
+}
 
 const originDelta = (d: PointDrag, delta: TransformDelta) =>
   deltaMatrix(delta, new Vector3().setFromMatrixPosition(d.world));
@@ -137,17 +156,22 @@ export const pointGizmoHandlers = {
       moving.set(child, child);
       for (const below of poseDescendants(doc, child)) moving.set(below, child);
     }
-    drag = { ...sel, world, poses, moving };
+    drag = { ...sel, doc, world, poses, moving };
+    lastDelta = null;
     transformStateSig.value = 'transform';
   },
   change(delta: TransformDelta): void {
-    if (drag) previewMoving(drag.moving, drag.poses, () => originDelta(drag!, delta));
+    lastDelta = delta;
+    if (drag && rebasePointDrag(drag))
+      previewMoving(drag.moving, drag.poses, () => originDelta(drag!, delta));
   },
   end(delta: TransformDelta): void {
     const d = drag;
     drag = null;
+    lastDelta = null;
     transformStateSig.value = 'idle';
     if (!d) return;
+    if (!rebasePointDrag(d)) return previewMoving(d.moving, posesSig.peek(), () => new Matrix4());
     const cat = catalogSig.value;
     const host = docSig.value.parts.get(d.host);
     const point = host?.points?.get(d.uuid);
@@ -164,8 +188,9 @@ export const pointGizmoHandlers = {
   cancel(): void {
     const d = drag;
     drag = null;
+    lastDelta = null;
     transformStateSig.value = 'idle';
-    if (d) previewMoving(d.moving, d.poses, () => new Matrix4());
+    if (d) previewMoving(d.moving, posesSig.peek(), () => new Matrix4());
   },
 };
 
@@ -234,7 +259,8 @@ export function createPointTool(): Tool {
     const cat = catalogSig.value;
     const sel = selectedPoint();
     const free = sel && childrenOf(docSig.value, sel.host, sel.uuid).length === 0;
-    const m = free && cat ? pointWorld(docSig.value, posesSig.value, cat, sel!.host, sel!.uuid) : null;
+    const m =
+      free && cat ? pointWorld(docSig.value, posesSig.value, cat, sel!.host, sel!.uuid) : null;
     if (!vp || !m) {
       plus?.remove();
       plus = null;
@@ -306,7 +332,7 @@ export function createPointTool(): Tool {
         pointGizmoModeSig.value = e.code === 'KeyG' ? 'translate' : 'rotate';
         return true;
       }
-      return (inner.onKey?.(e) ?? false);
+      return inner.onKey?.(e) ?? false;
     },
   };
 }

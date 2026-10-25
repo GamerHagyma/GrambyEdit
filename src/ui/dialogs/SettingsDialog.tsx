@@ -227,6 +227,16 @@ export function SettingsDialog({
           {...R.maxSockets}
           onCommit={(v) => updateSettings({ maxSockets: v })}
         />
+        <NumberField
+          label="Socket enlargement while holding Shift (%)"
+          value={s.shiftSocketEnlargement}
+          {...R.shiftSocketEnlargement}
+          onCommit={(v) => updateSettings({ shiftSocketEnlargement: v })}
+        />
+        <p class="muted">
+          While carrying or dragging parts, hold Shift for enlarged compatible sockets and
+          socket-only snapping. 100% doubles their size.
+        </p>
       </section>
 
       <section class="settings-section">

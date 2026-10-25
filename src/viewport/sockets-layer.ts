@@ -2,10 +2,11 @@
 // a constant screen size, coloured by role. Used sockets fade to 35%, sockets a mount has consumed are
 // red, and the sockets that selected parts are attached to are purple.
 import { Group, MathUtils, Matrix4, Vector3 } from 'three';
-import type { Catalog, SocketRole } from '../core/catalog-types';
+import type { Catalog, SocketDef } from '../core/catalog-types';
 import { cfToMatrix4 } from '../core/cframe';
 import { bodyOfSocket, bodyWorld, type Poses } from '../core/pose';
-import { isSocketUsed, mountSockets, pieceSockets, socketRole } from '../core/rules';
+import { isSocketUsed, mountSockets, pieceSockets } from '../core/rules';
+import { socketMagnification } from '../state/socket-focus';
 import type { Doc, PartId, SocketId } from '../core/types';
 import type { CameraRig } from './cameras/rig';
 import { MarkerPool, srgbToLinear } from './markers';
@@ -16,6 +17,7 @@ export interface ShownSocket {
   readonly part: PartId;
   readonly socket: SocketId;
   readonly world: Vector3;
+  readonly side?: 'child' | 'parent';
 }
 
 /** Fill and outline colours per role, as sRGB hex. */
@@ -30,6 +32,13 @@ const STYLE: Record<
   socket: { fill: 0x7cc4fa, rim: 0x163e5e },
 };
 const CONSUMED = { fill: 0xe5484d, rim: 0xffffff };
+export function socketStyle(s: SocketDef): { fill: number; rim: number } {
+  if (s.mountType)
+    return s.mountType === 'Door'
+      ? { fill: 0xef5a4c, rim: 0x631b13 }
+      : { fill: 0xff922b, rim: 0x653000 };
+  return STYLE[s.role ?? 'socket'];
+}
 /** Where a selected part is attached (spec: "highlight the point a part is placed on"). */
 export const ATTACH = { fill: 0xb57bff, rim: 0xffffff };
 /** On-screen radius of a marker's body, in CSS pixels. */
@@ -74,16 +83,30 @@ export class SocketsLayer {
     attach: ReadonlySet<string> = new Set(),
   ): void {
     const eye = rig.camera.position;
-    type Candidate = { part: PartId; socket: SocketId; m: Matrix4; world: Vector3; d: number };
-    const candidate = (id: PartId, socket: SocketId): Candidate | null => {
+    type Candidate = {
+      part: PartId;
+      socket: SocketId;
+      m: Matrix4;
+      world: Vector3;
+      d: number;
+      side?: 'child' | 'parent';
+    };
+    const candidate = (id: PartId, socket: SocketId, child = false): Candidate | null => {
       const part = doc.parts.get(id);
       const def = part && cat.parts[part.type];
       const s = def?.sockets[socket];
       const world = def && bodyWorld(poses, id, bodyOfSocket(def, socket));
       if (!world || !s) return null;
-      const m = world.clone().multiply(cfToMatrix4(s.frame));
+      const m = world.clone().multiply(cfToMatrix4(child ? s.childFrame! : s.frame));
       const p = new Vector3().setFromMatrixPosition(m);
-      return { part: id, socket, m, world: p, d: p.distanceTo(eye) };
+      return {
+        part: id,
+        socket,
+        m,
+        world: p,
+        d: p.distanceTo(eye),
+        side: child ? 'child' : s.side === 'child' ? 'child' : 'parent',
+      };
     };
     const all: Candidate[] = [];
     for (const id of parts.length > MAX_SELECTED_PARTS ? parts.slice(0, 1) : parts) {
@@ -92,6 +115,10 @@ export class SocketsLayer {
       for (const socket of Object.keys(def.sockets)) {
         const c = !attach.has(socketKey(id, socket)) && candidate(id, socket);
         if (c) all.push(c);
+        if (def.sockets[socket].childFrame) {
+          const c = candidate(id, socket, true);
+          if (c) all.push(c);
+        }
       }
     }
     all.sort((a, b) => a.d - b.d);
@@ -104,7 +131,7 @@ export class SocketsLayer {
     const rest = all.slice(0, Math.max(0, max));
     const scale = new Matrix4();
     const sized = (c: Candidate) => {
-      const size = RADIUS_PX * worldPerPixel(rig, c.d);
+      const size = RADIUS_PX * worldPerPixel(rig, c.d) * socketMagnification(c);
       return c.m.clone().multiply(scale.makeScale(size, size, size));
     };
     const top = this.pinnedMarkers.get(pinned.length);
@@ -117,18 +144,31 @@ export class SocketsLayer {
       const part = doc.parts.get(c.part)!;
       const def = cat.parts[part.type]!;
       const m = sized(c);
-      const role: SocketRole = socketRole(cat, part.type, c.socket);
-      const used = isSocketUsed(doc, c.part, c.socket);
+      const used = isSocketUsed(
+        doc,
+        c.part,
+        c.socket,
+        def.sockets[c.socket].childFrame ? c.side : undefined,
+      );
       const consumed =
         !used &&
         mountSockets(doc, c.part).some(
           (m) => m !== c.socket && pieceSockets(def, m).includes(c.socket),
         );
-      const style = consumed ? CONSUMED : STYLE[role ?? 'socket'];
+      const style = consumed
+        ? CONSUMED
+        : c.side === 'child' && def.sockets[c.socket].childFrame
+          ? STYLE.mount
+          : socketStyle(def.sockets[c.socket]);
       markers.set(i, m, srgbToLinear(style.fill), srgbToLinear(style.rim), used ? 0.35 : 1);
     });
     markers.finish(rest.length);
-    this.list = [...pinned, ...rest].map(({ part, socket, world }) => ({ part, socket, world }));
+    this.list = [...pinned, ...rest].map(({ part, socket, world, side }) => ({
+      part,
+      socket,
+      world,
+      side,
+    }));
   }
 
   dispose(): void {

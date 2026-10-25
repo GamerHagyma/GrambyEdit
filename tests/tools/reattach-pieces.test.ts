@@ -3,7 +3,7 @@
 import { Vector2, Vector3 } from 'three';
 import { bodyWorld, computePoses } from '../../src/core/pose';
 import { parseShareText, toShareCode } from '../../src/core/share';
-import { selectPiece } from '../../src/state/selection';
+import { selectPiece, select } from '../../src/state/selection';
 import { baseCatalogSig, docSig, loadDoc, resetStoreForTests, undo } from '../../src/state/store';
 import { createTransformTool, reattachSig, transformStateSig } from '../../src/tools/transform';
 import { setViewport } from '../../src/viewport/context';
@@ -11,6 +11,7 @@ import { pickPart, pickPoint, pickSocketWhere, type Hit } from '../../src/viewpo
 import { docOf, mount, part, pt, sock } from '../helpers/doc';
 import { realCatalog } from '../helpers/real-catalog';
 import { fakeViewport } from '../helpers/viewport';
+import { shiftSocketSig, socketFocusSig } from '../../src/state/socket-focus';
 
 vi.mock('../../src/viewport/raycast', () => ({
   pickPart: vi.fn(),
@@ -50,6 +51,69 @@ beforeEach(async () => {
 afterEach(() => {
   setViewport(null);
   reattachSig.value = null;
+  shiftSocketSig.value = false;
+  socketFocusSig.value = null;
+});
+
+test.each(['select', 'move'] as const)(
+  '%s reattaches ordinary single-piece parts and carries independent selections rigidly',
+  async (id) => {
+    loadDoc({
+      ...docOf(part(1, 'Part'), part(2, 'Part'), part(3, 'Part')),
+      layout: new Map([
+        [2, [2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+        [3, [4, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]],
+      ]),
+    });
+    select([2, 3], 'replace');
+    const tool = createTransformTool(id);
+    tool.onPointer!(pointer('down', 100));
+    vi.mocked(pickSocketWhere).mockImplementation((_p, accept) =>
+      accept({ part: 1, socket: '6' }) ? { part: 1, socket: '6' } : null,
+    );
+    vi.mocked(pickPart).mockReturnValue(null);
+    tool.onPointer!(pointer('move', 120));
+    expect(reattachSig.value?.moving.has(3)).toBe(true);
+    tool.onPointer!(pointer('up', 120));
+    expect(docSig.value.parts.get(2)!.conns[0].target).toEqual({
+      kind: 'socket',
+      part: 1,
+      socket: '6',
+    });
+    const cat = await realCatalog(),
+      poses = computePoses(docSig.value, cat, cat.conventions);
+    expect(poses.world.get(3)!.elements[12] - poses.world.get(2)!.elements[12]).toBeCloseTo(2);
+    undo();
+    expect(docSig.value.parts.get(2)!.conns).toEqual([]);
+  },
+);
+
+test('ordinary part center yields the Move gizmo to reattachment', () => {
+  loadDoc(docOf(part(1, 'Part'), part(2, 'Part')));
+  select([2], 'replace');
+  const cancel = vi.fn();
+  setViewport(fakeViewport({ gizmo: { busy: () => true, axis: () => 'XYZ', cancel } as never }));
+  const tool = createTransformTool('move');
+  tool.onPointer!(pointer('down', 100));
+  expect(cancel).toHaveBeenCalled();
+  vi.mocked(pickSocketWhere).mockImplementation((_p, accept) =>
+    accept({ part: 1, socket: '6' }) ? { part: 1, socket: '6' } : null,
+  );
+  tool.onPointer!(pointer('move', 120));
+  tool.onPointer!(pointer('up', 120));
+  expect(docSig.value.parts.get(2)!.conns[0].target).toEqual({
+    kind: 'socket',
+    part: 1,
+    socket: '6',
+  });
+});
+test('deleting a pressed part before its drag starts safely drops the press', () => {
+  loadDoc(docOf(part(1, 'Part'), part(2, 'Part')));
+  select([2], 'replace');
+  const tool = createTransformTool('select');
+  tool.onPointer!(pointer('down', 100));
+  loadDoc(docOf(part(1, 'Part')));
+  expect(() => tool.onPointer!(pointer('move', 120))).not.toThrow();
 });
 
 test.each(['select', 'move'] as const)(

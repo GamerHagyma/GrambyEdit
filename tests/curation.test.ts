@@ -6,7 +6,10 @@ const schema = j('data/props_schema.json').props;
 
 test('every catalog part has exactly one valid category', () => {
   const cats = j('data/curation/categories.json');
-  expect(Object.keys(cats).sort()).toEqual(Object.keys(catalog).sort());
+  for (const type of Object.keys(catalog)) expect(cats[type], type).toBeDefined();
+  const native = j('data/runtime_parts.json').parts;
+  for (const type of Object.keys(cats))
+    expect(Object.hasOwn(catalog, type) || Object.hasOwn(native, type)).toBe(true);
   for (const c of Object.values(cats)) expect(CATEGORIES).toContain(c);
 });
 test('prop meta covers every observed key with a type-compatible widget', () => {

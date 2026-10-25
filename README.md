@@ -25,6 +25,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | --- | --- |
 | **Import and export** | Read share codes or JSON, display native part meshes and textures, and export edited creations. |
 | **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
+| **Socket dragging** | Reattach parts, pieces or selections with Select or the Move center handle. Hold Shift for larger compatible sockets and socket-only snapping; adjust the percentage in Settings. |
 | **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
 | **Mirroring and radial copies** | Anchor a mirror plane or radial axis to a Part or Connector, preview copies, and repeat new placements automatically. Guides stay local during collaboration; created parts sync. |
 | **Servo preview** | Hold red/blue simulation buttons or enable Sustain, inspect the live angle, and choose whether remembered rotations are exported. |
@@ -32,6 +33,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
 | **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
 | **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |
+| **Part availability** | Non-spawnable templates have an Unavailable category, keeping them searchable for imports and inspection. Working splitter variants stay in their normal category. |
 | **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
 | **Collaboration** | Host a shared workspace, invite up to seven guests, assign viewer/editor permissions, and see colored cameras with names. Changes sync directly between browsers. |
 | **Reference images** | Paste images or direct image links into the Reference tab, or choose local files. Pop the viewer out into a pinned, movable, resizable window over the editor. |
@@ -67,6 +69,8 @@ The creation library and preferences are stored in your browser. Export a librar
 
 Edits sync as small changes. Moving cameras are throttled; stationary cameras send nothing. A small consistency check runs every 15 seconds, with a full build sent on joining or when needed to repair a mismatch. Undo/redo applies to your own changes and protects newer changes from others. Reference images, selections and servo previews stay local.
 
+G/R and gizmo transforms keep running while collaborators edit. Your delta applies to the latest shared pose; removing the target cancels safely. Invitation links open a prominent **Join** action.
+
 The host must keep the page open. When the room ends, everyone keeps their current local copy and can export it. Leave the room before using New/Open to replace the whole blueprint. A room supports eight people total, with matching part catalogs and socket settings.
 
 GitHub Pages serves the editor; the default public PeerJS signaling service establishes WebRTC connections between browsers. Some networks require a TURN relay: **Connection settings** accepts a custom HTTPS PeerServer and ICE/TURN settings. TURN credentials are session-only and are not included in invite links. See [collaboration details](docs/COLLABORATION.md) for limits and synchronization behavior.
@@ -89,6 +93,8 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 | `?` | Open Help & controls |
 
 **Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls for the selection. Hidden parts remain selectable in the Outliner and can be shown again from the same menu.
+
+**Socket dragging:** use Select or the Move center handle to drag one part or a selection onto another socket. The other selected parts keep their relative placement. Hold **Shift** while carrying or dragging for compatible sockets only; surface and ground placement resume on release. **Settings → Editing → Socket enlargement while holding Shift (%)** controls the increase (100% doubles size). Orange/red markers distinguish mechanical connection points.
 
 **Surfaces:** Shift-click corner buttons or viewport dots to select multiple corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
 

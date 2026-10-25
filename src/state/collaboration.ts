@@ -151,7 +151,7 @@ function refresh() {
 }
 function install(doc: Doc, replace = false) {
   if (replace || digest(docSig.peek()) !== digest(doc)) {
-    cancelModal();
+    if (replace) cancelModal();
     installSharedDoc(doc, replace);
   }
   refresh();

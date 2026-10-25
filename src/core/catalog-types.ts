@@ -11,6 +11,7 @@ export const CATEGORIES = [
   'Motion',
   'Weapons',
   'Fun & Misc',
+  'Unavailable',
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
 
@@ -24,6 +25,8 @@ export interface SocketDef {
   readonly piece: string | null;
   /** Outward: local +Y points out of the part. */
   readonly frame: CFrame12;
+  /** Shared native IDs can have distinct child/parent frames (Spoiler bottom/top both use 2). */
+  readonly childFrame?: CFrame12;
   readonly frameSource: FrameSource;
   /**
    * A hinged child socket (the game's HingeType: DoorA–D, GasCap): it mounts turned on door sockets

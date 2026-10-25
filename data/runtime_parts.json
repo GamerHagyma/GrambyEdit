@@ -16481,10 +16481,44 @@
       "groups": {
         "material_0": "Meshes/Spoiler"
       },
-      "sockets": {},
-      "blockedSockets": [
-        "2"
-      ],
+      "sockets": {
+        "2": {
+          "side": "both",
+          "cframe": [
+            0.0,
+            0.21025824546813965,
+            -0.0883474349975586,
+            1.0,
+            -0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            -0.0,
+            1.0
+          ],
+          "childCFrame": [
+            0.0,
+            -0.26508694887161255,
+            -0.0883474349975586,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "parentPath": "Meshes/Spoiler",
+          "attributes": {
+            "Id": 2.0
+          }
+        }
+      },
+      "blockedSockets": [],
       "textureAlphaBlend": {},
       "warnings": []
     },

@@ -20,7 +20,7 @@ test('imports complete runtime templates with native socket frames and subpart o
   expect(catalog.parts.JetEngine.mesh).not.toBeNull();
   expect(catalog.parts.Minecart).toBeUndefined();
   expect(catalog.parts.PotionGetSmall).toBeUndefined();
-  expect(catalog.parts.Spoiler.sockets['2']).toBeUndefined();
+  expect(catalog.parts.Spoiler.sockets['2'].childFrame).toBeDefined();
   expect(catalog.parts.GoKart.sockets['1']).toBeUndefined();
   expect(catalog.parts.Wire.mainPartName).toBe('InputA');
   expect(catalog.parts.Wire.bodies![0].pivot).toEqual([0, 0, 0]);
@@ -36,7 +36,7 @@ test('imports complete runtime templates with native socket frames and subpart o
   ).toBeLessThan(1e-4);
 }, 30_000);
 
-test('all imported snap targets use captured frames rather than bounding-box guesses', async () => {
+test('native snap targets use captured frames, including both Spoiler attachment sides', async () => {
   const { catalog } = await buildAssets({ root: '.', outDir: null });
   const approximate = Object.values(catalog.parts).flatMap((p) =>
     Object.entries(p.sockets)

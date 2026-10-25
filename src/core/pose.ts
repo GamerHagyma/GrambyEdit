@@ -129,7 +129,7 @@ function socketFrame(
     const def = cat.parts[type];
     const s = def?.sockets[socket];
     if (s) {
-      const m = cfToMatrix4(s.frame);
+      const m = cfToMatrix4(as === 'child' ? (s.childFrame ?? s.frame) : s.frame);
       if (as === 'parent' && s.mountType === 'Suspension') {
         m.premultiply(new Matrix4().makeTranslation(0, -SPRING_DROP, 0));
       }
@@ -232,7 +232,8 @@ export function childSocketMatrix(
   socket: SocketId,
   onto: MountOnto,
 ): { m: Matrix4; approx: boolean } {
-  const s = socketMatrix(cat, type, socket);
+  const frame = socketFrame(cat, type, socket, 'child');
+  const s = { m: frame.m.clone(), approx: frame.approx };
   const turn = hingeTurn(cat, type, socket, onto);
   if (turn) turnHinge(s.m, turn);
   return s;

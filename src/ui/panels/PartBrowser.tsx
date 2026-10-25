@@ -102,6 +102,11 @@ export function PartBrowser({ onArm, creations = [] }: PartBrowserProps): JSX.El
       </Section>
       {categories.map(({ title, parts }) => (
         <Section key={title} title={title} empty={parts.length === 0}>
+          {title === 'Unavailable' && (
+            <li class="part-empty">
+              Not currently spawnable in game. Kept for importing and inspection.
+            </li>
+          )}
           {parts.map((p) => card(p))}
         </Section>
       ))}

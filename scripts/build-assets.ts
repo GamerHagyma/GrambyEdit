@@ -341,6 +341,7 @@ export async function buildAssets(opts: {
               ? hingeOutward(socket.cframe)
               : socket.cframe,
           frameSource: 'captured',
+          ...(socket.childCFrame ? { childFrame: socket.childCFrame } : {}),
           ...(socket.side === 'child' && Object.hasOwn(attributes, 'HingeType')
             ? { hinge: true }
             : {}),

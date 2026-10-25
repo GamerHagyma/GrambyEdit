@@ -32,9 +32,11 @@ import { select } from '../state/selection';
 import { catalogSig, commit, docSig } from '../state/store';
 import { toast } from '../state/toasts';
 import { statusHintSig } from '../state/ui';
+import { shiftSocketSig, socketFocusSig } from '../state/socket-focus';
+import { hoverSig } from '../state/selection';
 import { addPlacementSymmetry, placementSymmetryGhosts } from '../state/symmetry';
 import { getViewport } from '../viewport/context';
-import { cursorRay, pickPart, pickPoint, pickSocket } from '../viewport/raycast';
+import { cursorRay, pickPart, pickPoint, pickSocketWhere } from '../viewport/raycast';
 import { setTool, type Tool, type ToolPointer } from './manager';
 
 export const PLACE_HINT = 'Root positions are not stored in share codes.';
@@ -63,8 +65,11 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
   const poses = posesSig.value;
   const conv = cat.conventions;
   const { type, props } = root;
-  const sock = pickSocket(ndc, undefined, (s) => attachable(cat, doc, type, s));
+  const accepts = (s: { part: PartId; socket: string }) => attachable(cat, doc, type, s);
+  socketFocusSig.value = accepts;
+  const sock = pickSocketWhere(ndc, accepts, 12);
   if (sock && attachable(cat, doc, type, sock)) {
+    hoverSig.value = sock.part;
     const host = doc.parts.get(sock.part)!;
     const self = defaultChildSocket(cat, type, host.type, sock.socket)!;
     const world = childWorldViaSocket(
@@ -76,6 +81,10 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
       bodyPivot(cat, type, self),
     );
     return { kind: 'attach', target: { kind: 'socket', ...sock, childSocket: self }, world };
+  }
+  if (shiftSocketSig.peek()) {
+    hoverSig.value = pickPart(ndc)?.part ?? null;
+    return null;
   }
   const mount = Object.hasOwn(cat.parts, type) ? cat.parts[type].defaultMount : null;
   if (mount !== null) {
@@ -95,6 +104,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
       return { kind: 'attach', target: { kind: 'point', part: p.host, uuid: p.uuid }, world };
     }
     const hit = pickPart(ndc);
+    hoverSig.value = hit?.part ?? null;
     if (hit) {
       const frame = cfToMatrix4(frameFromNormal(hit.point.toArray(), hit.normal.toArray()));
       const world = childWorldViaPoint(
@@ -144,7 +154,11 @@ export function createPlaceTool(): Tool {
     cursor = ndc;
     const cat = catalogSig.value;
     spot = cat && root ? findSpot(cat, root, ndc) : null;
-    statusHintSig.value = spot?.kind === 'root' ? PLACE_HINT : null;
+    statusHintSig.value = shiftSocketSig.peek()
+      ? 'Shift: compatible sockets only · release Shift for surfaces or ground'
+      : spot?.kind === 'root'
+        ? PLACE_HINT
+        : null;
     showGhost();
   };
 
@@ -205,6 +219,7 @@ export function createPlaceTool(): Tool {
       });
     },
     deactivate() {
+      socketFocusSig.value = null;
       stopSource?.();
       stopSource = null;
       sub = null;
@@ -215,6 +230,7 @@ export function createPlaceTool(): Tool {
       placeSig.value = null;
     },
     onPointer(e: ToolPointer) {
+      shiftSocketSig.value = e.shift;
       if (e.button === 2 && e.kind === 'up') {
         setTool('select');
         return;
@@ -226,6 +242,11 @@ export function createPlaceTool(): Tool {
       }
     },
     onKey(e: KeyboardEvent) {
+      if (e.key === 'Shift') {
+        shiftSocketSig.value = e.type !== 'keyup';
+        if (cursor) aim(cursor);
+        return false;
+      }
       if (e.key !== 'Escape') return false;
       disarm();
       return true;

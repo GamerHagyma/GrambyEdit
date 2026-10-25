@@ -12,7 +12,8 @@ export interface RuntimePart {
   sockets: Record<
     string,
     {
-      side: 'child' | 'parent';
+      side: 'child' | 'parent' | 'both';
+      childCFrame?: CFrame12;
       cframe: CFrame12;
       parentPath: string;
       /** The attachment's attributes, as captured (HingeType, MountType, Angle, ...). */
@@ -75,7 +76,9 @@ export function parseRuntimeParts(value: unknown): RuntimeParts {
     for (const socket of Object.values(part.sockets)) {
       if (
         !object(socket) ||
-        !['child', 'parent'].includes(String(socket.side)) ||
+        !['child', 'parent', 'both'].includes(String(socket.side)) ||
+        (socket.childCFrame !== undefined && !isCFrame12(socket.childCFrame)) ||
+        (socket.side === 'both' && socket.childCFrame === undefined) ||
         !isCFrame12(socket.cframe) ||
         typeof socket.parentPath !== 'string' ||
         !part.subParts[socket.parentPath] ||
@@ -93,7 +96,8 @@ export function runtimeRawPart(legacy: RawPart | undefined, native: RuntimePart)
   const parent: Record<string, object> = {};
   for (const [id, socket] of Object.entries(native.sockets)) {
     const metadata = legacy?.sockets.child?.[id] ?? legacy?.sockets.parent?.[id] ?? {};
-    (socket.side === 'child' ? child : parent)[id] = metadata;
+    if (socket.side !== 'parent') child[id] = metadata;
+    if (socket.side !== 'child') parent[id] = metadata;
   }
   return {
     sockets: { child, parent },

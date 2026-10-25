@@ -2250,6 +2250,12 @@ kbd {
 .collab-open {
   white-space: nowrap;
 }
+.collab-join {
+  width: 100%;
+  min-height: 42px;
+  font-weight: 600;
+  margin: 4px 0 12px;
+}
 .collab-identity {
   display: flex;
   gap: 12px;

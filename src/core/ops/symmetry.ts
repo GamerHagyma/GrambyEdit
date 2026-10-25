@@ -17,10 +17,11 @@ import {
   subPartMatrix,
   type Poses,
 } from '../pose';
-import { canBeChild, isSignalJoint } from '../rules';
+import { canBeChild, canBeParent, isSignalJoint, validate } from '../rules';
 import { isServo } from '../servo-simulation';
 import { copyFrame, mirroredType, reflectedSocket, sameFrame } from '../symmetry';
 import type { Conn, Part, PartId, Point } from '../types';
+import { DEFAULT_LIMITS } from '../types';
 import { newUuid } from '../uuid';
 import { draftDoc } from './conns';
 import { addPoint, setPointCFrame } from './points';
@@ -50,15 +51,22 @@ export function symmetryCopies(
     if ((poses.flags.get(id) ?? 0) & POSE_CYCLE)
       throw new Error('Resolve attachment cycles before mirroring.');
   const made: PartId[] = [];
+  const existingErrors = new Set(
+    validate(doc, cat, DEFAULT_LIMITS, 0, poses)
+      .filter((i) => i.severity === 'error')
+      .map(canonical),
+  );
   const signature = (p: Part, worlds: readonly Matrix4[]) =>
     p.type +
     '|' +
     canonical(p.props) +
     '|' +
     worlds.map((w) => w.elements.map((n) => Math.round(n * 10000)).join(',')).join(';');
-  const existing = new Map<string, PartId>();
-  for (const p of doc.parts.values())
-    existing.set(signature(p, poses.bodies?.get(p.id) ?? [poses.world.get(p.id)!]), p.id);
+  const existing = new Map<string, { id: PartId; worlds: readonly Matrix4[] }>();
+  for (const p of doc.parts.values()) {
+    const worlds = poses.bodies?.get(p.id) ?? [poses.world.get(p.id)!];
+    existing.set(signature(p, worlds), { id: p.id, worlds });
+  }
   for (const transform of transforms) {
     const reflected = transform.determinant() < 0,
       ids = new Map<PartId, PartId>(),
@@ -88,10 +96,12 @@ export function symmetryCopies(
           const center = new Vector3(...(def?.bodies?.[b].pivot ?? [0, 0, 0])).applyMatrix4(w);
           return center.distanceToSquared(center.clone().applyMatrix4(transform)) < 1e-10;
         });
-      const match = centered ? id : existing.get(signature({ ...old, type, props }, worlds));
+      const match = centered
+        ? { id, worlds: before }
+        : existing.get(signature({ ...old, type, props }, worlds));
       if (match !== undefined) {
-        ids.set(id, match);
-        desired.set(id, [...(poses.bodies?.get(match) ?? [poses.world.get(match)!])]);
+        ids.set(id, match.id);
+        desired.set(id, [...match.worlds]);
         continue;
       }
       const copy = d.allocId();
@@ -254,7 +264,15 @@ export function symmetryCopies(
             cat.conventions,
             bodyPivot(cat, next.type, c.self),
           );
-          if (sameFrame(expected, world)) continue;
+          const check = draftDoc(d),
+            parts = new Map(check.parts);
+          parts.set(copy, { ...next, conns: next.conns.filter((x) => x !== c) });
+          const available = canBeParent({ ...check, parts }, cat, t.part, t.socket).ok;
+          if (!available && isSignalJoint(cat, next.type, c.self, h.type, t.socket))
+            throw new Error(
+              'A mirrored signal socket is already occupied. The build was not changed.',
+            );
+          if (sameFrame(expected, world) && available) continue;
         } else if (!original && b !== leadBody(def, old) && sameFrame(world, planned(id))) continue;
         const signal =
           c?.target.kind === 'socket' &&
@@ -303,7 +321,19 @@ export function symmetryCopies(
         throw new Error(
           `Could not preserve the mirrored pose of ${doc.parts.get(id)!.type}. The build was not changed.`,
         );
+      existing.set(signature(d.get(copy)!, actual), { id: copy, worlds: actual });
     }
+  }
+  if (made.length) {
+    const result = draftDoc(d),
+      final = computePoses(result, cat, cat.conventions);
+    const error = validate(result, cat, DEFAULT_LIMITS, 0, final).find(
+      (i) => i.severity === 'error' && !existingErrors.has(canonical(i)),
+    );
+    if (error)
+      throw new Error(
+        `Cannot preserve mirrored connections: ${error.message} The build was not changed.`,
+      );
   }
   return made;
 }

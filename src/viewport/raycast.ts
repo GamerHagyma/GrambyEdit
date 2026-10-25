@@ -20,6 +20,7 @@ import { assetsSig, catalogSig, docSig } from '../state/store';
 import { SphereBVH } from './bvh';
 import { getViewport } from './context';
 import { readIds } from './id-pass';
+import { socketMagnification } from '../state/socket-focus';
 
 export interface Hit {
   part: PartId;
@@ -175,7 +176,8 @@ export function pickSocket(
   for (const s of vp.sockets?.shown() ?? []) {
     if (skip?.has(s.part)) continue;
     const px = screenDistance(s.world, ndc);
-    if (px !== null && px < MARKER_PICK_PX) hits.push({ part: s.part, socket: s.socket, px });
+    if (px !== null && px < MARKER_PICK_PX * socketMagnification(s))
+      hits.push({ part: s.part, socket: s.socket, px });
   }
   if (hits.length === 0) return null;
   hits.sort((a, b) => a.px - b.px);
@@ -194,7 +196,9 @@ export function pickSocketWhere(
   let best: { part: PartId; socket: SocketId } | null = null;
   let bestPx = radiusPx;
   for (const s of vp?.sockets?.shown() ?? []) {
-    const px = screenDistance(s.world, ndc);
+    if (s.side === 'child') continue;
+    const distance = screenDistance(s.world, ndc);
+    const px = distance === null ? null : distance / socketMagnification(s);
     if (px === null || px >= bestPx || !accept(s)) continue;
     best = { part: s.part, socket: s.socket };
     bestPx = px;
