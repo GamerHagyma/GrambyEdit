@@ -298,6 +298,25 @@ button:disabled {
   color: var(--muted);
   font-size: 12px;
 }
+.reference-toolbar,
+.reference-navigation {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+.reference-toolbar {
+  justify-content: space-between;
+}
+.reference-navigation {
+  padding: 4px;
+}
+.reference-navigation output {
+  min-width: 40px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
 .reference-url {
   display: flex;
   flex-wrap: wrap;
@@ -320,6 +339,7 @@ button:disabled {
 .reference-view {
   position: relative;
   display: flex;
+  flex-direction: column;
   flex: 1;
   align-items: center;
   justify-content: center;
@@ -329,8 +349,17 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
+.reference-image-area {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 40px;
+  overflow: hidden;
+  touch-action: none;
+}
 .reference-image {
   position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -409,10 +438,9 @@ button:disabled {
 }
 .reference-resize {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 22px;
-  height: 22px;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
   padding: 0;
   border: 0;
   border-radius: 4px 0 0;
@@ -420,6 +448,27 @@ button:disabled {
   color: var(--muted);
   cursor: nwse-resize;
   touch-action: none;
+}
+.reference-resize-top-left {
+  left: 0;
+  top: 0;
+  transform: rotate(180deg);
+}
+.reference-resize-top-right {
+  right: 0;
+  top: 0;
+  transform: rotate(270deg);
+  cursor: nesw-resize;
+}
+.reference-resize-bottom-left {
+  left: 0;
+  bottom: 0;
+  transform: rotate(90deg);
+  cursor: nesw-resize;
+}
+.reference-resize-bottom-right {
+  right: 0;
+  bottom: 0;
 }
 
 /* Status bar */

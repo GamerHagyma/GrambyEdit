@@ -7,9 +7,11 @@ import {
   addReferenceFile,
   addReferenceUrl,
   pasteReference,
+  referenceControlsCollapsedSig,
   referenceErrorSig,
   referenceFloatingSig,
   referencesSig,
+  referenceViews,
   removeReference,
   type ReferenceImage,
 } from '../../state/references';
@@ -17,6 +19,40 @@ import { showInspectorTab } from '../../state/ui';
 
 function ImageView({ image }: { image: ReferenceImage }): JSX.Element {
   const [failed, setFailed] = useState(false);
+  const [view, setView] = useState(() => referenceViews.get(image.id) ?? { scale: 1, x: 0, y: 0 });
+  const area = useRef<HTMLDivElement>(null);
+  const element = useRef<HTMLImageElement>(null);
+  const drag = useRef<{ pointer: number; x: number; y: number; view: typeof view } | null>(null);
+  const constrain = (next: typeof view): typeof view => {
+    const scale = Math.max(1, Math.min(8, next.scale));
+    const size = area.current?.getBoundingClientRect();
+    const image = element.current;
+    if (!size?.width || !size.height || !image?.naturalWidth || !image.naturalHeight)
+      return { ...next, scale };
+    const fitted = Math.min(size.width / image.naturalWidth, size.height / image.naturalHeight);
+    const x = Math.max(0, (image.naturalWidth * fitted * scale - size.width) / 2);
+    const y = Math.max(0, (image.naturalHeight * fitted * scale - size.height) / 2);
+    return { scale, x: Math.max(-x, Math.min(x, next.x)), y: Math.max(-y, Math.min(y, next.y)) };
+  };
+  useLayoutEffect(() => {
+    referenceViews.set(image.id, view);
+  }, [image.id, view]);
+  useLayoutEffect(() => {
+    const resize = () => setView((v) => constrain(v));
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resize);
+    if (area.current) observer?.observe(area.current);
+    window.addEventListener('resize', resize);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+  const zoom = (factor: number) => setView((v) => constrain({ ...v, scale: v.scale * factor }));
+  const endDrag = (e: PointerEvent) => {
+    if (drag.current?.pointer !== e.pointerId) return;
+    drag.current = null;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+  };
   if (failed)
     return (
       <p class="reference-load-error" role="alert">
@@ -24,19 +60,93 @@ function ImageView({ image }: { image: ReferenceImage }): JSX.Element {
       </p>
     );
   return (
-    <img
-      class="reference-image"
-      src={image.src}
-      alt={`Reference: ${image.name}`}
-      referrerPolicy="no-referrer"
-      draggable={false}
-      onError={() => setFailed(true)}
-    />
+    <>
+      <div class="reference-navigation" aria-label="Image zoom controls">
+        <button
+          class="button"
+          aria-label="Zoom out reference"
+          disabled={view.scale <= 1}
+          onClick={() => zoom(1 / 1.25)}
+        >
+          −
+        </button>
+        <output aria-label="Reference zoom">{Math.round(view.scale * 100)}%</output>
+        <button
+          class="button"
+          aria-label="Zoom in reference"
+          disabled={view.scale >= 8}
+          onClick={() => zoom(1.25)}
+        >
+          +
+        </button>
+        <button
+          class="button"
+          aria-label="Fit reference image"
+          onClick={() => {
+            drag.current = null;
+            setView({ scale: 1, x: 0, y: 0 });
+          }}
+        >
+          Fit
+        </button>
+      </div>
+      <div
+        class="reference-image-area"
+        ref={area}
+        role="group"
+        tabIndex={0}
+        aria-label="Reference image navigation"
+        title="Scroll to zoom; drag to pan"
+        style={{ cursor: view.scale > 1 ? 'grab' : 'default' }}
+        onWheel={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 200 : 1);
+          zoom(Math.exp(-Math.max(-2000, Math.min(2000, delta)) * 0.002));
+        }}
+        onPointerDown={(e) => {
+          if (e.button !== 0 || view.scale <= 1 || drag.current) return;
+          e.preventDefault();
+          e.currentTarget.focus({ preventScroll: true });
+          e.currentTarget.setPointerCapture(e.pointerId);
+          drag.current = { pointer: e.pointerId, x: e.clientX, y: e.clientY, view };
+        }}
+        onPointerMove={(e) => {
+          const start = drag.current;
+          if (!start || start.pointer !== e.pointerId) return;
+          setView(
+            constrain({
+              ...view,
+              x: start.view.x + e.clientX - start.x,
+              y: start.view.y + e.clientY - start.y,
+            }),
+          );
+        }}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onLostPointerCapture={() => {
+          drag.current = null;
+        }}
+      >
+        <img
+          class="reference-image"
+          ref={element}
+          src={image.src}
+          alt={`Reference: ${image.name}`}
+          referrerPolicy="no-referrer"
+          draggable={false}
+          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
+          onLoad={() => setView((v) => constrain(v))}
+          onError={() => setFailed(true)}
+        />
+      </div>
+    </>
   );
 }
 
 function ReferenceContent(): JSX.Element {
   const [url, setUrl] = useState('');
+  const collapsed = referenceControlsCollapsedSig.value;
   const panel = useRef<HTMLElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => {
@@ -63,43 +173,16 @@ function ReferenceContent(): JSX.Element {
       onCopy={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
     >
-      <p class="reference-help">
-        Paste an image or image link here. References stay outside your build and last until you
-        close this page.
-      </p>
-      <form
-        class="reference-url"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (addReferenceUrl(url)) setUrl('');
-        }}
-      >
-        <input
-          type="text"
-          aria-label="Image URL"
-          placeholder="https://…/image.png"
-          value={url}
-          onInput={(e) => setUrl(e.currentTarget.value)}
-        />
-        <button class="button" type="submit">
-          Add image
-        </button>
-      </form>
-      <div class="reference-actions">
-        <input
-          hidden
-          ref={fileInput}
-          type="file"
-          accept="image/*"
-          multiple
-          aria-label="Choose image files"
-          onChange={(e) => {
-            for (const file of e.currentTarget.files ?? []) addReferenceFile(file);
-            e.currentTarget.value = '';
+      <div class="reference-toolbar">
+        <button
+          class="button"
+          aria-label={`${collapsed ? 'Expand' : 'Collapse'} reference controls`}
+          aria-expanded={!collapsed}
+          onClick={() => {
+            referenceControlsCollapsedSig.value = !collapsed;
           }}
-        />
-        <button class="button" onClick={() => fileInput.current?.click()}>
-          Choose image…
+        >
+          {collapsed ? '▸' : '▾'} <span>Image controls</span>
         </button>
         {!referenceFloatingSig.value && (
           <button
@@ -112,12 +195,55 @@ function ReferenceContent(): JSX.Element {
             Pop out ↗
           </button>
         )}
-        {active && (
-          <button class="button" onClick={() => removeReference(active.id)}>
-            Remove image
-          </button>
-        )}
       </div>
+      {!collapsed && (
+        <>
+          <p class="reference-help">
+            Paste an image or image link here. References stay outside your build and last until you
+            close this page.
+          </p>
+          <form
+            class="reference-url"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (addReferenceUrl(url)) setUrl('');
+            }}
+          >
+            <input
+              type="text"
+              aria-label="Image URL"
+              placeholder="https://…/image.png"
+              value={url}
+              onInput={(e) => setUrl(e.currentTarget.value)}
+            />
+            <button class="button" type="submit">
+              Add image
+            </button>
+          </form>
+          <div class="reference-actions">
+            <input
+              hidden
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              multiple
+              aria-label="Choose image files"
+              onChange={(e) => {
+                for (const file of e.currentTarget.files ?? []) addReferenceFile(file);
+                e.currentTarget.value = '';
+              }}
+            />
+            <button class="button" onClick={() => fileInput.current?.click()}>
+              Choose image…
+            </button>
+            {active && (
+              <button class="button" onClick={() => removeReference(active.id)}>
+                Remove image
+              </button>
+            )}
+          </div>
+        </>
+      )}
       {referenceErrorSig.value && (
         <p role="alert" class="reference-load-error">
           {referenceErrorSig.value}
@@ -134,7 +260,7 @@ function ReferenceContent(): JSX.Element {
           </p>
         )}
       </div>
-      {referencesSig.value.length > 0 && (
+      {!collapsed && referencesSig.value.length > 0 && (
         <div class="reference-thumbnails" aria-label="Choose a reference">
           {referencesSig.value.map((image) => (
             <button
@@ -181,15 +307,43 @@ interface Bounds {
   height: number;
 }
 
+type Corner = 'top left' | 'top right' | 'bottom left' | 'bottom right';
+const corners: readonly Corner[] = ['top left', 'top right', 'bottom left', 'bottom right'];
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+
 /** Keeps controls reachable even after the browser window becomes smaller. */
 function fit(bounds: Bounds): Bounds {
-  const width = Math.min(Math.max(240, bounds.width), Math.max(1, window.innerWidth - 16));
-  const height = Math.min(Math.max(240, bounds.height), Math.max(1, window.innerHeight - 16));
+  const mx = Math.min(8, Math.max(0, (window.innerWidth - 1) / 2));
+  const my = Math.min(8, Math.max(0, (window.innerHeight - 1) / 2));
+  const width = Math.min(Math.max(240, bounds.width), Math.max(1, window.innerWidth - mx * 2));
+  const height = Math.min(Math.max(240, bounds.height), Math.max(1, window.innerHeight - my * 2));
   return {
     width,
     height,
-    x: Math.max(8, Math.min(bounds.x, window.innerWidth - width - 8)),
-    y: Math.max(8, Math.min(bounds.y, window.innerHeight - height - 8)),
+    x: clamp(bounds.x, mx, window.innerWidth - width - mx),
+    y: clamp(bounds.y, my, window.innerHeight - height - my),
+  };
+}
+
+/** Clamp the dragged edges instead of moving the opposite corner at a boundary. */
+function resizeBounds(bounds: Bounds, corner: Corner, dx: number, dy: number): Bounds {
+  const mx = Math.min(8, Math.max(0, (window.innerWidth - 1) / 2));
+  const my = Math.min(8, Math.max(0, (window.innerHeight - 1) / 2));
+  const minWidth = Math.min(240, window.innerWidth - mx * 2);
+  const minHeight = Math.min(240, window.innerHeight - my * 2);
+  const right = bounds.x + bounds.width,
+    bottom = bounds.y + bounds.height;
+  const x = corner.includes('left') ? clamp(bounds.x + dx, mx, right - minWidth) : bounds.x;
+  const y = corner.includes('top') ? clamp(bounds.y + dy, my, bottom - minHeight) : bounds.y;
+  return {
+    x,
+    y,
+    width: corner.includes('left')
+      ? right - x
+      : clamp(bounds.width + dx, minWidth, window.innerWidth - mx - x),
+    height: corner.includes('top')
+      ? bottom - y
+      : clamp(bounds.height + dy, minHeight, window.innerHeight - my - y),
   };
 }
 
@@ -199,22 +353,25 @@ export function ReferenceWindow(): JSX.Element | null {
     fit({ x: window.innerWidth - 720, y: 80, width: 400, height: 420 }),
   );
   const drag = useRef<{
-    mode: 'move' | 'resize';
+    mode: 'move' | Corner;
     pointer: number;
     x: number;
     y: number;
     bounds: Bounds;
   } | null>(null);
   useEffect(() => {
-    const resize = () => setBounds((b) => fit(b));
+    const resize = () => {
+      drag.current = null;
+      setBounds((b) => fit(b));
+    };
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, []);
   if (!referenceFloatingSig.value) return null;
 
-  const handles = (mode: 'move' | 'resize') => ({
+  const handles = (mode: 'move' | Corner) => ({
     onPointerDown(e: PointerEvent) {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || drag.current) return;
       e.preventDefault();
       (e.currentTarget as HTMLElement).focus({ preventScroll: true });
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -226,14 +383,17 @@ export function ReferenceWindow(): JSX.Element | null {
       const dx = e.clientX - start.x,
         dy = e.clientY - start.y;
       setBounds(
-        fit(
-          start.mode === 'move'
-            ? { ...start.bounds, x: start.bounds.x + dx, y: start.bounds.y + dy }
-            : { ...start.bounds, width: start.bounds.width + dx, height: start.bounds.height + dy },
-        ),
+        start.mode === 'move'
+          ? fit({ ...start.bounds, x: start.bounds.x + dx, y: start.bounds.y + dy })
+          : resizeBounds(start.bounds, start.mode, dx, dy),
       );
     },
     onPointerUp(e: PointerEvent) {
+      if (drag.current?.pointer !== e.pointerId) return;
+      drag.current = null;
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    },
+    onPointerCancel(e: PointerEvent) {
       if (drag.current?.pointer !== e.pointerId) return;
       drag.current = null;
       (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
@@ -248,11 +408,9 @@ export function ReferenceWindow(): JSX.Element | null {
       e.preventDefault();
       const step = e.shiftKey ? 10 : 1;
       setBounds((b) =>
-        fit(
-          mode === 'move'
-            ? { ...b, x: b.x + dx * step, y: b.y + dy * step }
-            : { ...b, width: b.width + dx * step, height: b.height + dy * step },
-        ),
+        mode === 'move'
+          ? fit({ ...b, x: b.x + dx * step, y: b.y + dy * step })
+          : resizeBounds(b, mode, dx * step, dy * step),
       );
     },
   });
@@ -280,14 +438,17 @@ export function ReferenceWindow(): JSX.Element | null {
         </button>
       </header>
       <ReferenceContent />
-      <button
-        class="reference-resize"
-        aria-label="Resize reference window"
-        title="Drag to resize; arrow keys also resize"
-        {...handles('resize')}
-      >
-        ◢
-      </button>
+      {corners.map((corner) => (
+        <button
+          key={corner}
+          class={`reference-resize reference-resize-${corner.replace(' ', '-')}`}
+          aria-label={`Resize reference window ${corner}`}
+          title="Drag to resize; arrow keys also resize"
+          {...handles(corner)}
+        >
+          ◢
+        </button>
+      ))}
     </section>
   );
 }

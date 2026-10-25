@@ -8,6 +8,14 @@ export interface ReferenceImage {
   readonly local: boolean;
 }
 
+export interface ReferenceView {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+export const referenceViews = new Map<number, ReferenceView>();
+export const referenceControlsCollapsedSig = signal(false);
 export const referencesSig = signal<readonly ReferenceImage[]>([]);
 export const activeReferenceIdSig = signal<number | null>(null);
 export const activeReferenceSig = computed(
@@ -58,6 +66,7 @@ export function removeReference(id: number): void {
   const removed = referencesSig.value.find((image) => image.id === id);
   if (!removed) return;
   if (removed.local) URL.revokeObjectURL(removed.src);
+  referenceViews.delete(id);
   batch(() => {
     referencesSig.value = referencesSig.value.filter((image) => image.id !== id);
     if (activeReferenceIdSig.value === id)
@@ -68,7 +77,9 @@ export function removeReference(id: number): void {
 
 export function clearReferences(): void {
   for (const image of referencesSig.value) if (image.local) URL.revokeObjectURL(image.src);
+  referenceViews.clear();
   batch(() => {
+    referenceControlsCollapsedSig.value = false;
     referencesSig.value = [];
     activeReferenceIdSig.value = null;
     referenceFloatingSig.value = false;
