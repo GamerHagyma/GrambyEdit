@@ -189,7 +189,7 @@ export function PropField({ cat, row, ids }: PropFieldProps): JSX.Element {
   };
 
   return (
-    <div class="prop-row">
+    <div class="prop-row" title={meta.description}>
       <div class="prop-head">
         <label for={id} class="prop-label">
           {label}

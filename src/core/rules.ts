@@ -2,6 +2,8 @@
 import type { Catalog, PartDef, SocketRole } from './catalog-types';
 import { orderIndex } from './doc';
 import { graphIndex, poseDescendants, roots } from './graph';
+import type { Poses } from './pose';
+import { wireStretchIssues } from './wires';
 import type {
   Conn,
   Doc,
@@ -185,7 +187,13 @@ export function canTakeChild(doc: Doc, host: PartId, uuid: Uuid): Verdict {
 }
 
 /** Every issue of §7.2 for `doc`. `codeLength` is the length of the exported code. */
-export function validate(doc: Doc, cat: Catalog, limits: Limits, codeLength: number): Issue[] {
+export function validate(
+  doc: Doc,
+  cat: Catalog,
+  limits: Limits,
+  codeLength: number,
+  poses?: Poses,
+): Issue[] {
   return [
     ...limitIssues(doc, limits, codeLength),
     ...partIssues(doc, cat),
@@ -193,6 +201,7 @@ export function validate(doc: Doc, cat: Catalog, limits: Limits, codeLength: num
     ...jointIssues(doc, cat),
     ...pointIssues(doc),
     ...cycleIssues(doc),
+    ...wireStretchIssues(doc, cat, poses),
   ];
 }
 

@@ -288,6 +288,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     if (ctx.layer) {
       ctx.layer.group.visible = ctx.layer.labels.group.visible = !wb;
       ctx.layer.springs.group.visible = !wb;
+      ctx.layer.wires.group.visible = !wb;
     }
     sockets.group.visible = !wb;
     points.group.visible = !wb;
@@ -570,7 +571,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     grid.setTheme(s.theme);
     if (assets && ctx.layer?.assets !== assets) {
       if (ctx.layer) {
-        scene.remove(ctx.layer.group, ctx.layer.labels.group, ctx.layer.springs.group);
+        scene.remove(
+          ctx.layer.group,
+          ctx.layer.labels.group,
+          ctx.layer.springs.group,
+          ctx.layer.wires.group,
+        );
         ctx.layer.dispose();
       }
       if (ctx.ghost) {
@@ -578,7 +584,12 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
         ctx.ghost.dispose();
       }
       ctx.layer = new PartsLayer(assets);
-      scene.add(ctx.layer.group, ctx.layer.labels.group, ctx.layer.springs.group);
+      scene.add(
+        ctx.layer.group,
+        ctx.layer.labels.group,
+        ctx.layer.springs.group,
+        ctx.layer.wires.group,
+      );
       ctx.ghost = new GhostLayer(assets);
       scene.add(ctx.ghost.group);
     }

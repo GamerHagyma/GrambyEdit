@@ -18,6 +18,12 @@ export interface PropRow {
 
 /** These rows come first, in this order; every other row follows by label. */
 const LEAD = ['RGB', 'OrientationX', 'OrientationY', 'OrientationZ'];
+const SERVO_PROPS = ['Speed', 'Rest', 'LimitEnabled', 'LimitAngle', 'Rotation'];
+
+/** Servo runtime/legacy fields survive import/export but are not offered as editable controls. */
+export function visibleProperty(type: string, key: string): boolean {
+  return (type !== 'Servo' && type !== 'Servo_Physics') || SERVO_PROPS.includes(key);
+}
 /** Points live in `part.points`, so this key is never a prop row. */
 const EPHEMERAL = 'EphemeralAttachments';
 
@@ -52,7 +58,10 @@ export function unionProps(doc: Doc, cat: Catalog, ids: readonly PartId[]): Prop
   for (const key of keys) {
     const meta = metaOf(cat, key);
     if (!meta || key === EPHEMERAL) continue;
-    const applicable = parts.filter((part) => propApplies(cat, part, key));
+    const applicable = parts.filter(
+      (part) => visibleProperty(part.type, key) && propApplies(cat, part, key),
+    );
+    if (applicable.length === 0) continue;
     const values = applicable.map((part) =>
       Object.hasOwn(part.props, key) ? part.props[key] : undefined,
     );
@@ -69,9 +78,13 @@ export function unionProps(doc: Doc, cat: Catalog, ids: readonly PartId[]): Prop
       total: parts.length,
     });
   }
-  return rows.sort(
-    (a, b) => leadRank(a.key) - leadRank(b.key) || a.meta.label.localeCompare(b.meta.label),
-  );
+  const rank = (key: string) => {
+    const lead = leadRank(key);
+    if (lead < LEAD.length) return lead;
+    const servo = SERVO_PROPS.indexOf(key);
+    return LEAD.length + (servo < 0 ? SERVO_PROPS.length : servo);
+  };
+  return rows.sort((a, b) => rank(a.key) - rank(b.key) || a.meta.label.localeCompare(b.meta.label));
 }
 
 /** The selected parts' types with their counts, in the order each type first appears. */
@@ -95,7 +108,9 @@ export function otherProps(doc: Doc, cat: Catalog, id: PartId): Record<string, J
   const part = doc.parts.get(id);
   if (!part) return {};
   return Object.fromEntries(
-    Object.entries(part.props).filter(([key]) => key !== EPHEMERAL && !metaOf(cat, key)),
+    Object.entries(part.props).filter(
+      ([key]) => visibleProperty(part.type, key) && key !== EPHEMERAL && !metaOf(cat, key),
+    ),
   );
 }
 

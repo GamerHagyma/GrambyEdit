@@ -26,6 +26,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Import and export** | Read share codes or JSON, display native part meshes and textures, and export edited creations. |
 | **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
 | **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
+| **Logic-part wires** | Thin internal wires follow moving pieces, turn orange beyond 10 studs, and report overstretched parts in the Issues tab. |
 | **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
 | **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
 | **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |

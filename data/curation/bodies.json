@@ -20,6 +20,10 @@
     { "name": "base", "sockets": ["3"], "anchor": [0, 0, -0.5] },
     { "name": "circle", "sockets": ["1", "2"], "anchor": [0, -0.8, 0.5] }
   ],
+  "PressurePlate": [
+    { "name": "base", "sockets": ["1"], "anchor": [0, 0, 0] },
+    { "name": "circle", "sockets": ["2", "3"], "anchor": [-2, 0, 0] }
+  ],
   "Splitter_1": [
     { "name": "A", "sockets": ["3", "4"], "anchor": [0, 0, 0.85] },
     { "name": "B", "sockets": ["5", "6"], "anchor": [0, -0.02, -0.15] }

@@ -2,6 +2,17 @@ import { buildAssets } from '../../scripts/build-assets';
 import { Vector3 } from 'three';
 import { subPartMatrix } from '../../src/core/pose';
 
+test('PressurePlate separates the plate and output into independently posed bodies', async () => {
+  const { catalog } = await buildAssets({ root: '.', outDir: null });
+  const def = catalog.parts.PressurePlate;
+  expect(def.bodies?.map((body) => body.sockets)).toEqual([['1'], ['2', '3']]);
+  expect(def.bodies?.map((body) => body.pivot)).toEqual([
+    [0, 0, 0],
+    [-2, 0, 0],
+  ]);
+  expect(Object.values(def.sockets).every((s) => s.frameSource === 'captured')).toBe(true);
+});
+
 test('imports complete runtime templates with native socket frames and subpart origins', async () => {
   const { catalog, manifest } = await buildAssets({ root: '.', outDir: null });
   expect(Object.keys(catalog.parts)).toHaveLength(162);

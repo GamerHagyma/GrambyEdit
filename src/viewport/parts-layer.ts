@@ -16,6 +16,7 @@ import type { Doc, Json, PartId } from '../core/types';
 import { LabelsLayer } from './labels-layer';
 import { SlotAllocator } from './slots';
 import { SpringsLayer } from './springs-layer';
+import { WiresLayer } from './wires-layer';
 import { PartMaterialCache } from './part-materials';
 
 /** Bits of the per-instance `aFlags` attribute. */
@@ -105,6 +106,8 @@ export class PartsLayer {
   readonly labels = new LabelsLayer();
   /** The game's suspension springs; its group goes in the scene next to `group` too. */
   readonly springs = new SpringsLayer();
+  /** Internal connecting wires, outside picking and outline/ID passes. */
+  readonly wires = new WiresLayer();
   private readonly layers = new Map<string, Layer>();
   private readonly owner = new Map<PartId, Layer>();
   /** Per part: the sync-owned bits (approx, hidden, painted), and the highlight bits. */
@@ -171,6 +174,7 @@ export class PartsLayer {
     }
     this.labels.sync(doc, poses, hidden);
     this.springs.sync(doc, poses, hidden, this.assets.catalog);
+    this.wires.sync(doc, poses, hidden, this.assets.catalog);
   }
 
   /**
@@ -191,6 +195,7 @@ export class PartsLayer {
       });
     }
     this.labels.setPreview(world);
+    this.wires.setPreview(world);
   }
 
   /** Draws one body of a multi-piece part at `m` without touching the doc: a body drag preview. */
@@ -201,6 +206,7 @@ export class PartsLayer {
     if (!mesh || slot === undefined) return;
     mesh.setMatrixAt(slot, m);
     mesh.instanceMatrix.needsUpdate = true;
+    this.wires.setBodyPreview(id, body, m);
   }
 
   /**
@@ -272,6 +278,7 @@ export class PartsLayer {
     this.materials.dispose();
     this.labels.dispose();
     this.springs.dispose();
+    this.wires.dispose();
     this.layers.clear();
     this.owner.clear();
   }

@@ -11,8 +11,65 @@ import {
 import { select, selectModeSig, selectionSig } from '../../../src/state/selection';
 import { docOf, part, pt, sock } from '../../helpers/doc';
 import { MINI } from '../../helpers/catalog';
+import { realCatalog } from '../../helpers/real-catalog';
+import { parseShareText, toShareCode } from '../../../src/core/share';
 
 beforeEach(resetStoreForTests);
+
+test.each(['Servo', 'Servo_Physics'])(
+  '%s fields use canonical keys, accept >360 and keep Rotation',
+  async (type) => {
+    baseCatalogSig.value = await realCatalog();
+    const sample = `[["${type}",[],{"Rotation":0,"LimitAngle":36.9,"Speed":47.2,"Rest":true,"LimitEnabled":true}]]`;
+    const parsed = parseShareText(sample);
+    if (!parsed.ok) throw new Error(parsed.message);
+    loadDoc(parsed.doc);
+    select([1], 'replace');
+    const { container } = render(<Properties />);
+    expect([...container.querySelectorAll('.prop-label')].map((el) => el.textContent)).toEqual([
+      'Speed (°/s)',
+      'Rest',
+      'Limit enabled',
+      'Limit angle (°)',
+      'Rotation (°)',
+    ]);
+    expect(screen.queryByLabelText('Forwards')).toBeNull();
+    expect(screen.queryByText('Simulate')).toBeNull();
+    for (const [label, value] of [
+      ['Speed (°/s)', '720.5'],
+      ['Limit angle (°)', '1080'],
+      ['Rotation (°)', '-47.2'],
+    ]) {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      expect(input.getAttribute('max')).toBeNull();
+      fireEvent.input(input, { target: { value } });
+      fireEvent.blur(input);
+    }
+    fireEvent.click(screen.getByLabelText('Rest'));
+    fireEvent.click(screen.getByLabelText('Limit enabled'));
+    const back = parseShareText(toShareCode(docSig.value));
+    if (!back.ok) throw new Error(back.message);
+    expect(back.doc.parts.get(1)!.props).toEqual({
+      Rotation: -47.2,
+      LimitAngle: 1080,
+      Speed: 720.5,
+      Rest: false,
+      LimitEnabled: false,
+    });
+  },
+);
+
+test('mixed selection edits generic properties on non-servos only', async () => {
+  baseCatalogSig.value = await realCatalog();
+  loadDoc(docOf(part(1, 'Servo', [], { OrientationX: 100 }), part(2, 'Part')));
+  select([1, 2], 'replace');
+  render(<Properties />);
+  const input = screen.getByLabelText('Orientation X');
+  fireEvent.input(input, { target: { value: '45' } });
+  fireEvent.blur(input);
+  expect(docSig.value.parts.get(1)!.props.OrientationX).toBe(100);
+  expect(docSig.value.parts.get(2)!.props.OrientationX).toBe(45);
+});
 
 test('editing Bullets on a mixed selection writes only to the mags', () => {
   baseCatalogSig.value = MINI;

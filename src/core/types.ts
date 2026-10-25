@@ -76,6 +76,7 @@ export type IssueCode =
   | 'W-TYPE-UNKNOWN'
   | 'W-CYCLE'
   | 'W-PART-LIMIT'
+  | 'W-WIRE-STRETCHED'
   | 'I-POINT-UNUSED'
   | 'I-NO-ANCHOR'
   | 'I-RELAY-UNMOUNTED'

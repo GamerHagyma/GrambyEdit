@@ -333,6 +333,7 @@ Parts are immutable. An edit creates new `Part` objects only for what changed an
 | W-TYPE-UNKNOWN | warning | type not in the catalog (rendered as a placeholder; data kept) |
 | W-CYCLE | warning | parts no root reaches, even through a loop island's anchor joint (§10.6) |
 | W-PART-LIMIT | warning | parts > soft cap (8,000); text escalates past 16,000 |
+| W-WIRE-STRETCHED | warning | an internal wire of a logic part is longer than 10 studs; one warning per part with the longest measured wire |
 | I-POINT-UNUSED | info | point with no child (~110 chars wasted) |
 | I-NO-ANCHOR | info | > 200 parts and no `Anchor` with `Activated: true` (spec §8.3) |
 | I-RELAY-UNMOUNTED | info | `Wire`/`Splitter_n` without an ephemeral mount (spec §8.1 — it dangles) |
@@ -499,6 +500,7 @@ About 4 matrix products per part, so roughly 64 K for 16 K parts: a few ms (budg
 - **Drag sockets:** while a part or piece is dragged, the sockets shown are those of the hovered part, the part last hovered in the drag, and the 12 parts nearest the drag point. Whole moving and hidden parts never show; a piece drag keeps its own part's stationary sockets visible for self-stacking (`viewport/drag-sockets.ts`).
 - **Sockets layer:** instanced shaded spheres with an arrow along the socket's outward +Y and a contrasting outline, at constant screen size, so a socket reads from every side.
 - **Springs layer** (`viewport/springs-layer.ts`, D24): a navy coil, five turns 0.33 studs round, from each wheel socket with a part on it down to that part. It sits in its own group, beside the parts, so picking and outlines skip it, and it hides with hidden parts.
+- **Internal wires** (`core/wires.ts`, `viewport/wires-layer.ts`, user 2026-10-25): thin black cylinders connect the bodies of Wire, Switch, Button/RemoteButton, PressurePlate, TripWire and all Splitter variants. Splitters connect their central body to every output. Wires longer than 10 studs turn orange; the Issues tab warns from committed poses using the same endpoints. Preview movement updates wires live; hidden parts and the workbench hide them. The layer is separate from picking and outlines. PressurePlate has distinct plate and output bodies. Body previews update only incident wire instances, avoiding quadratic work on large selections.
 
   | socket state | look |
   |---|---|
@@ -697,6 +699,12 @@ focus follows pop-out/dock and pointer handles. Local object URLs are revoked on
 - Right-click on a selected row keeps the whole selection; on an unselected row it selects that row first. Its part menu offers Hide selected, or Show selected if any selected part is hidden. This action retains the selection so hidden parts can immediately be restored from their Outliner rows; unrelated hidden parts stay hidden.
 
 ### 13.3 Properties (right dock tab; must-have: multi-selection property changes)
+- **Servo controls (2026-10-25):** Servo and Servo_Physics show Speed (degrees/s), Rest,
+  Limit enabled, Limit angle (degrees), then Rotation (degrees), in that order. Speed and
+  Limit angle have no 360-degree upper cap. Other imported servo properties remain in the
+  code but are hidden from this panel; mixed-selection writes respect that visibility.
+  Rotation preserves the remembered angle when Rest is off. Servo simulation and its
+  live Rotation display are planned separately and await user verification of these tweaks.
 - **Header:** "3 parts — 2 Mag, 1 Stick". The type chips are clickable and narrow the selection to that type.
 - **Fields:** the union of every prop key applicable to at least one selected part.
   - Shared values show the value; differing values show "mixed".

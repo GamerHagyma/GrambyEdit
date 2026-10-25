@@ -20,6 +20,12 @@ export const statsSig = computed(() => buildStats(docSig.value));
 export const issuesSig = computed(() => {
   const cat = catalogSig.value;
   return cat
-    ? validate(docSig.value, cat, settingsSig.value.limits, sizeSig.value.base64Chars)
+    ? validate(
+        docSig.value,
+        cat,
+        settingsSig.value.limits,
+        sizeSig.value.base64Chars,
+        posesSig.value,
+      )
     : [];
 });

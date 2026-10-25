@@ -6,7 +6,13 @@ import type { Catalog } from '../../core/catalog-types';
 import { orderIndex } from '../../core/doc';
 import { detach, makePoseJoint, removeConn } from '../../core/ops/conns';
 import { setProp, UNSET } from '../../core/ops/props';
-import { otherProps, selectionHeader, typeCounts, unionProps } from '../../core/propview';
+import {
+  otherProps,
+  selectionHeader,
+  typeCounts,
+  unionProps,
+  visibleProperty,
+} from '../../core/propview';
 import { POSE_APPROX, poseConn } from '../../core/pose';
 import { entryBytes } from '../../core/size';
 import type { Doc, Part, PartId, Verdict } from '../../core/types';
@@ -255,7 +261,12 @@ export function Properties(): JSX.Element {
     <div class="properties" data-app-undo>
       <Header doc={doc} ids={ids} />
       {unionProps(doc, cat, ids).map((row) => (
-        <PropField key={row.key} cat={cat} row={row} ids={ids} />
+        <PropField
+          key={row.key}
+          cat={cat}
+          row={row}
+          ids={ids.filter((id) => visibleProperty(doc.parts.get(id)!.type, row.key))}
+        />
       ))}
       {single && (
         <>

@@ -37,8 +37,9 @@
   },
   "Rotation": {
     "widget": "number",
-    "label": "Rotation",
-    "step": 0.1
+    "label": "Rotation (°)",
+    "step": 0.1,
+    "description": "Remembered servo angle when Rest is disabled."
   },
   "Backwards": {
     "widget": "bool",
@@ -46,12 +47,15 @@
   },
   "LimitEnabled": {
     "widget": "bool",
-    "label": "Limit Enabled"
+    "label": "Limit enabled",
+    "description": "Stop at the angle limit when enabled."
   },
   "Speed": {
     "widget": "number",
-    "label": "Speed",
-    "step": 0.1
+    "label": "Speed (°/s)",
+    "step": 0.1,
+    "min": 0,
+    "description": "Servo speed in degrees per second. Values above 360 are allowed."
   },
   "Forwards": {
     "widget": "bool",
@@ -59,12 +63,15 @@
   },
   "Rest": {
     "widget": "bool",
-    "label": "Rest"
+    "label": "Rest",
+    "description": "Return to the default position without a signal; otherwise keep the last angle."
   },
   "LimitAngle": {
     "widget": "number",
-    "label": "Limit Angle",
-    "step": 0.1
+    "label": "Limit angle (°)",
+    "step": 0.1,
+    "min": 0,
+    "description": "Angle limit in degrees, used when Limit enabled is checked. Values above 360 are allowed."
   },
   "Visible": {
     "widget": "bool",

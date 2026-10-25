@@ -1,6 +1,8 @@
 import { otherProps, robloxKeyName, selectionHeader, unionProps } from '../../src/core/propview';
 import { MINI } from '../helpers/catalog';
 import { docOf, part } from '../helpers/doc';
+import { realCatalog } from '../helpers/real-catalog';
+import { parseShareText, toShareCode } from '../../src/core/share';
 
 test('two Mags and a ShortStick', () => {
   const d = docOf(
@@ -86,3 +88,37 @@ test('EphemeralAttachments is never a row, even when the catalog gives it a Prop
 test('a one-part selection says "1 part"', () => {
   expect(selectionHeader(docOf(part(1, 'Wire')), [1])).toBe('1 part — 1 Wire');
 });
+
+test.each(['Servo', 'Servo_Physics'])(
+  '%s shows only the five requested rows in order, preserving hidden data',
+  async (type) => {
+    const cat = await realCatalog();
+    const doc = docOf(
+      part(1, type, [], {
+        Rotation: 0,
+        LimitAngle: 36.9,
+        Speed: 47.2,
+        Rest: true,
+        LimitEnabled: true,
+        Forwards: true,
+        RGB: [1, 2, 3],
+        Mystery: 99,
+      }),
+    );
+    const code = toShareCode(doc);
+    const rows = unionProps(doc, cat, [1]);
+    expect(rows.map((row) => row.key)).toEqual([
+      'Speed',
+      'Rest',
+      'LimitEnabled',
+      'LimitAngle',
+      'Rotation',
+    ]);
+    expect(rows.map((row) => row.value)).toEqual([47.2, true, true, 36.9, 0]);
+    expect(otherProps(doc, cat, 1)).toEqual({});
+    expect(toShareCode(doc)).toBe(code);
+    const back = parseShareText(code);
+    if (!back.ok) throw new Error(back.message);
+    expect(back.doc.parts.get(1)!.props).toEqual(doc.parts.get(1)!.props);
+  },
+);
