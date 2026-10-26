@@ -4,9 +4,30 @@ import { KEYMAPS } from '../../src/state/keymap';
 import { hiddenSig, select, selectionSig, selectModeSig } from '../../src/state/selection';
 import { baseCatalogSig, docSig, loadDoc, resetStoreForTests } from '../../src/state/store';
 import { MINI } from '../helpers/catalog';
+import {
+  editingReferencePlaneSig,
+  referencePlaneModeSig,
+  clearReferences,
+} from '../../src/state/references';
 import { docOf, part, chainDoc } from '../helpers/doc';
 
 beforeEach(resetStoreForTests);
+
+test('standard tool commands select the matching plane mode, including repeated Select after Resize', () => {
+  editingReferencePlaneSig.value = 10;
+  runCommand('tool.move');
+  expect(referencePlaneModeSig.peek()).toBe('translate');
+  runCommand('tool.rotate');
+  expect(referencePlaneModeSig.peek()).toBe('rotate');
+  runCommand('tool.select');
+  expect(referencePlaneModeSig.peek()).toBeNull();
+  referencePlaneModeSig.value = 'scale';
+  runCommand('tool.select');
+  expect(referencePlaneModeSig.peek()).toBeNull();
+  runCommand('tool.connect');
+  expect(editingReferencePlaneSig.peek()).toBeNull();
+  clearReferences();
+});
 
 test('inversion is the exact whole-part complement even in attached mode', () => {
   loadDoc(chainDoc(3));

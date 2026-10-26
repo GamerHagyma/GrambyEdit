@@ -28,6 +28,7 @@ import { surfaceSig } from './surfaces';
 import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
 import { toast } from './toasts';
 import { openDialog } from './ui';
+import { editingReferencePlaneSig, referencePlaneModeSig } from './references';
 
 export interface Command {
   readonly id: string;
@@ -88,7 +89,18 @@ const TOOLS: readonly [ToolId, string][] = [
   ['sockets', 'Socket Workbench'],
 ];
 for (const [tool, label] of TOOLS) {
-  registerCommand({ id: `tool.${tool}`, label, run: () => setTool(tool) });
+  registerCommand({
+    id: `tool.${tool}`,
+    label,
+    run: () => {
+      setTool(tool);
+      if (editingReferencePlaneSig.peek() !== null) {
+        referencePlaneModeSig.value =
+          tool === 'move' ? 'translate' : tool === 'rotate' ? 'rotate' : null;
+        if (!['select', 'move', 'rotate'].includes(tool)) editingReferencePlaneSig.value = null;
+      }
+    },
+  });
 }
 
 registerCommand({

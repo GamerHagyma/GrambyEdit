@@ -2,11 +2,17 @@
 import {
   DoubleSide,
   Group,
+  BufferGeometry,
+  LineBasicMaterial,
+  LineLoop,
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
   SRGBColorSpace,
   TextureLoader,
+  Raycaster,
+  Vector3,
+  type Vector2,
   type Camera,
   type Texture,
 } from 'three';
@@ -30,6 +36,15 @@ export class ReferencePlanesLayer {
   private readonly geometry = new PlaneGeometry(1, 1);
   private readonly entries = new Map<number, Entry>();
   private readonly gizmo: TransformControls;
+  private readonly outline = new LineLoop(
+    new BufferGeometry().setFromPoints([
+      new Vector3(-0.5, -0.5, 0),
+      new Vector3(0.5, -0.5, 0),
+      new Vector3(0.5, 0.5, 0),
+      new Vector3(-0.5, 0.5, 0),
+    ]),
+    new LineBasicMaterial({ color: 0xffc46b, depthTest: false }),
+  );
   private selected: number | null = null;
   private disposed = false;
   private pointer: number | null = null;
@@ -49,6 +64,11 @@ export class ReferencePlanesLayer {
     this.gizmo.setSize(0.8);
     this.gizmo.setSpace('local');
     this.group.add(this.gizmo.getHelper());
+    this.outline.name = 'reference-plane-selection';
+    this.outline.visible = false;
+    this.outline.matrixAutoUpdate = false;
+    this.outline.renderOrder = 6;
+    this.group.add(this.outline);
     canvas.addEventListener('pointerdown', this.rememberPointer);
     canvas.addEventListener('pointercancel', this.cancelPointer);
     canvas.addEventListener('lostpointercapture', this.cancelPointer);
@@ -77,10 +97,12 @@ export class ReferencePlanesLayer {
     images: readonly ReferenceImage[],
     planes: ReadonlyMap<number, ReferencePlane>,
     selected: number | null,
-    mode: 'translate' | 'rotate' | 'scale',
+    mode: 'translate' | 'rotate' | 'scale' | null,
   ): void {
     if (
+      mode === null ||
       selected !== this.selected ||
+      (this.gizmo.dragging && mode !== this.gizmo.getMode()) ||
       (selected !== null &&
         (!planes.get(selected)?.visible || !images.some((image) => image.id === selected)))
     )
@@ -147,12 +169,46 @@ export class ReferencePlanesLayer {
     }
     this.selected = selected;
     const mesh = selected === null ? null : this.entries.get(selected)?.mesh;
-    if (mesh?.visible) {
+    this.outline.visible = !!mesh?.visible;
+    if (mesh) {
+      mesh.updateMatrix();
+      this.outline.matrix.copy(mesh.matrix);
+    }
+    if (mesh?.visible && mode !== null) {
       if (this.gizmo.object !== mesh) this.gizmo.attach(mesh);
       this.gizmo.setMode(mode);
       this.gizmo.showZ = mode !== 'scale';
     } else this.gizmo.detach();
-    this.gizmo.enabled = !!mesh?.visible;
+    this.gizmo.enabled = !!mesh?.visible && mode !== null;
+  }
+
+  /** Separate local picking, called only by the Reference-tab interaction route. */
+  pick(ndc: Vector2, camera: Camera): number | null {
+    if (!this.group.visible) return null;
+    this.group.updateMatrixWorld(true);
+    const ray = new Raycaster();
+    ray.setFromCamera(ndc, camera);
+    let nearest = Infinity,
+      chosen: number | null = null;
+    for (const [id, entry] of this.entries) {
+      if (!entry.mesh.visible || entry.failed || entry.mesh.material.opacity <= 0) continue;
+      const hit = ray.intersectObject(entry.mesh, false)[0];
+      const clip = hit?.point.clone().project(camera).z;
+      if (hit && clip !== undefined && clip >= -1 && clip <= 1 && hit.distance < nearest) {
+        nearest = hit.distance;
+        chosen = id;
+      }
+    }
+    return chosen;
+  }
+
+  busy(ndc?: Vector2): boolean {
+    // Refresh before viewport routing as a stationary press/touch may have no preceding hover.
+    if (this.gizmo.enabled && ndc && !this.gizmo.dragging) {
+      this.gizmo.getRaycaster().setFromCamera(ndc, this.gizmo.camera);
+      this.gizmo.pointerHover(null);
+    }
+    return this.gizmo.enabled && (this.gizmo.dragging || this.gizmo.axis !== null);
   }
 
   setCamera(camera: Camera, visible: boolean): void {
@@ -175,6 +231,8 @@ export class ReferencePlanesLayer {
       e.mesh.material.dispose();
     }
     this.entries.clear();
+    this.outline.geometry.dispose();
+    this.outline.material.dispose();
     this.geometry.dispose();
     this.group.clear();
   }

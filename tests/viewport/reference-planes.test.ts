@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { Texture, TextureLoader, PerspectiveCamera, Mesh, SRGBColorSpace } from 'three';
+import { Texture, TextureLoader, PerspectiveCamera, Mesh, SRGBColorSpace, Vector2 } from 'three';
 import type { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { ReferencePlanesLayer } from '../../src/viewport/reference-planes';
 import {
@@ -67,5 +67,60 @@ test('reference meshes follow local transforms and dispose textures even if a pe
   loads[0].loaded(loads[0].texture);
   expect(layer.group.getObjectByName(mesh.name)).toBeUndefined();
   expect(referenceErrorSig.peek()).toBeNull();
+  layer.dispose();
+});
+
+test('the plane picker finds the nearest visible image and Select has an outline without a gizmo', () => {
+  vi.spyOn(TextureLoader.prototype, 'load').mockImplementation(
+    () => new Texture<HTMLImageElement>(),
+  );
+  addReferenceUrl('https://example.com/a.png');
+  const a = activeReferenceSig.peek()!.id;
+  insertReferencePlane(a);
+  addReferenceUrl('https://example.com/b.png');
+  const b = activeReferenceSig.peek()!.id;
+  insertReferencePlane(b, [0, 0, 2]);
+  const camera = new PerspectiveCamera(50, 1, 0.1, 100);
+  camera.position.set(0, 0, 10);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  const canvas = document.createElement('canvas');
+  const layer = new ReferencePlanesLayer(camera, canvas, vi.fn());
+  const sync = () => layer.sync(referencesSig.peek(), referencePlanesSig.peek(), b, null);
+  sync();
+  expect(layer.pick(new Vector2(), camera)).toBe(b);
+  expect(layer.group.getObjectByName('reference-plane-selection')?.visible).toBe(true);
+  const controls = (
+    layer.group.children.find((c) => 'controls' in c) as unknown as { controls: TransformControls }
+  ).controls;
+  expect(controls.enabled).toBe(false);
+  controls.axis = 'X';
+  expect(layer.busy()).toBe(false);
+  sync();
+  expect(controls.axis).toBeNull();
+  updateReferencePlane(b, { width: 0.1, height: 0.1 });
+  layer.sync(referencesSig.peek(), referencePlanesSig.peek(), b, 'translate');
+  layer.group.updateMatrixWorld(true);
+  const handle = new Vector2(0.02, -0.01);
+  expect(layer.pick(handle, camera)).not.toBe(b);
+  expect(layer.busy(handle)).toBe(true);
+  controls.pointerDown(null);
+  expect(controls.dragging).toBe(true);
+  canvas.dispatchEvent(new Event('lostpointercapture'));
+  expect(controls.dragging).toBe(false);
+  layer.group.updateMatrixWorld(true);
+  expect(layer.busy(handle)).toBe(true);
+  controls.pointerDown(null);
+  expect(controls.dragging).toBe(true);
+  layer.sync(referencesSig.peek(), referencePlanesSig.peek(), b, null);
+  updateReferencePlane(b, { visible: false });
+  sync();
+  expect(layer.pick(new Vector2(), camera)).toBe(a);
+  updateReferencePlane(a, { opacity: 0 });
+  sync();
+  expect(layer.pick(new Vector2(), camera)).toBeNull();
+  updateReferencePlane(b, { visible: true, position: [0, 0, 9.95] });
+  sync();
+  expect(layer.pick(new Vector2(), camera)).toBeNull();
   layer.dispose();
 });

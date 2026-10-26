@@ -37,7 +37,7 @@ export interface ReferencePlane {
 export const referenceAspects = new Map<number, number>();
 export const referencePlanesSig = signal<ReadonlyMap<number, ReferencePlane>>(new Map());
 export const editingReferencePlaneSig = signal<number | null>(null);
-export const referencePlaneModeSig = signal<'translate' | 'rotate' | 'scale'>('translate');
+export const referencePlaneModeSig = signal<'translate' | 'rotate' | 'scale' | null>('translate');
 
 export function insertReferencePlane(
   id: number,

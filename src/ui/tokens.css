@@ -285,6 +285,15 @@ button:disabled {
 }
 
 /* Reference images belong to the UI; the pinned window stays below modal dialogs. */
+.button.danger {
+  background: #a5222a;
+  border-color: #dc3844;
+  color: #fff;
+}
+.button.danger:hover:not(:disabled) {
+  background: #c52b35;
+  border-color: #f85149;
+}
 .reference-panel {
   display: flex;
   flex-direction: column;

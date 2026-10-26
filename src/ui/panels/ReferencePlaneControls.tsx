@@ -1,4 +1,5 @@
 import { Euler } from 'three';
+import { batch } from '@preact/signals';
 import { getViewport } from '../../viewport/context';
 import {
   insertReferencePlane,
@@ -8,20 +9,36 @@ import {
   editingReferencePlaneSig,
   referencePlaneModeSig,
   type ReferenceVector,
+  activeReferenceIdSig,
 } from '../../state/references';
+import { clearSelection } from '../../state/selection';
+import { runCommand } from '../../state/commands';
+import { showInspectorTab } from '../../state/ui';
 import { NumberScrub } from '../widgets/NumberScrub';
 
 export function ReferencePlaneControls({ id }: { id: number }) {
   const plane = referencePlanesSig.value.get(id);
   const editing = editingReferencePlaneSig.value === id;
+  const activate = (mode: 'translate' | 'rotate' | 'scale') =>
+    batch(() => {
+      showInspectorTab('reference');
+      runCommand(`tool.${mode === 'rotate' ? 'rotate' : mode === 'translate' ? 'move' : 'select'}`);
+      clearSelection();
+      activeReferenceIdSig.value = id;
+      editingReferencePlaneSig.value = id;
+      referencePlaneModeSig.value = mode;
+    });
   const insert = () => {
     const rig = getViewport()?.rig;
     const e = rig ? new Euler().setFromQuaternion(rig.camera.quaternion) : new Euler();
-    insertReferencePlane(
-      id,
-      rig ? (rig.target.toArray() as [number, number, number]) : [0, 0, 0],
-      [e.x, e.y, e.z].map((r) => (r * 180) / Math.PI) as [number, number, number],
-    );
+    batch(() => {
+      insertReferencePlane(
+        id,
+        rig ? (rig.target.toArray() as [number, number, number]) : [0, 0, 0],
+        [e.x, e.y, e.z].map((r) => (r * 180) / Math.PI) as [number, number, number],
+      );
+      activate('translate');
+    });
   };
   return (
     <section class="reference-plane-controls" aria-label="Workspace image plane">
@@ -36,7 +53,8 @@ export function ReferencePlaneControls({ id }: { id: number }) {
               class="button"
               aria-pressed={editing}
               onClick={() => {
-                editingReferencePlaneSig.value = editing ? null : id;
+                if (editing) editingReferencePlaneSig.value = null;
+                else activate('translate');
               }}
             >
               {editing ? 'Finish editing plane' : 'Edit plane in workspace'}
@@ -52,8 +70,7 @@ export function ReferencePlaneControls({ id }: { id: number }) {
                 key={mode}
                 aria-pressed={referencePlaneModeSig.value === mode && editing}
                 onClick={() => {
-                  referencePlaneModeSig.value = mode;
-                  editingReferencePlaneSig.value = id;
+                  activate(mode);
                 }}
               >
                 {['Move plane', 'Rotate plane', 'Resize plane'][i]}
@@ -109,8 +126,9 @@ export function ReferencePlaneControls({ id }: { id: number }) {
         </>
       )}
       <p class="muted">
-        Local reference only; excluded from exports and collaboration. Use the plane gizmo or these
-        fields. Finish editing to resume part tools.
+        Local only; excluded from exports and collaboration. In the Reference tab, click a plane and
+        use Select / Move / Rotate (1 / 2 / 3). G / R also move or rotate; T resizes. Esc finishes
+        editing.
       </p>
     </section>
   );

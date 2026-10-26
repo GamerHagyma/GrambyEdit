@@ -12,7 +12,7 @@ import {
 import { historySig, historyAvailabilitySig } from '../../state/store';
 import { toast } from '../../state/toasts';
 import { keysFor } from '../../state/keymap';
-import { setTool, toolSig, type ToolId } from '../../tools/manager';
+import { toolSig, type ToolId } from '../../tools/manager';
 import {
   pivotModeSig,
   setPivotMode,
@@ -112,7 +112,7 @@ export function Toolbar(): JSX.Element {
             aria-label={t.label}
             title={key ? `${t.label} (${key})` : t.label}
             aria-pressed={toolSig.value === t.id}
-            onClick={() => setTool(t.id)}
+            onClick={() => runCommand(`tool.${t.id}`)}
           >
             <Icon name={t.icon} />
           </button>

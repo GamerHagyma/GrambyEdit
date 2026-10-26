@@ -25,11 +25,13 @@ import {
   referencePlanesSig,
   editingReferencePlaneSig,
   referencePlaneModeSig,
+  activeReferenceIdSig,
 } from '../state/references';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
   hiddenSig,
+  clearSelection,
   hoverPieceSig,
   hoverPointSig,
   hoverSig,
@@ -97,7 +99,7 @@ import { toast } from '../state/toasts';
 import { genPreviewSig } from '../state/generators';
 import { arm, dragTypeSig, placeSig } from '../state/place';
 import { surfaceHostSig, surfacePreviewSig, surfaceSig } from '../state/surfaces';
-import { contextMenuSig, leftTabSig } from '../state/ui';
+import { contextMenuSig, leftTabSig, inspectorTabSig } from '../state/ui';
 import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
 import { AxisGuide } from './axis-guide';
 import { GhostLayer } from './ghost';
@@ -397,7 +399,11 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       return new Promise((resolve) => out.toBlob((b) => resolve(b), 'image/png'));
     },
     onKey: (e) => {
-      if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) {
+      if (
+        editingReferencePlaneSig.peek() !== null &&
+        inspectorTabSig.peek() === 'reference' &&
+        !inWorkbench()
+      ) {
         if (e.key === 'Escape') {
           editingReferencePlaneSig.value = null;
           return true;
@@ -406,15 +412,18 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
           !e.ctrlKey &&
           !e.metaKey &&
           !e.altKey &&
-          ({ g: 'translate', r: 'rotate', s: 'scale' } as const)[
-            e.key.toLowerCase() as 'g' | 'r' | 's'
+          !e.shiftKey &&
+          ({ g: 'translate', r: 'rotate', t: 'scale' } as const)[
+            e.key.toLowerCase() as 'g' | 'r' | 't'
           ];
         if (mode) {
+          setTool(mode === 'rotate' ? 'rotate' : mode === 'translate' ? 'move' : 'select');
           referencePlaneModeSig.value = mode;
           return true;
         }
         const command = resolveKey(e, settingsSig.peek().cameraScheme);
-        if (command && /^(edit|transform|tool|select)\./.test(command)) return true;
+        if (command?.startsWith('tool.')) return false;
+        if (command && /^(edit|transform|select)\./.test(command)) return true;
         return controls().onKeyDown(e);
       }
       return (
@@ -498,7 +507,25 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.focus({ preventScroll: true });
     if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
     if (controls().onPointerDown(e) || e.button !== 0) return;
-    if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) return;
+    if (
+      inspectorTabSig.peek() === 'reference' &&
+      !inWorkbench() &&
+      ['select', 'move', 'rotate'].includes(toolSig.peek()) &&
+      !modalActiveSig.peek()
+    ) {
+      if (referencePlanes.busy(ndc(e))) return;
+      const plane = referencePlanes.pick(ndc(e), rig.camera);
+      if (plane !== null) {
+        clearSelection();
+        activeReferenceIdSig.value = plane;
+        if (editingReferencePlaneSig.peek() !== plane)
+          referencePlaneModeSig.value =
+            toolSig.peek() === 'move' ? 'translate' : toolSig.peek() === 'rotate' ? 'rotate' : null;
+        editingReferencePlaneSig.value = plane;
+        return;
+      }
+      editingReferencePlaneSig.value = null;
+    }
     const simulation = servoPreviewSig.peek();
     if (
       toolSig.peek() !== 'select' ||
@@ -838,12 +865,16 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     request();
   });
 
+  let previousPlane: number | null = null;
   const stopReferencePlanes = effect(() => {
-    const editing = editingReferencePlaneSig.value;
-    if (editing !== null && toolSig.peek() !== 'sockets') {
-      cancelModal();
-      setTool('select');
+    const tool = toolSig.value;
+    let editing = editingReferencePlaneSig.value;
+    if (inspectorTabSig.value !== 'reference' || !['select', 'move', 'rotate'].includes(tool)) {
+      editing = null;
+      if (editingReferencePlaneSig.peek() !== null) editingReferencePlaneSig.value = null;
     }
+    if (editing !== null && previousPlane !== editing) cancelModal();
+    previousPlane = editing;
     referencePlanes.sync(
       referencesSig.value,
       referencePlanesSig.value,

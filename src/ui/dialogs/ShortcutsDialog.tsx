@@ -219,7 +219,7 @@ const USAGE: readonly Section[] = [
       {
         keys: ['Image planes'],
         action:
-          'Reference → Insert image plane adds a local plane at the camera focus. Drag its Move / Rotate / Resize gizmo or use exact position, angle and size fields. G / R / S switch gizmo modes; Esc finishes editing. Opacity and visibility are adjustable. Planes never enter exports or collaboration. Image links need CORS support; choose a local image file if blocked.',
+          'Reference → Insert image plane adds a local plane at the camera focus. Click planes only while the Reference tab is selected. Use the normal Select / Move / Rotate tools (1 / 2 / 3), G / R, or T to resize. S keeps its Studio camera function. Drag the gizmo or use the exact fields. Esc or changing tabs deselects the plane. Planes never enter exports or collaboration. Image links need CORS support; choose a local file if blocked.',
       },
       {
         keys: ['Sockets'],

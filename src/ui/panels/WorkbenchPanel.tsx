@@ -159,7 +159,7 @@ export function WorkbenchPanel(): JSX.Element {
       </section>
 
       <footer class="wb-footer">
-        <button class="button" onClick={() => setConfirmReset(true)}>
+        <button class="button danger" onClick={() => setConfirmReset(true)}>
           Reset all to defaults…
         </button>
         <button class="button" onClick={exportFile}>
@@ -194,7 +194,7 @@ export function WorkbenchPanel(): JSX.Element {
               Cancel
             </button>
             <button
-              class="button primary"
+              class="button danger"
               disabled={resetting}
               onClick={async () => {
                 setResetting(true);

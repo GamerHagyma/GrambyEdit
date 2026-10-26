@@ -38,6 +38,9 @@ test('parts listed by usage with progress', () => {
 test('reset all requires confirmation and Cancel preserves captured data', async () => {
   await captureSocket('Part', '6', [9, 9, 9, 1, 0, 0, 0, 1, 0, 0, 0, 1]);
   render(<WorkbenchPanel />);
+  expect(
+    screen.getByRole('button', { name: 'Reset all to defaults…' }).classList.contains('danger'),
+  ).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Reset all to defaults…' }));
   expect(screen.getByRole('dialog', { name: 'Reset all socket data' })).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Cancel', exact: true }));
