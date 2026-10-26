@@ -6,11 +6,17 @@
 // Esc or a right click cancels. No Ctrl shortcuts: browsers reserve too many of them. While it runs the
 // transform gizmo hides, and a chosen axis is drawn through the pivot in its colour, as in Blender.
 import { signal } from '@preact/signals';
-import { MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
+import { Euler, MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'three';
 import { selectionSig } from '../state/selection';
 import { catalogSig, docSig } from '../state/store';
 import { settingsSig } from '../state/settings';
 import { surfaceSig } from '../state/surfaces';
+import {
+  editingReferencePlaneSig,
+  referencePlanesSig,
+  updateReferencePlane,
+} from '../state/references';
+import { inspectorTabSig } from '../state/ui';
 import { getViewport } from '../viewport/context';
 import { toolSig } from './manager';
 import { pointGizmoHandlers, pointGizmoPlacement, selectedPoint } from './point';
@@ -45,6 +51,40 @@ interface Target {
   preview(d: TransformDelta): void;
   finish(d: TransformDelta): void;
   cancel(): void;
+}
+
+/** Reference planes use the same mouse/axis/numeric transform engine, outside blueprint history. */
+function referenceTarget(): Target | null {
+  const id = editingReferencePlaneSig.peek(),
+    before = id === null ? null : referencePlanesSig.peek().get(id);
+  if (id === null || !before?.visible || inspectorTabSig.peek() !== 'reference') return null;
+  const pivot = new Vector3(...before.position),
+    local = new Quaternion().setFromEuler(
+      new Euler(...(before.rotation.map(MathUtils.degToRad) as [number, number, number])),
+    );
+  const apply = (d: TransformDelta) => {
+    if (d.kind === 'move') {
+      const offset = d.grid ? gridOffset(d.offset, pivot, d.grid) : d.offset;
+      updateReferencePlane(id, { position: pivot.clone().add(offset).toArray() });
+    } else {
+      const e = new Euler().setFromQuaternion(d.rotation.clone().multiply(local));
+      updateReferencePlane(id, {
+        rotation: [e.x, e.y, e.z].map(MathUtils.radToDeg) as [number, number, number],
+      });
+    }
+  };
+  return {
+    pivot,
+    local,
+    alive: () =>
+      inspectorTabSig.peek() === 'reference' &&
+      editingReferencePlaneSig.peek() === id &&
+      !!referencePlanesSig.peek().get(id)?.visible,
+    preview: apply,
+    finish: apply,
+    cancel: () =>
+      updateReferencePlane(id, { position: before.position, rotation: before.rotation }),
+  };
 }
 
 function partsTarget(): Target | null {
@@ -330,13 +370,15 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   if (!vp || transformStateSig.value !== 'idle') return false;
   // In the Surface tool the chosen corners are what G moves; corners do not turn.
   const corner = toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
-  const target = corner
-    ? kind === 'move'
-      ? cornerTarget()
-      : null
-    : selectionSig.value.parts.size > 0
-      ? partsTarget()
-      : pointTarget();
+  const target =
+    referenceTarget() ??
+    (corner
+      ? kind === 'move'
+        ? cornerTarget()
+        : null
+      : selectionSig.value.parts.size > 0
+        ? partsTarget()
+        : pointTarget());
   if (!target) return false;
   const r = vp.canvas.getBoundingClientRect();
   const start = vp.pointer ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };

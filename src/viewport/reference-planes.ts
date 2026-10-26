@@ -12,6 +12,7 @@ import {
   TextureLoader,
   Raycaster,
   Vector3,
+  Quaternion,
   type Vector2,
   type Camera,
   type Texture,
@@ -23,6 +24,8 @@ import {
   type ReferenceImage,
   type ReferencePlane,
 } from '../state/references';
+import type { Settings } from '../state/settings';
+import { gridOffset, snapValue } from '../tools/transform';
 
 interface Entry {
   mesh: Mesh<PlaneGeometry, MeshBasicMaterial>;
@@ -48,6 +51,12 @@ export class ReferencePlanesLayer {
   private selected: number | null = null;
   private disposed = false;
   private pointer: number | null = null;
+  private snapping = false;
+  private moveStep = 0.25;
+  private rotateStep = 15;
+  private grid = false;
+  private readonly dragPosition = new Vector3();
+  private readonly dragQuaternion = new Quaternion();
   private readonly rememberPointer = (e: PointerEvent) => {
     if (this.gizmo.enabled) this.pointer = e.pointerId;
   };
@@ -73,11 +82,32 @@ export class ReferencePlanesLayer {
     canvas.addEventListener('pointercancel', this.cancelPointer);
     canvas.addEventListener('lostpointercapture', this.cancelPointer);
     this.gizmo.addEventListener('change', request);
+    this.gizmo.addEventListener('mouseDown', () => {
+      const m = this.gizmo.object;
+      if (m) {
+        this.dragPosition.copy(m.position);
+        this.dragQuaternion.copy(m.quaternion);
+      }
+    });
     this.gizmo.addEventListener('objectChange', () => {
       const id = this.selected,
         entry = id === null ? null : this.entries.get(id);
       if (!entry || id === null) return;
       const m = entry.mesh;
+      if (this.snapping && this.gizmo.getMode() === 'translate') {
+        let offset = m.position.clone().sub(this.dragPosition);
+        if (this.grid) offset = gridOffset(offset, this.dragPosition, this.moveStep);
+        else {
+          offset.applyQuaternion(this.dragQuaternion.clone().invert());
+          offset.set(
+            snapValue(offset.x, this.moveStep),
+            snapValue(offset.y, this.moveStep),
+            snapValue(offset.z, this.moveStep),
+          );
+          offset.applyQuaternion(this.dragQuaternion);
+        }
+        m.position.copy(this.dragPosition).add(offset);
+      }
       m.position.clampScalar(-1e6, 1e6);
       m.scale.set(
         Math.max(0.01, Math.min(1e5, Math.abs(m.scale.x))),
@@ -177,6 +207,7 @@ export class ReferencePlanesLayer {
     if (mesh?.visible && mode !== null) {
       if (this.gizmo.object !== mesh) this.gizmo.attach(mesh);
       this.gizmo.setMode(mode);
+      this.gizmo.setSpace(this.grid && mode === 'translate' ? 'world' : 'local');
       this.gizmo.showZ = mode !== 'scale';
     } else this.gizmo.detach();
     this.gizmo.enabled = !!mesh?.visible && mode !== null;
@@ -209,6 +240,18 @@ export class ReferencePlanesLayer {
       this.gizmo.pointerHover(null);
     }
     return this.gizmo.enabled && (this.gizmo.dragging || this.gizmo.axis !== null);
+  }
+
+  configure(settings: Pick<Settings, 'snapMove' | 'snapRotate' | 'snapToGrid'>): void {
+    this.moveStep = settings.snapMove;
+    this.rotateStep = settings.snapRotate;
+    this.grid = settings.snapToGrid;
+    this.setSnapping(this.snapping);
+  }
+
+  setSnapping(on: boolean): void {
+    this.snapping = on;
+    this.gizmo.setRotationSnap(on ? this.rotateStep * DEG : null);
   }
 
   setCamera(camera: Camera, visible: boolean): void {

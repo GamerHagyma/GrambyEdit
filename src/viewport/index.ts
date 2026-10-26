@@ -317,7 +317,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const render = () => {
     frame = 0;
     renderer.info.reset();
-    grid.update(rig.target, rig.distance);
+    grid.update(rig.target, rig.distance, rig.persp.position);
     follow(rig.camera);
     gizmo.update(rig.camera);
     const wb = inWorkbench();
@@ -408,21 +408,20 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
           editingReferencePlaneSig.value = null;
           return true;
         }
-        const mode =
-          !e.ctrlKey &&
-          !e.metaKey &&
-          !e.altKey &&
-          !e.shiftKey &&
-          ({ g: 'translate', r: 'rotate', t: 'scale' } as const)[
-            e.key.toLowerCase() as 'g' | 'r' | 't'
-          ];
-        if (mode) {
-          setTool(mode === 'rotate' ? 'rotate' : mode === 'translate' ? 'move' : 'select');
-          referencePlaneModeSig.value = mode;
+        const resize =
+          !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 't';
+        if (resize) {
+          setTool('select');
+          referencePlaneModeSig.value = 'scale';
           return true;
         }
         const command = resolveKey(e, settingsSig.peek().cameraScheme);
-        if (command?.startsWith('tool.')) return false;
+        if (
+          command?.startsWith('tool.') ||
+          command === 'transform.grab' ||
+          command === 'transform.rotate'
+        )
+          return false;
         if (command && /^(edit|transform|select)\./.test(command)) return true;
         return controls().onKeyDown(e);
       }
@@ -552,6 +551,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const onHover = (e: PointerEvent) => {
     ctx.pointer = { x: e.clientX, y: e.clientY };
     socketCursorSig.value = ndc(e);
+    referencePlanes.setSnapping(e.ctrlKey || e.metaKey);
     if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) return;
     // Runs before a gizmo drag's own move handler, so Ctrl decides this move's snapping.
     transformGizmo.setSnapping(e.ctrlKey || e.metaKey);
@@ -626,7 +626,10 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       toolKey(e);
       request();
     }
-    if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(true);
+    if (e.key === 'Control' || e.key === 'Meta') {
+      transformGizmo.setSnapping(true);
+      referencePlanes.setSnapping(true);
+    }
   };
   const onKeyUp = (e: KeyboardEvent) => {
     if (e.key === 'Shift') {
@@ -634,10 +637,14 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       toolKey(e);
       request();
     }
-    if (e.key === 'Control' || e.key === 'Meta') transformGizmo.setSnapping(false);
+    if (e.key === 'Control' || e.key === 'Meta') {
+      transformGizmo.setSnapping(false);
+      referencePlanes.setSnapping(false);
+    }
     studio.onKeyUp(e);
   };
   const onBlur = () => {
+    referencePlanes.setSnapping(false);
     shiftSocketSig.value = false;
     rightDown = null;
     studio.releaseAll();
@@ -870,17 +877,23 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const stopReferencePlanes = effect(() => {
     const tool = toolSig.value;
     let editing = editingReferencePlaneSig.value;
-    if (inspectorTabSig.value !== 'reference' || !['select', 'move', 'rotate'].includes(tool)) {
+    const planes = referencePlanesSig.value;
+    if (
+      inspectorTabSig.value !== 'reference' ||
+      !['select', 'move', 'rotate'].includes(tool) ||
+      (editing !== null && !planes.get(editing)?.visible)
+    ) {
       editing = null;
       if (editingReferencePlaneSig.peek() !== null) editingReferencePlaneSig.value = null;
     }
-    if (editing !== null && previousPlane !== editing) cancelModal();
+    if (previousPlane !== editing) cancelModal();
     previousPlane = editing;
+    referencePlanes.configure(settingsSig.value);
     referencePlanes.sync(
       referencesSig.value,
       referencePlanesSig.value,
       editing,
-      referencePlaneModeSig.value,
+      modalActiveSig.value ? null : referencePlaneModeSig.value,
     );
     request();
   });

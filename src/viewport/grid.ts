@@ -1,5 +1,5 @@
 // The ground grid: a shader plane with 1-stud minor and 4-stud major lines that fades with distance.
-import { Color, DoubleSide, Mesh, PlaneGeometry, ShaderMaterial, type Vector3 } from 'three';
+import { Color, DoubleSide, Mesh, PlaneGeometry, ShaderMaterial, Vector3 } from 'three';
 
 const VERTEX = /* glsl */ `
 varying vec3 vWorld;
@@ -11,6 +11,7 @@ void main() {
 
 const FRAGMENT = /* glsl */ `
 uniform float uFade;
+uniform vec3 uEye;
 uniform vec3 uMinor;
 uniform vec3 uMajor;
 uniform vec3 uAxisX;
@@ -25,7 +26,7 @@ float lines(vec2 p, float size) {
 
 void main() {
   vec2 p = vWorld.xz;
-  float d = length(p - cameraPosition.xz);
+  float d = length(p - uEye.xz);
   float fade = 1.0 - smoothstep(uFade * 0.45, uFade, d);
   float minor = lines(p, 1.0) * (1.0 - smoothstep(uFade * 0.12, uFade * 0.35, d));
   float major = lines(p, 4.0);
@@ -44,8 +45,8 @@ void main() {
 
 export interface Grid {
   readonly mesh: Mesh;
-  /** Re-centres the plane under the view and sets the fade distance from the camera distance. */
-  update(target: Vector3, distance: number): void;
+  /** Re-centres the plane; `eye` is the navigation eye at the displayed view distance in either projection. */
+  update(target: Vector3, distance: number, eye: Vector3): void;
   setTheme(theme: 'dark' | 'light'): void;
 }
 
@@ -54,6 +55,7 @@ export function createGrid(): Grid {
   geometry.rotateX(-Math.PI / 2);
   const uniforms = {
     uFade: { value: 80 },
+    uEye: { value: new Vector3() },
     uMinor: { value: new Color() },
     uMajor: { value: new Color() },
     uAxisX: { value: new Color(0xd9534f) },
@@ -72,7 +74,9 @@ export function createGrid(): Grid {
   mesh.renderOrder = -1;
   const grid: Grid = {
     mesh,
-    update(target, distance) {
+    update(target, distance, eye) {
+      // Orthographic cameras are backed off 10,000 studs; fade from the navigation eye instead.
+      uniforms.uEye.value.copy(eye);
       const fade = Math.min(3000, Math.max(60, distance * 6));
       uniforms.uFade.value = fade;
       mesh.position.set(Math.round(target.x), 0, Math.round(target.z));

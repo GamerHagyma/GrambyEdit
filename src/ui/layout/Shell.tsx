@@ -129,7 +129,7 @@ export function Shell({
   });
   const hint =
     editingReferencePlaneSig.value !== null
-      ? 'Reference plane · 1: select · 2: move · 3: rotate · T: resize · Esc: deselect'
+      ? 'Reference plane · 1/2/3: select/move/rotate · G/R: transform · Ctrl: snap · T: resize'
       : (statusHintSig.value ??
         (multiPiece
           ? 'Drag piece to socket/surface (Select/Move) · G/R: move/rotate · Double-click: whole part'

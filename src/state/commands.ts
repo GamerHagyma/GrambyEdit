@@ -27,8 +27,8 @@ import { settingsSig, updateSettings } from './settings';
 import { surfaceSig } from './surfaces';
 import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
 import { toast } from './toasts';
-import { openDialog } from './ui';
-import { editingReferencePlaneSig, referencePlaneModeSig } from './references';
+import { openDialog, inspectorTabSig } from './ui';
+import { editingReferencePlaneSig, referencePlaneModeSig, referencePlanesSig } from './references';
 
 export interface Command {
   readonly id: string;
@@ -71,6 +71,14 @@ const onePoint = () => selectionSig.value.parts.size === 0 && selectionSig.value
 /** The Surface tool's chosen corners, which G moves. */
 const cornersChosen = () => toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
 const anyParts = () => docSig.value.order.length > 0;
+const referenceChosen = () => {
+  const id = editingReferencePlaneSig.value;
+  return (
+    inspectorTabSig.value === 'reference' &&
+    id !== null &&
+    !!referencePlanesSig.value.get(id)?.visible
+  );
+};
 
 /** The part under the pointer in the viewport, for L and Ctrl+L. */
 function partUnderPointer(): PartId | null {
@@ -347,13 +355,13 @@ registerCommand({
 registerCommand({
   id: 'transform.grab',
   label: 'Move (G)',
-  enabled: () => anySelected() || onePoint() || cornersChosen(),
+  enabled: () => anySelected() || onePoint() || cornersChosen() || referenceChosen(),
   run: () => void startModal('move'),
 });
 registerCommand({
   id: 'transform.rotate',
   label: 'Rotate (R)',
-  enabled: () => anySelected() || onePoint(),
+  enabled: () => anySelected() || onePoint() || referenceChosen(),
   run: () => void startModal('rotate'),
 });
 for (const [axis, label] of [

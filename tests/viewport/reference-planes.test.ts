@@ -13,6 +13,7 @@ import {
   referencesSig,
   referenceErrorSig,
 } from '../../src/state/references';
+import { Quaternion, Euler, Vector3 } from 'three';
 
 afterEach(() => {
   clearReferences();
@@ -124,3 +125,44 @@ test('the plane picker finds the nearest visible image and Select has an outline
   expect(layer.pick(new Vector2(), camera)).toBeNull();
   layer.dispose();
 });
+
+test.each([false, true])(
+  'plane gizmo follows local step snapping or absolute world grid (world=%s)',
+  (grid) => {
+    vi.spyOn(TextureLoader.prototype, 'load').mockImplementation(
+      () => new Texture<HTMLImageElement>(),
+    );
+    addReferenceUrl('https://example.com/a.png');
+    const id = activeReferenceSig.peek()!.id;
+    insertReferencePlane(id, [0.13, 0.17, 0.19], [0, 30, 0]);
+    const layer = new ReferencePlanesLayer(
+      new PerspectiveCamera(),
+      document.createElement('canvas'),
+      vi.fn(),
+    );
+    layer.configure({ snapMove: 0.25, snapRotate: 15, snapToGrid: grid });
+    layer.sync(referencesSig.peek(), referencePlanesSig.peek(), id, 'translate');
+    const controls = (
+      layer.group.children.find((c) => 'controls' in c) as unknown as {
+        controls: TransformControls;
+      }
+    ).controls;
+    expect(controls.space).toBe(grid ? 'world' : 'local');
+    layer.setSnapping(true);
+    expect(controls.rotationSnap).toBeCloseTo(Math.PI / 12);
+    const mesh = layer.group.getObjectByName(`reference-image-${id}`) as Mesh;
+    controls.dispatchEvent({ type: 'mouseDown', mode: 'translate' });
+    const origin = mesh.position.clone(),
+      q = new Quaternion().setFromEuler(new Euler(0, Math.PI / 6, 0));
+    mesh.position.add(new Vector3(1.1, 0.4, -1.22).applyQuaternion(q));
+    controls.dispatchEvent({ type: 'objectChange' });
+    const landed = referencePlanesSig.peek().get(id)!.position;
+    const values = grid
+      ? landed
+      : new Vector3(...landed).sub(origin).applyQuaternion(q.invert()).toArray();
+    for (const value of values) expect(value / 0.25).toBeCloseTo(Math.round(value / 0.25), 8);
+    layer.setSnapping(false);
+    expect(controls.rotationSnap).toBeNull();
+    layer.dispose();
+  },
+);

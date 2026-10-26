@@ -1,0 +1,7 @@
+# Reference plane modal transforms and projection grid
+
+- Reuse the existing modal transform engine with a reference-plane target, rather than add a second mouse/axis/numeric-input implementation. G/R start mouse-following move/rotate; X/Y/Z constraints, typed amounts, Ctrl snapping, left click/Enter confirmation and right click/Esc cancellation match parts. Plane previews remain local and update the existing fields; cancellation restores the initial transform. Selection/tab/visibility changes cancel safely.
+- Connect plane gizmos to the same snap settings as parts: hold Ctrl (Cmd) for snap steps; with World grid enabled, moves land on the absolute world grid on every axis. Save each drag's starting transform for relative/local snapping when World grid is off.
+- Preserve Studio S camera movement, T resize and normal 1/2/3 tools. Hide the plane gizmo during a modal transform.
+- Grid bug: the shader fades by physical camera X/Z. Orthographic cameras sit 10,000 studs behind the target, so oblique views fade the grid and its world axes to zero. Feed the navigation eye at the displayed view distance to the shader in both projections; do not change orthographic camera placement or clipping.
+- Verify modal confirm/cancel, numeric/axis rotation, world-grid and relative snapping, gizmo drag settings, selection/deletion lifecycle, orthographic oblique/top rendering, blueprint export/collaboration isolation, and full checks/deployment.

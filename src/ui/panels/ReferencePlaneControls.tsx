@@ -127,8 +127,9 @@ export function ReferencePlaneControls({ id }: { id: number }) {
       )}
       <p class="muted">
         Local only; excluded from exports and collaboration. In the Reference tab, click a plane and
-        use Select / Move / Rotate (1 / 2 / 3). G / R also move or rotate; T resizes. Esc finishes
-        editing.
+        use Select / Move / Rotate (1 / 2 / 3). G / R starts an interactive move / rotation: click
+        or Enter confirms, right-click or Esc cancels. Hold Ctrl to snap; World grid snaps to
+        absolute grid positions. T resizes.
       </p>
     </section>
   );
