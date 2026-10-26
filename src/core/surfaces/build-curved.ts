@@ -1,6 +1,6 @@
 // Keep desired frames until the single calibrated mounting/rounding pass.
 import { Matrix4, Vector3 } from 'three';
-import type { Catalog, Conventions } from '../catalog-types';
+import type { Catalog, Conventions, Vec3 } from '../catalog-types';
 import { cfToMatrix4, roundCf } from '../cframe';
 import { matingMatrix, pointFrameFor } from '../conventions';
 import { mountSubDoc, tintColors } from '../generators/build';
@@ -19,6 +19,14 @@ export interface CurvedBuildSpec {
 export interface SurfacePrecision {
   readonly posDecimals: number;
   readonly rotDecimals: number;
+}
+export interface CurvedCalibration {
+  readonly sub: readonly number[];
+  readonly socket: readonly number[];
+  readonly center: Vec3;
+  readonly conventions: Conventions;
+  readonly precision: SurfacePrecision;
+  readonly staggered: boolean;
 }
 type BuildResult =
   { ok: true; sub: Doc; count: number; rows: number } | { ok: false; error: string };
@@ -69,32 +77,56 @@ export function curvedPoseValidator(
   cat: Catalog,
   conv: Conventions,
   opts: SurfacePrecision,
-): { ok: true; validate: (frame: Matrix4, tile: Tile) => Matrix4 } | { ok: false; error: string } {
+):
+  | { ok: true; calibration: CurvedCalibration; validate: (frame: Matrix4, tile: Tile) => Matrix4 }
+  | { ok: false; error: string } {
   const info = mounting(spec, cat, opts);
   if (!info.ok) return info;
   const { cap } = info;
-  const toPart = new Matrix4().makeTranslation(-cap.center[0], -cap.center[1], -cap.center[2]);
+  const calibration: CurvedCalibration = {
+    sub: [...subPartMatrix(cat, info.host.type, info.host.partName).m.elements],
+    socket: [...childSocketMatrix(cat, SURFACE_ELEMENT, info.socket, 'point').m.elements],
+    center: cap.center,
+    conventions: conv,
+    precision: opts,
+    staggered: spec.colorEnabled !== false && spec.color.mode !== 'single',
+  };
+  return { ok: true, calibration, validate: poseValidatorFromCalibration(calibration) };
+}
+
+/** Reconstruct inside the worker from small plain data, without sending the catalog. */
+export function poseValidatorFromCalibration(
+  calibration: CurvedCalibration,
+): (frame: Matrix4, tile: Tile) => Matrix4 {
+  const { center, conventions: conv, precision: opts } = calibration;
+  const toPart = new Matrix4().makeTranslation(-center[0], -center[1], -center[2]);
   const toCenter = toPart.clone().invert();
-  const sub = subPartMatrix(cat, info.host.type, info.host.partName).m;
-  const socket = childSocketMatrix(cat, SURFACE_ELEMENT, info.socket, 'point').m;
+  const sub = new Matrix4().fromArray(calibration.sub);
+  const socket = new Matrix4().fromArray(calibration.socket);
   const mate = matingMatrix(conv),
     unsocket = socket.clone().invert();
-  return {
-    ok: true,
-    validate: (frame, tile) => {
-      const part = staggeredFrame(frame, tile, spec).multiply(toPart);
-      const point = roundCf(
-        pointFrameFor(new Matrix4(), sub, part, socket, {}, conv),
-        opts.posDecimals,
-        opts.rotDecimals,
+  return (frame, tile) => {
+    const part = frame.clone();
+    if (calibration.staggered) {
+      const lift = STAGGER * ((tile.col % 2) + 2 * (tile.row % 2));
+      part.setPosition(
+        new Vector3()
+          .setFromMatrixPosition(part)
+          .addScaledVector(new Vector3().setFromMatrixColumn(part, 0), lift),
       );
-      return sub
-        .clone()
-        .multiply(cfToMatrix4(point))
-        .multiply(mate)
-        .multiply(unsocket)
-        .multiply(toCenter);
-    },
+    }
+    part.multiply(toPart);
+    const point = roundCf(
+      pointFrameFor(new Matrix4(), sub, part, socket, {}, conv),
+      opts.posDecimals,
+      opts.rotDecimals,
+    );
+    return sub
+      .clone()
+      .multiply(cfToMatrix4(point))
+      .multiply(mate)
+      .multiply(unsocket)
+      .multiply(toCenter);
   };
 }
 

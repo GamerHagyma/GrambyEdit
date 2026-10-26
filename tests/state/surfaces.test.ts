@@ -23,6 +23,14 @@ import { pickSig } from '../../src/tools/pick';
 import { cornerWorlds } from '../../src/tools/surface';
 import { docOf, part } from '../helpers/doc';
 import { realCatalog } from '../helpers/real-catalog';
+import {
+  setSurfaceCurves,
+  surfaceJobs,
+  applySurfaceEdit,
+  activeSurfacePatchSig,
+  surfaceDraftSig,
+} from '../../src/state/surface-draft';
+import { TestSurfaceWorker } from '../helpers/surface-worker';
 
 let cat: Catalog;
 beforeAll(async () => {
@@ -33,6 +41,10 @@ beforeEach(() => {
   resetSurfacesForTests();
   baseCatalogSig.value = cat;
   loadDoc(docOf(part(1, 'Part')));
+});
+afterEach(() => {
+  surfaceJobs.dispose();
+  vi.unstubAllGlobals();
 });
 
 /** Picks the Part's top face at its centre. */
@@ -157,4 +169,44 @@ test('Create hides the corners until Undo takes the caps out again', () => {
   expect(surfaceSig.value.selected).toEqual([]);
   undo();
   expect(cornerWorlds()).toHaveLength(4);
+});
+
+test('curved preview is pending until current worker output, then Create and Undo use those native frames', async () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  pickTop();
+  setSurfaceCurves(true, surfaceSig.value.corners);
+  expect(surfaceBuildSig.value).toBeNull();
+  expect(surfaceJobs.state.value.status).toBe('pending');
+  createSurface();
+  expect(docSig.value.order).toHaveLength(1);
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  const built = surfaceBuildSig.value!;
+  if (!built.ok) throw new Error(built.error);
+  const count = built.count;
+  createSurface();
+  expect(docSig.value.order).toHaveLength(count + 1);
+  expect(surfaceCreatedSig.value).toBe(count);
+  expect(surfacePreviewSig.value).toBeNull();
+  undo();
+  await vi.waitFor(() => expect(surfacePreviewSig.value).not.toBeNull());
+  expect(docSig.value.order).toHaveLength(1);
+  const d = activeSurfacePatchSig.value!,
+    id = d.grid[0][1],
+    p = d.points[id];
+  applySurfaceEdit({ kind: 'move', positions: { [id]: [p[0], p[1] + 0.05, p[2]] } });
+  expect(surfaceBuildSig.value).toBeNull();
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  expect(surfaceDraftSig.value.curved).toBe(true);
+});
+
+test('a replacement workspace with the same parent ID invalidates the picked surface and its worker', () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  pickTop();
+  setSurfaceCurves(true, surfaceSig.value.corners);
+  loadDoc(docOf(part(1, 'Part')));
+  expect(surfaceHostSig.value).toBeNull();
+  expect(surfaceBuildSig.value).toBeNull();
+  expect(surfaceJobs.state.value.status).toBe('idle');
+  createSurface();
+  expect(docSig.value.order).toHaveLength(1);
 });
