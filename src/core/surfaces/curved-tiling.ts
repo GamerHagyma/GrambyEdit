@@ -3,7 +3,14 @@
 import { Matrix4, Vector3 } from 'three';
 import type { Vec3 } from '../catalog-types';
 import type { CapSize } from './build';
-import { evaluatePatch, splitCubic, validatePatch, type Cubic, type PatchDraft } from './patches';
+import {
+  evaluatePatch,
+  evaluatePatchSpan,
+  splitCubic,
+  validatePatch,
+  type Cubic,
+  type PatchDraft,
+} from './patches';
 import type { Tile } from './tiling';
 
 export interface CurvedOptions {
@@ -170,6 +177,42 @@ function domainAt(
 }
 class Cancelled extends Error {}
 
+/** Extend convex ridge plates until their outer faces meet, including native thickness. */
+function creaseExtension(
+  d: PatchDraft,
+  axis: 'u' | 'v',
+  at: number,
+  other: number,
+  before: boolean,
+  tangent: Vector3,
+  thickness: number,
+  pad: number,
+): number {
+  const breaks = axis === 'u' ? d.uBreaks : d.vBreaks;
+  const joins = axis === 'u' ? d.uJoins : d.vJoins;
+  const k = breaks.findIndex((b) => touches(b, at));
+  if (k <= 0 || k === breaks.length - 1 || joins[k - 1] !== 'crease') return pad;
+  const transverse = axis === 'u' ? d.vBreaks : d.uBreaks;
+  const found = transverse.findIndex((b) => b > other);
+  const j = found === -1 ? transverse.length - 2 : Math.max(0, found - 1);
+  const t = (other - transverse[j]) / (transverse[j + 1] - transverse[j]);
+  const a =
+    axis === 'u' ? evaluatePatchSpan(d, k - 1, j, 1, t) : evaluatePatchSpan(d, j, k - 1, t, 1);
+  const b = axis === 'u' ? evaluatePatchSpan(d, k, j, 0, t) : evaluatePatchSpan(d, j, k, t, 0);
+  const na = vector(a.du).cross(vector(a.dv)).normalize(),
+    nb = vector(b.du).cross(vector(b.dv)).normalize();
+  const denominator = 1 + na.dot(nb);
+  if (denominator < 1e-6) return Infinity;
+  const offset = na.add(nb).multiplyScalar(thickness / (2 * denominator));
+  const sample = before ? a : b;
+  const toward = vector(axis === 'u' ? sample.du : sample.dv)
+    .normalize()
+    .multiplyScalar(before ? 1 : -1);
+  // Concave joins naturally hide the overlap; insetting them would open the guide.
+  if (offset.dot(toward) <= 0) return pad;
+  return Math.max(pad, Math.abs(offset.dot(tangent)));
+}
+
 export async function tileCurved(
   d: PatchDraft,
   cap: CapSize,
@@ -299,20 +342,29 @@ export async function tileCurved(
       // An exactly flush boundary can open after rounding the native point pose.
       // Reserve a small overlap; validation still rejects precision too coarse for it.
       const pad = Math.min(0.005, cap.width * 0.01, cap.height * 0.01);
+      const extU0 = edgeU0 ? creaseExtension(d, 'u', u0, v, false, z, cap.thickness, pad) : pad;
+      const extU1 = edgeU1 ? creaseExtension(d, 'u', u1, v, true, z, cap.thickness, pad) : pad;
+      const extV0 = edgeV0 ? creaseExtension(d, 'v', v0, u, false, y, cap.thickness, pad) : pad;
+      const extV1 = edgeV1 ? creaseExtension(d, 'v', v1, u, true, y, cap.thickness, pad) : pad;
+      if (![extU0, extU1, extV0, extV1].every((n) => Number.isFinite(n) && n <= footprintLimit))
+        return fail(
+          'resolution-limit',
+          'This crease is too tight for full-thickness native GasCaps.',
+        );
       const dz = clamp(
         edgeU0 && !edgeU1
-          ? lo.z + cap.width / 2 - pad
+          ? lo.z + cap.width / 2 - extU0
           : edgeU1 && !edgeU0
-            ? hi.z - cap.width / 2 + pad
+            ? hi.z - cap.width / 2 + extU1
             : 0,
         hi.z - cap.width / 2,
         lo.z + cap.width / 2,
       );
       const dy = clamp(
         edgeV0 && !edgeV1
-          ? hi.y - cap.height / 2 + pad
+          ? hi.y - cap.height / 2 + extV0
           : edgeV1 && !edgeV0
-            ? lo.y + cap.height / 2 - pad
+            ? lo.y + cap.height / 2 - extV1
             : 0,
         hi.y - cap.height / 2,
         lo.y + cap.height / 2,

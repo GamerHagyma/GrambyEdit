@@ -129,3 +129,58 @@ test('long geometry work yields and cancellation never returns partial success',
   expect(r.ok).toBe(false);
   if (!r.ok) expect(r.code).toBe('cancelled');
 });
+
+test.each([1, 2, 3.464101615])(
+  'a convex ridge of height %s aligns full-thickness outer corners without a lip',
+  async (height) => {
+    const d = fixture('crease90');
+    const points = Object.fromEntries(
+      Object.entries(d.points).map(([id, p]) => [id, [p[0], (p[1] * height) / 2, p[2]] as Vec3]),
+    );
+    const r = await tileCurved({ ...d, points }, cap, { maxElements: 1000 });
+    if (!r.ok) throw new Error(r.error);
+    const before = Math.max(...r.tiles.filter((t) => t.v < 0.5).map((t) => t.v));
+    const after = Math.min(...r.tiles.filter((t) => t.v > 0.5).map((t) => t.v));
+    for (const tile of r.tiles.filter((t) => t.v === before || t.v === after)) {
+      const toward = tile.v < 0.5 ? -1 : 1;
+      const outerEdge = new Vector3(cap.thickness / 2, (toward * cap.height) / 2, 0).applyMatrix4(
+        tile.frame,
+      );
+      expect(outerEdge.z).toBeCloseTo(-2, 6);
+      expect(outerEdge.y).toBeCloseTo(
+        height + (cap.thickness / 2) * Math.sqrt(1 + (height / 2) ** 2),
+        6,
+      );
+    }
+  },
+);
+
+test('concave crease compensation does not open a gap beneath the join', async () => {
+  const d = fixture('crease90');
+  const points = Object.fromEntries(
+    Object.entries(d.points).map(([id, p]) => [id, [p[0], -p[1], p[2]] as Vec3]),
+  );
+  const r = await tileCurved({ ...d, points }, cap, { maxElements: 1000 });
+  if (!r.ok) throw new Error(r.error);
+  const center = new Vector3(3, -2, -2);
+  expect(
+    r.tiles.some((t) => {
+      const q = center.clone().applyMatrix4(t.frame.clone().invert());
+      return (
+        Math.abs(q.x) <= cap.thickness / 2 &&
+        Math.abs(q.y) <= cap.height / 2 &&
+        Math.abs(q.z) <= cap.width / 2
+      );
+    }),
+  ).toBe(true);
+});
+
+test('a very sharp crease cannot hide a long native-plate spike beyond its guide', async () => {
+  const d = fixture('crease90');
+  const points = Object.fromEntries(
+    Object.entries(d.points).map(([id, p]) => [id, [p[0], p[1] * 3.7320508, p[2]] as Vec3]),
+  );
+  const r = await tileCurved({ ...d, points }, cap, { maxElements: 1000 });
+  expect(r.ok).toBe(false);
+  if (!r.ok) expect(r.code).toBe('resolution-limit');
+});
