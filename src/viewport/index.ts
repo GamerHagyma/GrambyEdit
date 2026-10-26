@@ -511,7 +511,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       inspectorTabSig.peek() === 'reference' &&
       !inWorkbench() &&
       ['select', 'move', 'rotate'].includes(toolSig.peek()) &&
-      !modalActiveSig.peek()
+      !modalActiveSig.peek() &&
+      transformStateSig.peek() !== 'transform'
     ) {
       if (referencePlanes.busy(ndc(e))) return;
       const plane = referencePlanes.pick(ndc(e), rig.camera);
