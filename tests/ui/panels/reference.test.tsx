@@ -7,6 +7,7 @@ import {
   activeReferenceSig,
   referenceFloatingSig,
   referencePlanesSig,
+  updateReferencePlane,
 } from '../../../src/state/references';
 import { docSig, historySig, resetStoreForTests } from '../../../src/state/store';
 
@@ -15,6 +16,28 @@ beforeEach(() => {
   resetStoreForTests();
 });
 afterEach(clearReferences);
+
+test('Ctrl width and height commits preserve current plane proportions; releasing Ctrl allows independent sizing', () => {
+  addReferenceUrl('https://example.com/front.png');
+  render(<ReferencePanel />);
+  fireEvent.click(screen.getByRole('button', { name: 'Insert image plane' }));
+  const id = activeReferenceSig.peek()!.id;
+  act(() => updateReferencePlane(id, { width: 12, height: 6 }));
+  const width = screen.getByLabelText('Plane width (studs)');
+  fireEvent.keyDown(width, { key: 'Control', ctrlKey: true });
+  fireEvent.input(width, { target: { value: '20' } });
+  fireEvent.blur(width);
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 20, height: 10 });
+  const height = screen.getByLabelText('Plane height (studs)');
+  fireEvent.keyDown(height, { key: 'Control', ctrlKey: true });
+  fireEvent.input(height, { target: { value: '4' } });
+  fireEvent.blur(height);
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 8, height: 4 });
+  fireEvent.keyUp(height, { key: 'Control', ctrlKey: false });
+  fireEvent.input(height, { target: { value: '3' } });
+  fireEvent.blur(height);
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 8, height: 3 });
+});
 
 test('reference plane controls edit local dimensions and angles and remove the plane alone', () => {
   addReferenceUrl('https://example.com/front.png');

@@ -7,3 +7,4 @@ tools/__pycache__/
 playwright-report/
 test-results/
 *.log
+__pycache__/

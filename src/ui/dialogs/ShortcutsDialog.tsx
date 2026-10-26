@@ -115,7 +115,7 @@ const TOOL_KEYS: Section = {
 const USAGE: readonly Section[] = [
   {
     title: 'Mirroring and radial copies',
-    note: 'Mirror settings, guides and previews are local to your browser. Only created parts sync with collaborators.',
+    note: 'Mirror settings, guides and previews are local to your browser. Created parts and committed edits sync with collaborators.',
     rows: [
       {
         keys: ['Anchor'],
@@ -145,6 +145,11 @@ const USAGE: readonly Section[] = [
         keys: ['Pending'],
         action:
           'With Repeat new placements off, placed parts stay in a pending hologram across selection changes. Apply pending & selection approves them together. Forget pending previews clears that list. The live mirrored cursor appears in both modes.',
+      },
+      {
+        keys: ['Edits'],
+        action:
+          'Mirror moves and deletions updates existing matching counterparts for G/R, gizmos, drag reattachment, Orientation fields and Delete. Works with plane and radial symmetry, independently of Repeat new placements. Preview stays local; each committed edit is one Undo action. Explicitly selected parts move once. Missing or ambiguous matches stay untouched. Moving the anchor does not expand the edit.',
       },
       {
         keys: ['Sockets'],
@@ -219,7 +224,7 @@ const USAGE: readonly Section[] = [
       {
         keys: ['Image planes'],
         action:
-          'Reference → Insert image plane adds a local plane at the camera focus. Click planes only in the Reference tab. 1 / 2 / 3 select, move or rotate; T resizes. G / R starts a mouse-driven transform with X/Y/Z constraints and typed amounts: Enter/left click confirms, Esc/right click cancels. Hold Ctrl to snap; World grid snaps moves to absolute grid positions, including gizmo drags. S keeps its Studio camera function. Planes never enter exports or collaboration. Image links need CORS support; choose a local file if blocked.',
+          'Reference → Insert image plane adds a local plane at the camera focus. Click planes only in the Reference tab. 1 / 2 / 3 select, move or rotate; T resizes. Hold Ctrl while scaling or committing width/height to preserve the current aspect ratio. G / R starts a mouse-driven transform with X/Y/Z constraints and typed amounts: Enter/left click confirms, Esc/right click cancels. Hold Ctrl to snap; World grid snaps moves to absolute grid positions, including gizmo drags. S keeps its Studio camera function. Planes never enter exports or collaboration. Image links need CORS support; choose a local file if blocked.',
       },
       {
         keys: ['Sockets'],

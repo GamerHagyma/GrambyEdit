@@ -20,6 +20,7 @@ import {
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import {
   referenceErrorSig,
+  referencePlaneSize,
   updateReferencePlane,
   type ReferenceImage,
   type ReferencePlane,
@@ -57,6 +58,7 @@ export class ReferencePlanesLayer {
   private grid = false;
   private readonly dragPosition = new Vector3();
   private readonly dragQuaternion = new Quaternion();
+  private dragSize = { width: 1, height: 1 };
   private readonly rememberPointer = (e: PointerEvent) => {
     if (this.gizmo.enabled) this.pointer = e.pointerId;
   };
@@ -87,6 +89,7 @@ export class ReferencePlanesLayer {
       if (m) {
         this.dragPosition.copy(m.position);
         this.dragQuaternion.copy(m.quaternion);
+        this.dragSize = { width: m.scale.x, height: m.scale.y };
       }
     });
     this.gizmo.addEventListener('objectChange', () => {
@@ -109,11 +112,13 @@ export class ReferencePlanesLayer {
         m.position.copy(this.dragPosition).add(offset);
       }
       m.position.clampScalar(-1e6, 1e6);
-      m.scale.set(
-        Math.max(0.01, Math.min(1e5, Math.abs(m.scale.x))),
-        Math.max(0.01, Math.min(1e5, Math.abs(m.scale.y))),
-        1,
+      const size = referencePlaneSize(
+        this.dragSize,
+        m.scale.x,
+        m.scale.y,
+        this.snapping && this.gizmo.getMode() === 'scale',
       );
+      m.scale.set(size.width, size.height, 1);
       updateReferencePlane(id, {
         position: m.position.toArray(),
         rotation: [m.rotation.x / DEG, m.rotation.y / DEG, m.rotation.z / DEG],

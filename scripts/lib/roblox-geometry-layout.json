@@ -1,0 +1,26 @@
+{
+  "format": "grambyedit-readonly-geometry-layout-v1",
+  "validatedExecutableSHA256": "b0f5f11a15a22545d7b15e2c4bae24f7ba153f834ad64fd3a148b48a262e94d4",
+  "validatedOn": "2026-10-26",
+  "dataModelType": ".?AVDataModel@RBX@@",
+  "typeDescriptorRva": 136450032,
+  "vtables": [
+    {
+      "rva": 118279784,
+      "offset": 720
+    },
+    {
+      "rva": 118279080,
+      "offset": 8
+    },
+    {
+      "rva": 118279152,
+      "offset": 496
+    },
+    {
+      "rva": 118279856,
+      "offset": 0
+    }
+  ],
+  "note": "Version-specific read-only geometry layout, verified against the user-spawned 171-part probe. Stop on executable/hash/layout mismatch; see docs/NATIVE_GEOMETRY_PROBING.md."
+}

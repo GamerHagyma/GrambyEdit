@@ -6,6 +6,8 @@ import { propApplies, setProp, UNSET } from '../../core/ops/props';
 import type { PropRow } from '../../core/propview';
 import type { Json, PartId, RGB } from '../../core/types';
 import { commit } from '../../state/store';
+import { commitSymmetryEdit } from '../../state/symmetry';
+import type { Draft } from '../../core/ops/transact';
 import { Icon } from '../icons';
 import { ColorField } from './ColorField';
 import { KeyCapture } from './KeyCapture';
@@ -77,22 +79,24 @@ export function PropField({ cat, row, ids }: PropFieldProps): JSX.Element {
     : meta.default === undefined
       ? 'default'
       : `default ${String(meta.default)}`;
+  const save = (label: string, edit: (d: Draft) => void) =>
+    meta.widget === 'orientation' ? commitSymmetryEdit(label, ids, edit) : commit(label, edit);
 
   const write = (next: Json): void => {
     // A value that every applicable part already holds is no edit, so it records nothing.
     if (value !== undefined && JSON.stringify(value) === JSON.stringify(next)) return;
-    commit(`Set ${label}`, (d) => {
+    save(`Set ${label}`, (d) => {
       setProp(d, cat, ids, key, next);
     });
   };
   const reset = (): void => {
-    commit(`Reset ${label}`, (d) => {
+    save(`Reset ${label}`, (d) => {
       setProp(d, cat, ids, key, UNSET);
     });
   };
   // Each applicable part turns from its own value, so the differences in a mixed selection survive.
   const turn = (delta: number): void => {
-    commit(`Set ${label}`, (d) => {
+    save(`Set ${label}`, (d) => {
       for (const partId of ids) {
         const part = d.get(partId);
         if (!part || !propApplies(cat, part, key)) continue;

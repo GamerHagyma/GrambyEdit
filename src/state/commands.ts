@@ -29,6 +29,7 @@ import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
 import { toast } from './toasts';
 import { openDialog, inspectorTabSig } from './ui';
 import { editingReferencePlaneSig, referencePlaneModeSig, referencePlanesSig } from './references';
+import { commitSymmetryEdit, mirroredDeleteIds, symmetryEditPlan } from './symmetry';
 
 export interface Command {
   readonly id: string;
@@ -203,8 +204,9 @@ registerCommand({
       requestPointDelete(Number(key.slice(0, at)), key.slice(at + 1));
       return;
     }
-    commit(`Delete ${parts(ids.length)}`, (d) => {
-      deleteParts(d, ids, posesSig.value);
+    const expanded = mirroredDeleteIds(ids);
+    commit(`Delete ${parts(expanded.length)}`, (d) => {
+      deleteParts(d, expanded, posesSig.value);
     });
   },
 });
@@ -377,9 +379,15 @@ for (const [axis, label] of [
       if (!cat) return;
       const poses = posesSig.value;
       const ids = topmost(docSig.value, selected());
-      commit(`Rotate ${parts(ids.length)}`, (d) => {
-        for (const id of ids) nativeRotate(d, cat, cat.conventions, poses, id, axis, 90);
-      });
+      const mirror = symmetryEditPlan(docSig.peek(), poses, ids);
+      commitSymmetryEdit(
+        `Rotate ${parts(ids.length)}`,
+        ids,
+        (d) => {
+          for (const id of ids) nativeRotate(d, cat, cat.conventions, poses, id, axis, 90);
+        },
+        mirror,
+      );
     },
   });
 }

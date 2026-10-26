@@ -42,6 +42,8 @@ import {
 import { canBeChild, canBeParent } from '../core/rules';
 import type { Conn, Doc, PartId, SocketId, Verdict } from '../core/types';
 import { posesSig } from '../state/derived';
+import { commitSymmetryEdit, symmetryEditPlan } from '../state/symmetry';
+import { type SymmetryEditPlan } from '../core/ops/symmetry-edits';
 import {
   hiddenSig,
   hoverPieceSig,
@@ -51,7 +53,7 @@ import {
   selectionSig,
   type Selection,
 } from '../state/selection';
-import { catalogSig, commit, docSig } from '../state/store';
+import { catalogSig, docSig } from '../state/store';
 import { shiftSocketSig, socketFocusSig, socketCursorSig } from '../state/socket-focus';
 import { toast } from '../state/toasts';
 import { loadPref, savePref } from '../storage/prefs';
@@ -286,6 +288,7 @@ const plural = (verb: string, n: number, noun = 'part') =>
 
 /** A transform in progress over the selection's topmost items; the doc changes only at `finish`. */
 export interface Session {
+  readonly mirror: SymmetryEditPlan | null;
   doc: Doc;
   selection: Selection;
   /** Topmost items: whole parts, and parts of which one piece moves (`pieces`). */
@@ -373,7 +376,16 @@ function sessionFor(selection: Selection): Session | null {
   const inPlace = new Set(
     ids.filter((id) => !pieces.has(id) && turnsInPlace(doc.parts.get(id)!, cat.conventions)),
   );
-  return { doc, selection, ids, moving, poses, inPlace, pieces };
+  return {
+    doc,
+    selection,
+    ids,
+    moving,
+    poses,
+    inPlace,
+    pieces,
+    mirror: symmetryEditPlan(doc, poses, ids),
+  };
 }
 
 export function beginSession(): Session | null {
@@ -395,11 +407,12 @@ export function previewMoving(
   moving: ReadonlyMap<PartId, PartId>,
   poses: Poses,
   deltaOf: (top: PartId) => Matrix4,
+  extra: ReadonlyMap<PartId, Matrix4> = new Map(),
 ): void {
   const vp = getViewport();
   if (!vp?.layer) return;
   const hidden = hiddenSig.peek();
-  const out = new Map<PartId, Matrix4>();
+  const out = new Map<PartId, Matrix4>(extra);
   const deltas = new Map<PartId, Matrix4>();
   for (const [id, top] of moving) {
     const world = poses.world.get(id);
@@ -410,6 +423,46 @@ export function previewMoving(
   }
   vp.layer.setPreview(out);
   vp.request();
+}
+
+/** Conjugating a source delta mirrors its motion without changing any document data. */
+function mirroredPreview(
+  plan: SymmetryEditPlan | null,
+  deltaOf: (id: PartId) => Matrix4,
+  pieces: Session['pieces'] = new Map(),
+) {
+  const out = {
+      worlds: new Map<PartId, Matrix4>(),
+      bodies: [] as { id: PartId; body: number; world: Matrix4 }[],
+    },
+    cat = catalogSig.peek();
+  if (!plan || !cat) return out;
+  const explicit = new Set(plan.sources);
+  for (const pair of plan.pairs) {
+    const delta = pair.transform
+      .clone()
+      .multiply(deltaOf(pair.source))
+      .multiply(pair.transform.clone().invert());
+    const piece = pieces.get(pair.source);
+    const below = piece
+      ? bodyDescendants(plan.doc, cat, pair.target, piece.body)
+      : poseDescendants(plan.doc, pair.target);
+    for (const id of below)
+      if (!explicit.has(id) && plan.poses.world.has(id))
+        out.worlds.set(id, delta.clone().multiply(plan.poses.world.get(id)!));
+    if (piece)
+      for (const body of piece.bodies) {
+        const before = bodyWorld(plan.poses, pair.target, body);
+        if (before)
+          out.bodies.push({ id: pair.target, body, world: delta.clone().multiply(before) });
+      }
+    else out.worlds.set(pair.target, delta.clone().multiply(plan.poses.world.get(pair.target)!));
+  }
+  return out;
+}
+function previewMirrorBodies(preview: ReturnType<typeof mirroredPreview>): void {
+  for (const { id, body, world } of preview.bodies)
+    getViewport()?.layer?.setBodyPreview(id, body, world);
 }
 
 const originDelta = (s: Session, delta: TransformDelta) => (top: PartId) =>
@@ -434,7 +487,10 @@ function previewPieces(s: Session, deltaOf: (id: PartId) => Matrix4): void {
 
 export function previewSession(s: Session, delta: TransformDelta): void {
   if (!rebaseSession(s)) return;
-  previewMoving(s.moving, s.poses, originDelta(s, delta));
+  const deltaOf = originDelta(s, delta);
+  const extra = mirroredPreview(s.mirror, deltaOf, s.pieces);
+  previewMoving(s.moving, s.poses, deltaOf, extra.worlds);
+  previewMirrorBodies(extra);
   previewPieces(s, originDelta(s, delta));
 }
 
@@ -442,7 +498,9 @@ export function previewSession(s: Session, delta: TransformDelta): void {
 export function cancelSession(s: Session): void {
   const current = rebaseSession(s) ?? s,
     poses = posesSig.peek();
-  previewMoving(current.moving, poses, () => new Matrix4());
+  const extra = mirroredPreview(current.mirror, () => new Matrix4(), current.pieces);
+  previewMoving(current.moving, poses, () => new Matrix4(), extra.worlds);
+  previewMirrorBodies(extra);
   previewPieces({ ...current, poses }, () => new Matrix4());
   transformStateSig.value = 'idle';
 }
@@ -458,13 +516,18 @@ export function finishSession(s: Session, delta: TransformDelta): void {
   const noun = s.pieces.size === s.ids.length ? 'piece' : 'part';
   const deltaOf = originDelta(s, delta);
   const whole = s.ids.filter((id) => !s.pieces.has(id));
-  const patch = commit(plural(verb, s.ids.length, noun), (d) => {
-    refused = applyTransform(d, cat, cat.conventions, s.poses, whole, deltaOf);
-    for (const [id, { body }] of s.pieces) {
-      const v = transformPiece(d, cat, cat.conventions, s.poses, id, body, deltaOf(id));
-      if (!v.ok) refused.push(v.message);
-    }
-  });
+  const patch = commitSymmetryEdit(
+    plural(verb, s.ids.length, noun),
+    s.ids,
+    (d) => {
+      refused = applyTransform(d, cat, cat.conventions, s.poses, whole, deltaOf);
+      for (const [id, { body }] of s.pieces) {
+        const v = transformPiece(d, cat, cat.conventions, s.poses, id, body, deltaOf(id));
+        if (!v.ok) refused.push(v.message);
+      }
+    },
+    s.mirror,
+  );
   if (patch === null) cancelSession(s);
   if (refused.length > 0) toast(refused.join('\n'), 'warn');
 }
@@ -515,6 +578,7 @@ export const reattachSig = signal<{
 } | null>(null);
 
 interface Reattach {
+  readonly mirror: SymmetryEditPlan | null;
   readonly doc: Doc;
   readonly group: Session | null;
   readonly ndc: Vector2;
@@ -562,6 +626,7 @@ function beginReattach(
   const check = body === null ? retargetCheckDoc(doc, cat, id) : bodyCheckDoc(doc, cat, id, body);
   const bodies = body === null ? [] : pieceBodies(doc, cat, id, body);
   return {
+    mirror: symmetryEditPlan(doc, poses, group?.ids ?? [id]),
     doc,
     group,
     ndc: ndc.clone(),
@@ -729,9 +794,23 @@ function updateReattach(r: Reattach, ndc: Vector2): void {
     : 'root' in t
       ? t.root
       : t.world.clone().multiply(before.clone().invert());
-  previewMoving(r.moving, r.poses, () => delta);
+  const pieces = reattachPieces(r);
+  const extra = mirroredPreview(r.mirror, () => delta, pieces);
+  previewMoving(r.moving, r.poses, () => delta, extra.worlds);
+  previewMirrorBodies(extra);
   if (r.group) previewPieces(r.group, () => delta);
   if (r.body !== null) previewBody(r, delta.clone().multiply(before));
+}
+
+function reattachPieces(r: Reattach): Session['pieces'] {
+  const pieces = new Map(r.group?.pieces);
+  if (r.body !== null)
+    pieces.set(r.id, {
+      body: r.body,
+      bodies: [...r.bodies],
+      origin: positionOf(bodyWorld(r.poses, r.id, r.body)!),
+    });
+  return pieces;
 }
 
 /** Draws the dragged body at `m` (its doc pose to undo the preview). */
@@ -747,7 +826,10 @@ function previewBody(r: Reattach, m: Matrix4): void {
 /** Puts the dragged parts (and body) back where the doc has them. */
 function undoPreview(r: Reattach): void {
   const poses = posesSig.peek();
-  previewMoving(r.moving, poses, () => new Matrix4());
+  const pieces = reattachPieces(r);
+  const extra = mirroredPreview(r.mirror, () => new Matrix4(), pieces);
+  previewMoving(r.moving, poses, () => new Matrix4(), extra.worlds);
+  previewMirrorBodies(extra);
   if (r.group) previewPieces({ ...r.group, poses }, () => new Matrix4());
   if (r.body !== null) {
     const world = bodyWorld(poses, r.id, r.body);
@@ -790,25 +872,31 @@ function endReattach(r: Reattach): void {
   try {
     patch =
       cat && t
-        ? commit(r.body === null ? 'Move 1 part' : `Move ${type} piece`, (d) => {
-            if ('root' in t) moveReattachGroup(d, r, cat, t.root, false);
-            else if (r.body !== null) {
-              verdict = retargetBody(d, cat, r.poses, r.id, r.body, t.pose);
-              if (!verdict.ok) throw new Error(verdict.message);
-              moveReattachGroup(
-                d,
-                r,
-                cat,
-                t.world.clone().multiply(bodyWorld(r.poses, r.id, r.body)!.clone().invert()),
-                true,
-              );
-            } else {
-              verdict = retargetPose(d, cat, cat.conventions, r.poses, r.id, t.pose);
-              if (!verdict.ok) throw new Error(verdict.message);
-              const delta = t.world.clone().multiply(r.poses.world.get(r.id)!.clone().invert());
-              moveReattachGroup(d, r, cat, delta, true);
-            }
-          })
+        ? commitSymmetryEdit(
+            r.body === null ? 'Move 1 part' : `Move ${type} piece`,
+            r.group?.ids ?? [r.id],
+            (d) => {
+              if ('root' in t) moveReattachGroup(d, r, cat, t.root, false);
+              else if (r.body !== null) {
+                verdict = retargetBody(d, cat, r.poses, r.id, r.body, t.pose);
+                if (!verdict.ok) throw new Error(verdict.message);
+                moveReattachGroup(
+                  d,
+                  r,
+                  cat,
+                  t.world.clone().multiply(bodyWorld(r.poses, r.id, r.body)!.clone().invert()),
+                  true,
+                );
+              } else {
+                verdict = retargetPose(d, cat, cat.conventions, r.poses, r.id, t.pose);
+                if (!verdict.ok) throw new Error(verdict.message);
+                const delta = t.world.clone().multiply(r.poses.world.get(r.id)!.clone().invert());
+                moveReattachGroup(d, r, cat, delta, true);
+              }
+            },
+            r.mirror,
+            { reattach: true, bodySources: new Set(reattachPieces(r).keys()) },
+          )
         : null;
   } catch (e) {
     undoPreview(r);
@@ -816,7 +904,6 @@ function endReattach(r: Reattach): void {
     return;
   }
   if (patch === null) undoPreview(r);
-  if (!verdict.ok) toast(verdict.message, 'warn');
 }
 
 /**

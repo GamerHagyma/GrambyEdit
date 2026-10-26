@@ -27,7 +27,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Placement and alignment** | Visible sockets, click-to-connect placement, editable connection points, and local or world-grid snapping. |
 | **Socket dragging** | Reattach parts, pieces or selections with Select or the Move center handle. Hold Shift for nearby compatible sockets to show through surfaces, grow toward the cursor and snap exclusively; adjust size and radius in Settings. |
 | **Assembly editing** | Select individual parts or attached branches, move and rotate them together, and edit shared properties. |
-| **Mirroring and radial copies** | Anchor a mirror plane or radial axis to a Part or Connector, preview copies, and repeat new placements automatically. Guides stay local during collaboration; created parts sync. |
+| **Mirroring and radial copies** | Anchor a mirror plane or radial axis to a Part or Connector, preview copies, repeat new placements, and mirror moves and deletions of matching parts. Guides stay local; committed changes sync. |
 | **Servo preview** | Hold red/blue simulation buttons or enable Sustain, inspect the live angle, and choose whether remembered rotations are exported. |
 | **Logic-part wires** | Thin internal wires follow moving pieces, turn orange beyond 10 studs, and report overstretched parts in the Issues tab. |
 | **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
@@ -61,7 +61,7 @@ The creation library and preferences are stored in your browser. Export a librar
 
 **Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Zoom and pan the image, or use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and any corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
 
-**Reference planes:** choose **Insert image plane** to place the active image at the camera's focus, facing the camera. With the **Reference tab selected**, click a plane to select it, then use the normal **Select / Move / Rotate** tools (**1 / 2 / 3**) or the plane's buttons. **G / R** starts an interactive move or rotation: move the mouse, constrain with **X / Y / Z**, or type an amount. **Enter / left-click** confirms; **Esc / right-click** cancels and restores the starting transform. Hold **Ctrl** (Cmd) to snap, using the toolbar's snap steps; **World grid** makes moves land on absolute grid coordinates on every axis. This works with both G/R and the drag gizmos. **T** activates resize; **S** remains available for Studio camera movement. Exact position, rotation, width and height fields are also available. Outside a transform, **Esc**, **Finish editing plane**, or switching inspector tabs deselects the plane; planes remain visible but cannot be clicked in other tabs. Adjust opacity, hide the plane, or remove it without deleting the reference image. Planes stay local and are excluded from exports and collaboration. Remote image servers must allow CORS for 3D textures; choosing a downloaded image file works without that restriction.
+**Reference planes:** choose **Insert image plane** to place the active image at the camera's focus, facing the camera. With the **Reference tab selected**, click a plane to select it, then use the normal **Select / Move / Rotate** tools (**1 / 2 / 3**) or the plane's buttons. **G / R** starts an interactive move or rotation: move the mouse, constrain with **X / Y / Z**, or type an amount. **Enter / left-click** confirms; **Esc / right-click** cancels and restores the starting transform. Hold **Ctrl** (Cmd) to snap, using the toolbar's snap steps; **World grid** makes moves land on absolute grid coordinates on every axis. This works with both G/R and the drag gizmos. **T** activates resize. Hold **Ctrl** while dragging a scale handle or committing width/height to keep the plane's current aspect ratio; release Ctrl to resize dimensions independently. **S** remains available for Studio camera movement. Exact position, rotation, width and height fields are also available. Outside a transform, **Esc**, **Finish editing plane**, or switching inspector tabs deselects the plane; planes remain visible but cannot be clicked in other tabs. Adjust opacity, hide the plane, or remove it without deleting the reference image. Planes stay local and are excluded from exports and collaboration. Remote image servers must allow CORS for 3D textures; choosing a downloaded image file works without that restriction.
 
 **Projection:** the toolbar's **Perspective / Orthographic** button switches projection without changing the camera target. The same toggle is available in **View → Toggle orthographic** or with **Numpad 5**.
 
@@ -116,6 +116,8 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 GasCaps keep their native size. Curves are approximated by overlapping flat plates; tight bends, folds and unsupported overhangs produce a diagnostic instead of an incomplete build. Coloring can be disabled, in which case the game assigns random GasCap colors. Export precision affects coverage; an unsupported precision cannot be created.
 
 ## Mirror and radial placement
+
+**Mirror moves and deletions** is enabled by default after choosing an anchor. It updates existing matching counterparts for single/group G/R transforms, gizmos, drag reattachment, Orientation fields and Delete, including radial copies. It is independent of **Repeat new placements**. Each edit is one Undo action; only committed part changes sync. Explicitly selected parts move once, the anchor is exempt, and missing or ambiguous matches stay untouched. Moving a selection that includes the anchor does not expand it.
 
 1. Select a **Part** or **Connector** and open the right panel's **Mirror** tab. Click **Use selected Part / Connector** to attach the guide to it.
 2. Choose **Mirror plane** and its local YZ/XZ/XY plane. Adjust the offset, use **Top face**, or expand **Rotate guide** to turn the plane. **Center** resets the offset and rotation. Moving the anchor moves the guide with it.
@@ -173,7 +175,7 @@ npm run build
 
 The source is organised into `src/core` for blueprint rules and geometry, `src/tools` for editing, `src/viewport` for rendering, and `src/ui` for panels. The asset pipeline is in `scripts`.
 
-Further documentation: [blueprint format](docs/RTG_BLUEPRINT_FORMAT.md), [editor design](docs/EDITOR_DESIGN.md), and [asset sources](docs/SOURCES.md).
+Further documentation: [blueprint format](docs/RTG_BLUEPRINT_FORMAT.md), [editor design](docs/EDITOR_DESIGN.md), and [asset sources](docs/SOURCES.md), and the [read-only native geometry probing runbook](docs/NATIVE_GEOMETRY_PROBING.md).
 
 ## Credits
 

@@ -4,6 +4,7 @@ import { getViewport } from '../../viewport/context';
 import {
   insertReferencePlane,
   updateReferencePlane,
+  referencePlaneSize,
   removeReferencePlane,
   referencePlanesSig,
   editingReferencePlaneSig,
@@ -111,7 +112,19 @@ export function ReferencePlaneControls({ id }: { id: number }) {
                 id={`reference-plane-${id}-${key}`}
                 max={key === 'opacity' ? 1 : 1e5}
                 step={key === 'opacity' ? 0.05 : 0.1}
-                onCommit={(v) => updateReferencePlane(id, { [key]: v })}
+                onCommit={(v, modifiers) =>
+                  updateReferencePlane(
+                    id,
+                    key === 'opacity'
+                      ? { opacity: v }
+                      : referencePlaneSize(
+                          plane,
+                          key === 'width' ? v : plane.width,
+                          key === 'height' ? v : plane.height,
+                          modifiers?.ctrl === true,
+                        ),
+                  )
+                }
               />
             </label>
           ))}
@@ -129,7 +142,8 @@ export function ReferencePlaneControls({ id }: { id: number }) {
         Local only; excluded from exports and collaboration. In the Reference tab, click a plane and
         use Select / Move / Rotate (1 / 2 / 3). G / R starts an interactive move / rotation: click
         or Enter confirms, right-click or Esc cancels. Hold Ctrl to snap; World grid snaps to
-        absolute grid positions. T resizes.
+        absolute grid positions. T resizes; hold Ctrl while scaling or committing width/height to
+        keep the current aspect ratio.
       </p>
     </section>
   );

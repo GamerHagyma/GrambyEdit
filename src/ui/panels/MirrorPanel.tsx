@@ -141,6 +141,7 @@ export function MirrorPanel(): JSX.Element {
           {(
             [
               ['auto', 'Repeat new placements'],
+              ['edits', 'Mirror moves and deletions'],
               ['guide', 'Show guide'],
               ['preview', 'Preview selection'],
               ['children', 'Include attached children'],
@@ -182,7 +183,9 @@ export function MirrorPanel(): JSX.Element {
             The mirrored cursor preview is always shown. Repeat new placements controls whether
             copies are placed automatically. Originals stay. Apply and automatic placement are
             undoable. Native asymmetric shapes keep their geometry; placement positions and
-            rotations are mirrored. Door A/B and C/D variants swap.
+            rotations are mirrored. Door A/B and C/D variants swap. Mirror moves and deletions
+            affects existing matching counterparts, including radial copies; missing or ambiguous
+            matches stay untouched. Each edit is one Undo action.
           </p>
         </>
       ) : (

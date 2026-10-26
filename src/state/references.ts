@@ -39,6 +39,32 @@ export const referencePlanesSig = signal<ReadonlyMap<number, ReferencePlane>>(ne
 export const editingReferencePlaneSig = signal<number | null>(null);
 export const referencePlaneModeSig = signal<'translate' | 'rotate' | 'scale' | null>('translate');
 
+/** Bound a resize without distorting its starting proportions while Ctrl is held. */
+export function referencePlaneSize(
+  start: Pick<ReferencePlane, 'width' | 'height'>,
+  width: number,
+  height: number,
+  uniform: boolean,
+): Pick<ReferencePlane, 'width' | 'height'> {
+  if (![width, height].every(Number.isFinite)) return start;
+  width = Math.abs(width);
+  height = Math.abs(height);
+  if (uniform) {
+    const x = width / start.width,
+      y = height / start.height;
+    const factor = Math.max(
+      0.01 / start.width,
+      0.01 / start.height,
+      Math.min(1e5 / start.width, 1e5 / start.height, Math.abs(x - 1) >= Math.abs(y - 1) ? x : y),
+    );
+    return { width: start.width * factor, height: start.height * factor };
+  }
+  return {
+    width: Math.max(0.01, Math.min(1e5, width)),
+    height: Math.max(0.01, Math.min(1e5, height)),
+  };
+}
+
 export function insertReferencePlane(
   id: number,
   position: ReferenceVector = [0, 0, 0],

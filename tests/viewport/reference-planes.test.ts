@@ -20,6 +20,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+test('Ctrl scale gizmo keeps its starting ratio and clamps both dimensions together', () => {
+  vi.spyOn(TextureLoader.prototype, 'load').mockImplementation(
+    () => new Texture<HTMLImageElement>(),
+  );
+  addReferenceUrl('https://example.com/a.png');
+  const id = activeReferenceSig.peek()!.id;
+  insertReferencePlane(id);
+  updateReferencePlane(id, { width: 12, height: 6 });
+  const layer = new ReferencePlanesLayer(
+    new PerspectiveCamera(),
+    document.createElement('canvas'),
+    vi.fn(),
+  );
+  layer.sync(referencesSig.peek(), referencePlanesSig.peek(), id, 'scale');
+  const controls = (
+    layer.group.children.find((c) => 'controls' in c) as unknown as { controls: TransformControls }
+  ).controls;
+  const mesh = layer.group.getObjectByName(`reference-image-${id}`) as Mesh;
+  controls.dispatchEvent({ type: 'mouseDown', mode: 'scale' });
+  layer.setSnapping(true);
+  mesh.scale.set(18, 6, 1);
+  controls.dispatchEvent({ type: 'objectChange' });
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 18, height: 9 });
+  mesh.scale.set(1e8, 6, 1);
+  controls.dispatchEvent({ type: 'objectChange' });
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 1e5, height: 5e4 });
+  layer.setSnapping(false);
+  mesh.scale.set(20, 3, 1);
+  controls.dispatchEvent({ type: 'objectChange' });
+  expect(referencePlanesSig.peek().get(id)).toMatchObject({ width: 20, height: 3 });
+  layer.dispose();
+});
+
 test('reference meshes follow local transforms and dispose textures even if a pending load completes after removal', () => {
   const loads: {
     texture: Texture<HTMLImageElement>;

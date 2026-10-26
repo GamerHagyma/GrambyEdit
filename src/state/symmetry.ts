@@ -4,8 +4,15 @@ import { Matrix4 } from 'three';
 import { poseDescendants } from '../core/graph';
 import { draftDoc } from '../core/ops/conns';
 import { symmetryCopies } from '../core/ops/symmetry';
-import { transact, type Draft } from '../core/ops/transact';
-import { computePoses } from '../core/pose';
+import {
+  mirrorChangedParts,
+  planSymmetryEdits,
+  symmetryDeleteIds,
+  type SymmetryEditPlan,
+  type SymmetryEditOptions,
+} from '../core/ops/symmetry-edits';
+import { transact, type Draft, type Patch } from '../core/ops/transact';
+import { computePoses, type Poses } from '../core/pose';
 import {
   copyFrame,
   mirroredType,
@@ -29,6 +36,7 @@ export interface SymmetrySettings {
   count: number;
   size: number;
   auto: boolean;
+  edits: boolean;
   guide: boolean;
   preview: boolean;
   children: boolean;
@@ -43,6 +51,7 @@ const initial = (): SymmetrySettings => ({
   count: 4,
   size: 10,
   auto: false,
+  edits: true,
   guide: true,
   preview: true,
   children: true,
@@ -116,6 +125,58 @@ function transforms(): Matrix4[] {
   const s = symmetrySig.value,
     frame = symmetryFrameSig.value;
   return frame ? symmetryTransforms(frame, s.mode, s.axis, s.count) : [];
+}
+
+/** Existing matching parts are paired once per local gesture, using the current guide. */
+export function symmetryEditPlan(
+  doc: Doc,
+  poses: Poses,
+  ids: readonly PartId[],
+): SymmetryEditPlan | null {
+  const s = symmetrySig.peek(),
+    cat = catalogSig.peek(),
+    anchor = s.anchor === null ? null : poses.world.get(s.anchor);
+  if (!s.edits || !anchor || s.anchor === null || !cat) return null;
+  return planSymmetryEdits(
+    doc,
+    cat,
+    poses,
+    ids,
+    s.anchor,
+    symmetryTransforms(
+      symmetryFrame(anchor, s.axis, s.offset, s.rotation),
+      s.mode,
+      s.axis,
+      s.count,
+    ),
+  );
+}
+export function mirroredDeleteIds(ids: readonly PartId[]): readonly PartId[] {
+  const plan = symmetryEditPlan(docSig.peek(), committedPosesSig.peek(), ids);
+  if (plan?.ambiguous) toast('Ambiguous mirror matches were left alone.', 'warn');
+  return plan ? symmetryDeleteIds(plan) : ids;
+}
+
+/** Explicit local edit boundary: source and counterparts share Undo and collaboration. */
+export function commitSymmetryEdit(
+  label: string,
+  ids: readonly PartId[],
+  edit: (d: Draft) => void,
+  plan = symmetryEditPlan(docSig.peek(), committedPosesSig.peek(), ids),
+  options: SymmetryEditOptions = {},
+): Patch | null {
+  const cat = catalogSig.peek();
+  try {
+    const patch = commit(label, (d) => {
+      edit(d);
+      if (cat && plan) mirrorChangedParts(d, cat, plan, options);
+    });
+    if (patch && plan?.ambiguous) toast('Ambiguous mirror matches were left alone.', 'warn');
+    return patch;
+  } catch (e) {
+    toast((e as Error).message, 'warn');
+    return null;
+  }
 }
 export function addPlacementSymmetry(d: Draft, ids: readonly PartId[]): PartId[] {
   const s = symmetrySig.peek(),

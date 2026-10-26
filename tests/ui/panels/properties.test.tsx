@@ -13,8 +13,38 @@ import { docOf, part, pt, sock } from '../../helpers/doc';
 import { MINI } from '../../helpers/catalog';
 import { realCatalog } from '../../helpers/real-catalog';
 import { parseShareText, toShareCode } from '../../../src/core/share';
+import { Matrix4 } from 'three';
+import { matrix4ToCf } from '../../../src/core/cframe';
+import { copyFrame } from '../../../src/core/symmetry';
+import { committedPosesSig } from '../../../src/state/derived';
+import { chooseSymmetryAnchor, clearSymmetry, applySymmetry } from '../../../src/state/symmetry';
 
-beforeEach(resetStoreForTests);
+beforeEach(() => {
+  resetStoreForTests();
+  clearSymmetry();
+});
+afterEach(clearSymmetry);
+
+test('Orientation fields mirror an existing counterpart in the same edit', () => {
+  baseCatalogSig.value = MINI;
+  loadDoc({
+    ...docOf(part(1, 'Part'), part(2, 'Part')),
+    layout: new Map([[2, matrix4ToCf(new Matrix4().makeTranslation(2, 0, 0))]]),
+  });
+  select([1], 'replace');
+  chooseSymmetryAnchor();
+  select([2], 'replace');
+  applySymmetry();
+  const source = docSig.peek().order[2];
+  select([source], 'replace');
+  render(<Properties />);
+  const x = screen.getByLabelText('Orientation X');
+  fireEvent.input(x, { target: { value: '45' } });
+  fireEvent.blur(x);
+  const poses = committedPosesSig.peek(),
+    wanted = copyFrame(new Matrix4().makeScale(-1, 1, 1), poses.world.get(source)!, 'Part');
+  poses.world.get(2)!.elements.forEach((v, i) => expect(v).toBeCloseTo(wanted.elements[i], 7));
+});
 
 test.each(['Servo', 'Servo_Physics'])(
   '%s fields use canonical keys, accept >360 and keep Rotation',
