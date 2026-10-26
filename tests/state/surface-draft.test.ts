@@ -11,6 +11,9 @@ import {
   applySurfaceEdit,
   undoSurfaceEdit,
   redoSurfaceEdit,
+  finishSurfaceDrag,
+  previewSurfacePositions,
+  surfaceDraftHistorySig,
 } from '../../src/state/surface-draft';
 import {
   runSurfaceJob,
@@ -231,3 +234,31 @@ test('starting Profiles while Curve edges is off uses the visible straight quad'
   expect(activeSurfacePatchSig.value!.points[id][1]).toBe(3);
   resetSurfaceDraft();
 });
+
+test.each(['quad', 'profiles'] as const)(
+  'zero-change %s gestures preserve real undo and redo steps',
+  (mode) => {
+    resetSurfaceDraft();
+    if (mode === 'quad') setSurfaceCurves(true, corners);
+    else setSurfaceMode('profiles', corners);
+    const initial = activeSurfacePatchSig.value!,
+      id = initial.grid[0][1],
+      p = initial.points[id];
+    applySurfaceEdit({ kind: 'move', positions: { [id]: [p[0], p[1] + 1, p[2]] } });
+    const from = activeSurfacePatchSig.value!;
+    for (let i = 0; i < 50; i++) {
+      previewSurfacePositions(from, { [id]: from.points[id] });
+      finishSurfaceDrag(from, false);
+    }
+    expect(surfaceDraftHistorySig.value).toEqual({ undo: 1, redo: 0 });
+    undoSurfaceEdit();
+    expect(activeSurfacePatchSig.value!.points[id][1]).toBe(p[1]);
+    const undone = activeSurfacePatchSig.value!;
+    previewSurfacePositions(undone, { missing: [0, 0, 0] });
+    finishSurfaceDrag(undone, false);
+    expect(surfaceDraftHistorySig.value).toEqual({ undo: 0, redo: 1 });
+    redoSurfaceEdit();
+    expect(activeSurfacePatchSig.value!.points[id][1]).toBe(p[1] + 1);
+    resetSurfaceDraft();
+  },
+);

@@ -371,6 +371,16 @@ export function finishSurfaceDrag(from: PatchDraft, cancel: boolean): void {
     replace(from, false);
     return;
   }
+  const current = activeSurfacePatchSig.peek();
+  if (!current) return;
+  const ids = Object.keys(from.points);
+  // Rebuilding a Coons guide or round-tripping a world-space drag can add
+  // floating-point noise. Neither that nor a rejected move is a history edit.
+  if (
+    ids.length === Object.keys(current.points).length &&
+    ids.every((id) => current.points[id]?.every((n, k) => Math.abs(n - from.points[id][k]) <= 1e-9))
+  )
+    return;
   const h = histories[surfaceDraftSig.peek().mode];
   h.undo.push(from);
   h.undo = h.undo.slice(-50);
