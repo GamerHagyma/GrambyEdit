@@ -1,6 +1,6 @@
 # Profile surfaces and optional Bézier edges
 
-Status: proposed design, for review before implementation. No generator changes are included.
+Status: implementation authorized by the user on 2026-10-26. Core geometry, native feasibility, background preview, curved edges and Profiles controls are implemented; final integration checks follow the linked plan.
 
 ## Outcome and scope
 
@@ -115,7 +115,7 @@ Create reuses calibrated `mountSubDoc`, `insertSubDoc`, the current cost checks,
 3. Profiles, exact insertion and Smooth/Crease editing, with draft undo and dynamic handles.
 4. Integration checks: calibrated round-trip, cost, precision, one blueprint undo, symmetry and collaboration; update README/help.
 
-Required compatibility: existing uncurved quad tests and poses remain unchanged; coloring-off still uses default colors; no change to normal part/reference-plane tools; no extra draft fields in share codes or collaboration messages.
+Required compatibility: the uncurved quad tiler and layout remain unchanged; coloring-off still uses native colors; no change to normal part/reference-plane tools; no extra draft fields in share codes or collaboration messages. Execution found and corrected an older shared GasCap mounting error using direct native CFrames; that intentionally supersedes legacy height/axis and exported-point assumptions, as documented in [native calibration evidence](../research/2026-10-26-gascap-native-calibration.md).
 
 Non-goals: arbitrary N-sided holes/branching surfaces, mismatched profile topology, periodic/closed lofts, C2 continuity, NURBS weights, automatic trimming and scaled/clipped GasCaps.
 

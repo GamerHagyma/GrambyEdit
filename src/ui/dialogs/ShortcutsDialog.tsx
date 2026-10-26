@@ -21,7 +21,7 @@ interface Section {
 
 const MODAL: Section = {
   title: 'While moving or rotating (G, R)',
-  note: 'Works with parts selected, in any tool but Sockets. In the Surfaces tab, G moves the selected corner.',
+  note: 'Works with parts selected, in any tool but Sockets. In Surfaces, G moves selected corners, anchors, handles or profiles.',
   rows: [
     { keys: ['Mouse'], action: 'Move: the parts follow it; rotate: they turn around the pivot' },
     {
@@ -254,7 +254,22 @@ const USAGE: readonly Section[] = [
       {
         keys: ['Color'],
         action:
-          'Generators and Surfaces have a coloring checkbox. Turn it off to use native default colors.',
+          'Generators and Surfaces have a coloring checkbox. Turn it off to use native default colors; the game assigns random GasCap colors.',
+      },
+      {
+        keys: ['Surfaces'],
+        action:
+          'Pick a parent face. Four corners keeps the classic tool; Curve edges adds Bezier boundary handles. Click anchors/handles or choose them from Control; Shift selects several. Move with the gizmo, G or XYZ fields in parent axes. Ctrl uses snap steps; World grid snaps coordinates.',
+      },
+      {
+        keys: ['Profiles'],
+        action:
+          'Add profile inserts a cross-section without changing the current guide. Add anchor column inserts matching anchors across every profile. Profile buttons select a whole section; Shift adds sections. Smooth keeps a join smooth, Crease makes a sharp join, and Straighten profile segment resets its curve handles.',
+      },
+      {
+        keys: ['Surface undo'],
+        action:
+          'Undo draft edit / Redo draft edit affect local guides; Ctrl+Z still affects the blueprint. Wait for the current GasCap preview before Create. Creation is one blueprint undo action; generated parts sync, while guides and drafts stay local. Tight curves or folds may be unsupported by native GasCaps.',
       },
       {
         keys: ['New'],

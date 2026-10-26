@@ -31,7 +31,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Servo preview** | Hold red/blue simulation buttons or enable Sustain, inspect the live angle, and choose whether remembered rotations are exported. |
 | **Logic-part wires** | Thin internal wires follow moving pieces, turn orange beyond 10 studs, and report overstretched parts in the Issues tab. |
 | **Colour** | Paint selections and regions, automatically colour new parts, and apply gradients or seeded random palettes to generated shapes. |
-| **Generators and surfaces** | Twelve shape generators with host picking and live previews, plus custom GasCap surfaces defined by four movable corners. |
+| **Generators and surfaces** | Twelve shape generators plus GasCap surfaces: classic four corners, optional Bézier edges, and multiple curved profiles with smooth or sharp joins. Live guides and cap previews stay local; created parts sync. |
 | **Reusable components** | Favourite parts, a local creation library, prefabs, and library backup import/export. |
 | **Part availability** | Non-spawnable templates have an Unavailable category, keeping them searchable for imports and inspection. Working splitter variants stay in their normal category. |
 | **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
@@ -73,7 +73,7 @@ The creation library and preferences are stored in your browser. Export a librar
 2. Share the invite link. Guests open it and click **Join (replace workspace)**; they should save their existing work first.
 3. Approve each guest for viewing or editing. You can change permissions or remove people from the same panel.
 
-Edits sync as small changes. Moving cameras are throttled; stationary cameras send nothing. A small consistency check runs every 15 seconds, with a full build sent on joining or when needed to repair a mismatch. Undo/redo applies to your own changes and protects newer changes from others. Reference images, selections and servo previews stay local.
+Edits sync as small changes. Moving cameras are throttled; stationary cameras send nothing. A small consistency check runs every 15 seconds, with a full build sent on joining or when needed to repair a mismatch. Undo/redo applies to your own changes and protects newer changes from others. Reference images, selections, surface drafts and servo previews stay local.
 
 G/R and gizmo transforms keep running while collaborators edit. Your delta applies to the latest shared pose; removing the target cancels safely. Invitation links open a prominent **Join** action.
 
@@ -102,7 +102,18 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 
 **Socket dragging:** use Select or the Move center handle to drag one part or a selection onto another socket. The other selected parts keep their relative placement. Hold **Shift** while carrying or dragging for compatible sockets only; surface and ground placement resume on release. Nearby compatible sockets show through surfaces, with enlargement fading smoothly to normal at the edge of the cursor radius. **Settings → Editing** controls **Socket enlargement while holding Shift (%)** (100% doubles size at the cursor) and **Shift socket focus radius (px)** (default 150). Outside that radius, sockets keep normal size and depth visibility. Orange/red markers distinguish mechanical connection points. Search **Spinner** to find the native **Bearing** part.
 
-**Surfaces:** Shift-click corner buttons or viewport dots to select multiple corners. Move them together with the gizmo or `G`. Enable **World grid** and hold Ctrl to snap all three coordinates.
+**Surfaces:** Shift-click corners, anchors or handles to select several. Move them with the gizmo or `G`; use **Ctrl** for snap steps and enable **World grid** for grid coordinates. Profile groups snap by their selection center so their curve handles keep their offsets.
+
+## Curved and profile surfaces
+
+1. In **Surfaces**, pick the parent face. **Four corners** keeps the original tool; enable **Curve edges** to expose Bézier boundary handles.
+2. Choose **Profiles** to shape the surface with cross-sections. Click **Add profile** to insert a section after the active one. **Add anchor column** inserts a matching anchor across every profile. Insertion preserves the guide's shape until you edit it.
+3. Click a profile button to move its whole section, or select individual anchors/handles in the viewport or **Control** list. Use the gizmo, `G`, or the **X/Y/Z** fields; Shift adds to the selection. The fields use the parent's axes.
+4. Choose **Smooth** at an interior profile/column to keep the join smooth, or **Crease** for a sharp change of direction. **Straighten profile segment** resets that segment's handles onto a straight line.
+5. Use **Undo draft edit / Redo draft edit** for guide changes. Regular `Ctrl+Z` still undoes blueprint edits. Switching modes retains their separate drafts; **Start profiles from quad** asks before replacing edited profiles.
+6. Wait for the GasCap preview and count, then click **Create**. Creation is one blueprint undo action and uses the normal mirroring and collaboration paths. Drafts and guides stay local and are not exported.
+
+GasCaps keep their native size. Curves are approximated by overlapping flat plates; tight bends, folds and unsupported overhangs produce a diagnostic instead of an incomplete build. Coloring can be disabled, in which case the game assigns random GasCap colors. Export precision affects coverage; an unsupported precision cannot be created.
 
 ## Mirror and radial placement
 

@@ -1,6 +1,6 @@
 # Profile Surfaces Implementation Plan
 
-> **For agentic workers:** Use superpowers:executing-plans to implement this plan inline, task by task. Subagents may be used only for verification/review, per the user's instruction. This document is a plan, not authorization to start implementation.
+> **For agentic workers:** Use superpowers:executing-plans to implement this plan inline, task by task. Subagents may be used only for verification/review, per the user's instruction. The user authorized implementation on 2026-10-26.
 
 **Goal:** Add optional Bézier edges and ordered profile surfaces made from native GasCaps while preserving the existing four-corner generator.
 
@@ -19,7 +19,7 @@
 - Drafts, guides and worker messages are local.
 - No new dependency.
 - Do not build the full Profiles UI until the native GasCap feasibility experiment establishes an acceptable useful range.
-- No implementation, scaffold, deployment or product behavior changes are part of the current planning request.
+- Deployment/publishing is separate from the authorized implementation.
 
 ## Review Focus
 

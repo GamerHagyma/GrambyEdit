@@ -1,6 +1,6 @@
 # Native GasCap curved-surface feasibility
 
-Date: 2026-10-26. Automated geometry gate passed for the fixtures below. In-game rendering/physics remains unverified; test share codes have been prepared for the user.
+Date: 2026-10-26. The automated geometry gate passed. The user checked crown/cylinder builds in game and confirmed the corrected v4 right-angle crease works perfectly. Independent live measurements of the v4 build match predicted coordinates within 0.00005 studs; see [native calibration](2026-10-26-gascap-native-calibration.md).
 
 ## Reproduce
 
@@ -17,12 +17,12 @@ Each variant was checked at 4,941 independent guide samples after share-code rou
 | Guide, 6 × 4 stud footprint | Caps | Max assigned deviation: native / colored | Max whole-footprint deviation: native / colored |
 | --- | ---: | ---: | ---: |
 | Flat | 96 | 0 / 0.01500 | 0 / 0.01500 |
-| Crown, 0.5 stud rise | 104 | 0.00333 / 0.01823 | 0.02636 / 0.03967 |
-| Circular-arc approximation, radius 6 studs / 60° sweep | 112 | 0.00470 / 0.01957 | 0.05314 / 0.06733 |
-| S curve | 112 | 0.00665 / 0.02040 | 0.06417 / 0.07329 |
-| Saddle | 96 | 0.00312 / 0.01806 | 0.01490 / 0.02924 |
-| Crease, approximately 53° change in normal | 120 | 0.00045 / 0.01565 | 0.00045 / 0.01566 |
-| Crease, 90° change in normal | 144 | 0 / 0.01556 | 0 / 0.01556 |
+| Crown, 0.5 stud rise | 104 | 0.00324 / 0.01828 | 0.02676 / 0.04013 |
+| Circular-arc approximation, radius 6 studs / 60° sweep | 112 | 0.00465 / 0.01965 | 0.05314 / 0.06733 |
+| S curve | 112 | 0.00661 / 0.02081 | 0.06406 / 0.07340 |
+| Saddle | 96 | 0.00312 / 0.01805 | 0.01527 / 0.02926 |
+| Crease, approximately 53° change in normal | 120 | 0.00054 / 0.01557 | 0.00054 / 0.01557 |
+| Crease, 90° change in normal | 144 | 0.00050 / 0.01535 | 0.00050 / 0.01535 |
 
 Distances are studs. Full-plate bounds are conservative and include plate thickness in the projected neighborhood. At Creases they apply independently to the two domains; native overlap at the ridge still needs visual judgment.
 
@@ -39,6 +39,6 @@ These are acceptance bounds, not a promise to generate every curve or a universa
 
 ## Remaining visual limits
 
-The guide lies within the union of accepted native plate solids; that does not make their outer faces mathematically smooth. Faceting, small overlap, native thickness at ridges, boundary overhang on skew/curved edges, and color staggering remain visible at close range. The gallery uses reconstructed native meshes, but SVG painter ordering is illustrative rather than a depth-buffer rendering guarantee. No claims about in-game hinge behavior, physics or flicker have been verified yet.
+The guide lies within the union of accepted native plate solids; that does not make their outer faces mathematically smooth. Faceting, small overlap, native thickness at ridges, boundary overhang on skew/curved edges, and color staggering remain visible at close range. The gallery uses reconstructed native meshes, but SVG painter ordering is illustrative rather than a depth-buffer rendering guarantee. The user verified the stiff fixture builds; this is not a general physics or hinge simulation claim.
 
 Proceed with the editor for this certified range. The user's optional in-game check can refine visual limits without changing the shared control-net representation or the old four-corner path.
