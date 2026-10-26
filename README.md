@@ -36,7 +36,7 @@ GrambyEdit makes it easier to build and modify RTG creations outside the game. I
 | **Part availability** | Non-spawnable templates have an Unavailable category, keeping them searchable for imports and inspection. Working splitter variants stay in their normal category. |
 | **Build management** | A searchable Outliner, range selection, batch visibility controls, undo/redo, a command palette, and part-count and code-length meters. |
 | **Collaboration** | Host a shared workspace, invite up to seven guests, assign viewer/editor permissions, and see colored cameras with names. Changes sync directly between browsers. |
-| **Reference images** | Paste images or direct image links into the Reference tab, or choose local files. Pop the viewer out into a pinned, movable, resizable window over the editor. |
+| **Reference images** | Paste images or direct links, choose local files, pop out a pinned viewer, or insert local image planes with move, rotate and resize gizmos. |
 
 ## Compatibility and limitations
 
@@ -60,6 +60,12 @@ The creation library and preferences are stored in your browser. Export a librar
 **Starting over:** **File → New** clears the workspace after confirmation. **Generators** and **Surfaces** have a coloring checkbox; turn it off to keep each part's native default color.
 
 **Building from a picture:** open the right panel's **Reference** tab and paste an image or direct image URL, or choose an image file. Zoom and pan the image, or use **Pop out** to keep it visible while using other tabs; drag its title bar to move it and any corner to resize it. **Dock** returns it to the panel. References last until the page closes and are kept outside share codes and build history.
+
+**Reference planes:** choose **Insert image plane** to place the active image at the camera's focus, facing the camera. Use **Move plane**, **Rotate plane** or **Resize plane** and drag the gizmo, or enter exact position, rotation, width and height. **G / R / S** switch the plane gizmo while editing; **Esc** or **Finish editing plane** returns to building. Adjust opacity, hide the plane, or remove it without deleting the reference image. Planes stay local and are excluded from exports and collaboration. Remote image servers must allow CORS for 3D textures; choosing a downloaded image file works without that restriction.
+
+**Projection:** the toolbar's **Perspective / Orthographic** button switches projection without changing the camera target. The same toggle is available in **View → Toggle orthographic** or with **Numpad 5**.
+
+**Socket defaults:** custom Sockets-tool captures and imported overrides are saved in this browser's IndexedDB. **Sockets → Reset all to defaults…** asks for confirmation, then clears all saved socket overrides and restores the shipped catalog. Export your socket file first to keep a backup.
 
 ## Build together
 
@@ -92,7 +98,7 @@ Open **View → Help & controls** or press **?** for usage instructions, collabo
 | `1` to `6` | Select, Move, Rotate, Connect, Point, Paint |
 | `?` | Open Help & controls |
 
-**Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls for the selection. Hidden parts remain selectable in the Outliner and can be shown again from the same menu.
+**Outliner:** Shift-click selects a range, Ctrl-click toggles individual rows, and right-click opens visibility controls and **Invert selection**. Invert is also available in the viewport's right-click menus. **Show all** and **Hide all** affect every workspace part, including filtered or collapsed rows. Hidden parts remain selectable in the Outliner.
 
 **Socket dragging:** use Select or the Move center handle to drag one part or a selection onto another socket. The other selected parts keep their relative placement. Hold **Shift** while carrying or dragging for compatible sockets only; surface and ground placement resume on release. Nearby compatible sockets show through surfaces, with enlargement fading smoothly to normal at the edge of the cursor radius. **Settings → Editing** controls **Socket enlargement while holding Shift (%)** (100% doubles size at the cursor) and **Shift socket focus radius (px)** (default 150). Outside that radius, sockets keep normal size and depth visibility. Orange/red markers distinguish mechanical connection points. Search **Spinner** to find the native **Bearing** part.
 

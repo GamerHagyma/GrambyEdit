@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from '@testing-library/preact';
-import { ContextMenu, partMenuItems, type MenuItem } from '../../../src/ui/widgets/ContextMenu';
+import {
+  ContextMenu,
+  partMenuItems,
+  viewMenuItems,
+  type MenuItem,
+} from '../../../src/ui/widgets/ContextMenu';
 import { allCommands, registerCommand } from '../../../src/state/commands';
 import { select } from '../../../src/state/selection';
 import { baseCatalogSig, loadDoc, resetStoreForTests } from '../../../src/state/store';
@@ -17,6 +22,12 @@ const items: MenuItem[] = [
   { label: 'Beta', command: 'test.ctx.beta', disabled: true },
   { label: 'Gamma', command: 'test.ctx.gamma' },
 ];
+
+test('part and empty viewport menus expose Invert selection', () => {
+  loadDoc(docOf(part(1, 'Part')));
+  expect(partMenuItems().some((i) => i.command === 'select.invert')).toBe(true);
+  expect(viewMenuItems().some((i) => i.command === 'select.invert')).toBe(true);
+});
 
 /** Registers the three commands of `items` with fresh spies. */
 function registerItems() {
@@ -114,6 +125,7 @@ test('the part menu lists the part commands, greyed when they cannot run', () =>
     'view.hide',
     'select.linked',
     'select.similarType',
+    'select.invert',
     'edit.detach',
     'edit.makeFree',
     'file.saveSelection',

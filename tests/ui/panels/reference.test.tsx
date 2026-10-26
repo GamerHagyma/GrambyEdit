@@ -6,6 +6,7 @@ import {
   clearReferences,
   activeReferenceSig,
   referenceFloatingSig,
+  referencePlanesSig,
 } from '../../../src/state/references';
 import { docSig, historySig, resetStoreForTests } from '../../../src/state/store';
 
@@ -14,6 +15,27 @@ beforeEach(() => {
   resetStoreForTests();
 });
 afterEach(clearReferences);
+
+test('reference plane controls edit local dimensions and angles and remove the plane alone', () => {
+  addReferenceUrl('https://example.com/front.png');
+  const before = docSig.peek();
+  render(<ReferencePanel />);
+  fireEvent.click(screen.getByRole('button', { name: 'Insert image plane' }));
+  const field = screen.getByLabelText('Plane position X');
+  fireEvent.input(field, { target: { value: '3' } });
+  fireEvent.blur(field);
+  const width = screen.getByLabelText('Plane width (studs)');
+  fireEvent.input(width, { target: { value: '12' } });
+  fireEvent.blur(width);
+  expect(referencePlanesSig.value.get(activeReferenceSig.value!.id)).toMatchObject({
+    position: [3, 0, 0],
+    width: 12,
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Remove plane' }));
+  expect(referencePlanesSig.value.size).toBe(0);
+  expect(activeReferenceSig.value).not.toBeNull();
+  expect(docSig.peek()).toBe(before);
+});
 
 test('URL references display, survive pop-out/dock, and never edit the blueprint', () => {
   const doc = docSig.value,

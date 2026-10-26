@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { WorkbenchPanel } from '../../../src/ui/panels/WorkbenchPanel';
-import { baseCatalogSig, catalogSig, resetStoreForTests } from '../../../src/state/store';
+import {
+  baseCatalogSig,
+  catalogSig,
+  socketOverridesSig,
+  resetStoreForTests,
+} from '../../../src/state/store';
 import {
   captureSocket,
+  exportSocketFile,
   wbGizmoModeSig,
   wbMateSig,
   wbSocketSig,
@@ -27,6 +33,43 @@ test('parts listed by usage with progress', () => {
   const first = screen.getAllByRole('option')[0];
   expect(first.textContent).toContain('Connector');
   expect(first.textContent).toContain('0/6');
+});
+
+test('reset all requires confirmation and Cancel preserves captured data', async () => {
+  await captureSocket('Part', '6', [9, 9, 9, 1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  render(<WorkbenchPanel />);
+  fireEvent.click(screen.getByRole('button', { name: 'Reset all to defaults…' }));
+  expect(screen.getByRole('dialog', { name: 'Reset all socket data' })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel', exact: true }));
+  expect(catalogSig.value!.parts.Part.sockets['6'].frame[0]).toBe(9);
+  fireEvent.click(screen.getByRole('button', { name: 'Reset all to defaults…' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset all socket data', exact: true }));
+  await waitFor(() =>
+    expect(catalogSig.value!.parts.Part.sockets['6'].frame).toEqual(
+      MINI.parts.Part.sockets['6'].frame,
+    ),
+  );
+});
+
+test('a file read started before Reset cannot restore overridden sockets afterward', async () => {
+  await captureSocket('Part', '6', [9, 9, 9, 1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  const file = exportSocketFile(socketOverridesSig.peek());
+  let finishRead!: (text: string) => void;
+  const text = new Promise<string>((resolve) => {
+    finishRead = resolve;
+  });
+  render(<WorkbenchPanel />);
+  fireEvent.change(screen.getByLabelText('Socket file'), {
+    target: { files: [{ name: 'late.json', text: () => text }] },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Reset all to defaults…' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Reset all socket data', exact: true }));
+  await waitFor(() => expect(socketOverridesSig.peek().parts).toEqual({}));
+  await act(async () => {
+    finishRead(file);
+    await text;
+  });
+  expect(socketOverridesSig.peek().parts).toEqual({});
 });
 
 test('choosing Splitter_2 shows six sockets and the red-stick legend', () => {

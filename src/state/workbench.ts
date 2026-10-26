@@ -12,6 +12,7 @@ import {
 } from '../core/socket-geometry';
 import type { CFrame12, SocketId } from '../core/types';
 import { saveSocketOverrides } from '../storage/sockets';
+import { idbClear } from '../storage/idb';
 import { baseCatalogSig, socketOverridesSig } from './store';
 
 export const wbTypeSig = signal<string | null>(null);
@@ -20,9 +21,30 @@ export const wbSocketSig = signal<SocketId | null>(null);
 export const wbMateSig = signal(false);
 /** What the selected socket's gizmo does: G moves it, R turns it about its own axes. */
 export const wbGizmoModeSig = signal<'translate' | 'rotate'>('translate');
+export const socketResetVersionSig = signal(0);
+let resettingSockets = false;
+
+/** Clear all saved namespaces so old captures cannot reappear after a catalog change. */
+export async function resetSocketOverrides(): Promise<void> {
+  if (resettingSockets) throw new Error('A socket reset is already in progress.');
+  resettingSockets = true;
+  socketResetVersionSig.value++;
+  try {
+    await idbClear('sockets');
+    const space = baseCatalogSig.peek()?.socketGeometrySpace;
+    socketOverridesSig.value = {
+      ...emptySocketGeometry(),
+      ...(space ? { meshCoordinateSpace: space } : {}),
+    };
+  } finally {
+    resettingSockets = false;
+  }
+}
 
 /** Applied before the save, so a failed save keeps the capture for this session; the caller reports it. */
 async function commitFile(file: SocketGeometryFile): Promise<void> {
+  if (resettingSockets)
+    throw new Error('Socket reset in progress. Try editing again when it finishes.');
   socketOverridesSig.value = file;
   await saveSocketOverrides(file);
 }

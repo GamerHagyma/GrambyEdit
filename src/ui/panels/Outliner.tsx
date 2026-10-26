@@ -8,6 +8,7 @@ import { issuesSig } from '../../state/derived';
 import { hiddenSig, select, selectionSig } from '../../state/selection';
 import { docSig, viewBus } from '../../state/store';
 import { contextMenuSig } from '../../state/ui';
+import { runCommand } from '../../state/commands';
 import { Icon } from '../icons';
 import { VirtualList } from '../widgets/VirtualList';
 
@@ -162,6 +163,7 @@ export function Outliner(): JSX.Element {
       y: e.clientY,
       items: [
         { command: 'view.toggleVisibility', label: show ? 'Show selected' : 'Hide selected' },
+        { command: 'select.invert', label: 'Invert selection' },
       ],
     };
   };
@@ -272,6 +274,18 @@ export function Outliner(): JSX.Element {
         />
         <button class="button" aria-pressed={grouped} onClick={() => setGrouped(!grouped)}>
           Group by type
+        </button>
+      </div>
+      <div class="outliner-visibility">
+        <button class="button" onClick={() => runCommand('view.unhide')}>
+          Show all
+        </button>
+        <button
+          class="button"
+          disabled={!doc.order.length}
+          onClick={() => runCommand('view.hideAll')}
+        >
+          Hide all
         </button>
       </div>
       <div

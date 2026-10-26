@@ -292,6 +292,48 @@ button:disabled {
   height: 100%;
   min-height: 240px;
   padding: 10px;
+  overflow-y: auto;
+}
+.reference-plane-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+.reference-plane-vector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+.reference-plane-vector > span {
+  grid-column: 1 / -1;
+}
+.reference-plane-vector label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.reference-plane-vector input {
+  min-width: 0;
+  width: 100%;
+}
+.reference-plane-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.reference-plane-number input {
+  width: 90px;
+}
+.outliner-visibility {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 4px 6px;
 }
 .reference-help {
   margin: 0;

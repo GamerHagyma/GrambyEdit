@@ -31,6 +31,16 @@ function OutlinerWithMenu() {
 
 const selectedIds = () => [...selectionSig.value.parts];
 
+test('Show all and Hide all affect the whole workspace despite a search filter', () => {
+  loadDoc(chainDoc(3));
+  render(<Outliner />);
+  fireEvent.input(screen.getByRole('searchbox'), { target: { value: '#2' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Hide all', exact: true }));
+  expect([...hiddenSig.value]).toEqual([1, 2, 3]);
+  fireEvent.click(screen.getByRole('button', { name: 'Show all', exact: true }));
+  expect(hiddenSig.value.size).toBe(0);
+});
+
 test('virtualises 16,000 rows', () => {
   loadDoc(chainDoc(16_000));
   const { container } = render(<Outliner />);

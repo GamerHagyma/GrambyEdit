@@ -18,6 +18,7 @@ const PART_MENU = [
   'view.hide',
   'select.linked',
   'select.similarType',
+  'select.invert',
   'edit.detach',
   'edit.makeFree',
   'file.saveSelection',
@@ -41,6 +42,7 @@ export function partMenuItems(): { label: string; command: string; disabled: boo
 const VIEW_MENU = [
   'edit.paste',
   'select.all',
+  'select.invert',
   'view.unhide',
   'view.frameAll',
   'app.palette',

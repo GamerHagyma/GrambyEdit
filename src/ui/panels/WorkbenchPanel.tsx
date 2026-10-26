@@ -12,6 +12,8 @@ import {
   captureProgress,
   captureSocket,
   clearSocket,
+  resetSocketOverrides,
+  socketResetVersionSig,
   exportSocketFile,
   importSocketFile,
   wbGizmoModeSig,
@@ -24,6 +26,7 @@ import { Icon } from '../icons';
 import { CopyButton } from '../widgets/CopyButton';
 import { fuzzyScore } from '../widgets/fuzzy';
 import { NumberScrub } from '../widgets/NumberScrub';
+import { Dialog } from '../layout/Dialog';
 
 const reportFailure = (what: string) => (e: unknown) =>
   toast(`${what}: ${(e as Error).message}`, 'error');
@@ -31,6 +34,8 @@ const reportFailure = (what: string) => (e: unknown) =>
 export function WorkbenchPanel(): JSX.Element {
   const [query, setQuery] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const cat = catalogSig.value;
   if (!cat) return <p class="empty">Loading the parts…</p>;
@@ -57,8 +62,14 @@ export function WorkbenchPanel(): JSX.Element {
     const picked = input.files?.[0];
     input.value = '';
     if (!picked) return;
+    const resetVersion = socketResetVersionSig.peek();
     try {
-      const result = await importSocketFile(await picked.text());
+      const text = await picked.text();
+      if (resetVersion !== socketResetVersionSig.peek()) {
+        toast('Socket import canceled because the socket data was reset.', 'warn');
+        return;
+      }
+      const result = await importSocketFile(text);
       if (result.ok) {
         setImportError(null);
         toast(`Imported ${picked.name}`);
@@ -148,6 +159,9 @@ export function WorkbenchPanel(): JSX.Element {
       </section>
 
       <footer class="wb-footer">
+        <button class="button" onClick={() => setConfirmReset(true)}>
+          Reset all to defaults…
+        </button>
         <button class="button" onClick={exportFile}>
           <Icon name="download" /> Export file
         </button>
@@ -168,6 +182,47 @@ export function WorkbenchPanel(): JSX.Element {
           </p>
         )}
       </footer>
+      <Dialog
+        title="Reset all socket data"
+        open={confirmReset}
+        onClose={() => {
+          if (!resetting) setConfirmReset(false);
+        }}
+        footer={
+          <>
+            <button class="button" disabled={resetting} onClick={() => setConfirmReset(false)}>
+              Cancel
+            </button>
+            <button
+              class="button primary"
+              disabled={resetting}
+              onClick={async () => {
+                setResetting(true);
+                try {
+                  await resetSocketOverrides();
+                  setConfirmReset(false);
+                  toast('All socket data restored to defaults.');
+                } catch (e) {
+                  reportFailure('Could not reset socket data')(e);
+                } finally {
+                  setResetting(false);
+                }
+              }}
+            >
+              {resetting ? 'Resetting…' : 'Reset all socket data'}
+            </button>
+          </>
+        }
+      >
+        <p>
+          Are you sure? This removes all custom socket captures and imported overrides saved in this
+          browser, for every part, and restores the shipped defaults.
+        </p>
+        <p class="muted">
+          Socket edits are stored locally in IndexedDB. Export your socket file first if you want to
+          keep a backup.
+        </p>
+      </Dialog>
     </section>
   );
 }

@@ -1,12 +1,23 @@
 // @vitest-environment jsdom
 import { allCommands, runCommand } from '../../src/state/commands';
 import { KEYMAPS } from '../../src/state/keymap';
-import { hiddenSig, select, selectionSig } from '../../src/state/selection';
+import { hiddenSig, select, selectionSig, selectModeSig } from '../../src/state/selection';
 import { baseCatalogSig, docSig, loadDoc, resetStoreForTests } from '../../src/state/store';
 import { MINI } from '../helpers/catalog';
-import { docOf, part } from '../helpers/doc';
+import { docOf, part, chainDoc } from '../helpers/doc';
 
 beforeEach(resetStoreForTests);
+
+test('inversion is the exact whole-part complement even in attached mode', () => {
+  loadDoc(chainDoc(3));
+  select([2], 'replace');
+  selectModeSig.value = 'attached';
+  runCommand('select.invert');
+  expect([...selectionSig.value.parts]).toEqual([1, 3]);
+  expect(selectionSig.value.pieces.size).toBe(0);
+  runCommand('select.invert');
+  expect([...selectionSig.value.parts]).toEqual([2]);
+});
 
 test('select.similarType and view.isolate', () => {
   baseCatalogSig.value = MINI;

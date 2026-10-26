@@ -15,7 +15,14 @@ import { getViewport } from '../viewport/context';
 import { pickPart } from '../viewport/raycast';
 import { copySelection, pasteFromClipboard } from './clipboard';
 import { posesSig } from './derived';
-import { clearSelection, hiddenSig, select, selectionSig, selectModeSig } from './selection';
+import {
+  clearSelection,
+  hiddenSig,
+  invertSelection,
+  select,
+  selectionSig,
+  selectModeSig,
+} from './selection';
 import { settingsSig, updateSettings } from './settings';
 import { surfaceSig } from './surfaces';
 import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
@@ -104,13 +111,7 @@ registerCommand({
   id: 'select.invert',
   label: 'Invert selection',
   enabled: anyParts,
-  run: () => {
-    const sel = selectionSig.value.parts;
-    select(
-      docSig.value.order.filter((id) => !sel.has(id)),
-      'replace',
-    );
-  },
+  run: invertSelection,
 });
 registerCommand({
   id: 'select.box',
@@ -266,6 +267,14 @@ registerCommand({
   run: () => {
     hiddenSig.value = new Set([...hiddenSig.value, ...selected()]);
     clearSelection();
+  },
+});
+registerCommand({
+  id: 'view.hideAll',
+  label: 'Hide all',
+  enabled: anyParts,
+  run: () => {
+    hiddenSig.value = new Set(docSig.peek().order);
   },
 });
 registerCommand({

@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { runCommand } from '../../state/commands';
+import { orthographicSig } from '../../state/camera';
 import { selectModeSig } from '../../state/selection';
 import {
   inRange,
@@ -195,6 +196,15 @@ export function Toolbar(): JSX.Element {
         onClick={() => updateSettings({ autoColor: !s.autoColor })}
       >
         <span class="swatch" style={{ background: hex(s.activeColor) }} />
+      </button>
+      <button
+        class="button"
+        aria-label="Orthographic projection"
+        aria-pressed={orthographicSig.value}
+        title="Toggle perspective / orthographic projection (Numpad 5)"
+        onClick={() => runCommand('view.ortho')}
+      >
+        {orthographicSig.value ? 'Orthographic' : 'Perspective'}
       </button>
       <label class="scheme">
         <span class="visually-hidden">Camera controls</span>

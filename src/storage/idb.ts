@@ -89,6 +89,10 @@ export async function idbDelete(store: StoreName, key: IDBValidKey): Promise<voi
   await run(store, 'readwrite', (s) => s.delete(key));
 }
 
+export async function idbClear(store: StoreName): Promise<void> {
+  await run(store, 'readwrite', (s) => s.clear());
+}
+
 export function idbAll<T>(store: StoreName): Promise<T[]> {
   return run<T[]>(store, 'readonly', (s) => s.getAll());
 }

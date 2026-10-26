@@ -144,6 +144,17 @@ export function clearSelection(): void {
   selectionSig.value = EMPTY;
 }
 
+/** Exact whole-part complement, independent of branch expansion in the picking mode. */
+export function invertSelection(): void {
+  const parts = new Set(docSig.peek().order.filter((id) => !selectionSig.peek().parts.has(id)));
+  selectionSig.value = {
+    parts,
+    pieces: new Map(),
+    points: new Set(),
+    active: [...parts].at(-1) ?? null,
+  };
+}
+
 export function resetSelectionForTests(): void {
   selectionSig.value = EMPTY;
   selectModeSig.value = 'part';

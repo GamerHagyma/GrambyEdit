@@ -15,6 +15,7 @@ import { Tabs } from './Tabs';
 import { Toasts } from './Toasts';
 import { Toolbar } from './Toolbar';
 import { roomSig, membersSig } from '../../state/collaboration';
+import { editingReferencePlaneSig } from '../../state/references';
 
 interface MenuItem {
   label: string;
@@ -127,10 +128,12 @@ export function Shell({
     return part && (cat?.parts[part.type]?.bodies?.length ?? 0) > 1;
   });
   const hint =
-    statusHintSig.value ??
-    (multiPiece
-      ? 'Drag piece to socket/surface (Select/Move) · G/R: move/rotate · Double-click: whole part'
-      : null);
+    editingReferencePlaneSig.value !== null
+      ? 'Reference plane · G: move · R: rotate · S: resize · Esc: finish editing'
+      : (statusHintSig.value ??
+        (multiPiece
+          ? 'Drag piece to socket/surface (Select/Move) · G/R: move/rotate · Double-click: whole part'
+          : null));
   const scheme = settingsSig.value.cameraScheme;
   /** A menu item that runs a command and shows its first key in the current scheme. */
   const cmd = (id: string, label: string): MenuItem => ({

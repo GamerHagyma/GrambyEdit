@@ -14,8 +14,11 @@ import {
   referenceViews,
   removeReference,
   type ReferenceImage,
+  referenceAspects,
+  editingReferencePlaneSig,
 } from '../../state/references';
 import { showInspectorTab } from '../../state/ui';
+import { ReferencePlaneControls } from './ReferencePlaneControls';
 
 function ImageView({ image }: { image: ReferenceImage }): JSX.Element {
   const [failed, setFailed] = useState(false);
@@ -136,7 +139,12 @@ function ImageView({ image }: { image: ReferenceImage }): JSX.Element {
           referrerPolicy="no-referrer"
           draggable={false}
           style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
-          onLoad={() => setView((v) => constrain(v))}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth && img.naturalHeight)
+              referenceAspects.set(image.id, img.naturalWidth / img.naturalHeight);
+            setView((v) => constrain(v));
+          }}
           onError={() => setFailed(true)}
         />
       </div>
@@ -260,6 +268,7 @@ function ReferenceContent(): JSX.Element {
           </p>
         )}
       </div>
+      {active && !collapsed && <ReferencePlaneControls id={active.id} />}
       {!collapsed && referencesSig.value.length > 0 && (
         <div class="reference-thumbnails" aria-label="Choose a reference">
           {referencesSig.value.map((image) => (
@@ -271,6 +280,7 @@ function ReferenceContent(): JSX.Element {
               aria-pressed={active?.id === image.id}
               onClick={() => {
                 activeReferenceIdSig.value = image.id;
+                editingReferencePlaneSig.value = null;
                 referenceErrorSig.value = null;
               }}
             >

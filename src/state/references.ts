@@ -24,12 +24,78 @@ export const activeReferenceSig = computed(
 export const referenceFloatingSig = signal(false);
 export const referenceErrorSig = signal<string | null>(null);
 
+export type ReferenceVector = readonly [number, number, number];
+export interface ReferencePlane {
+  readonly position: ReferenceVector;
+  /** Euler XYZ angles in degrees. */
+  readonly rotation: ReferenceVector;
+  readonly width: number;
+  readonly height: number;
+  readonly opacity: number;
+  readonly visible: boolean;
+}
+export const referenceAspects = new Map<number, number>();
+export const referencePlanesSig = signal<ReadonlyMap<number, ReferencePlane>>(new Map());
+export const editingReferencePlaneSig = signal<number | null>(null);
+export const referencePlaneModeSig = signal<'translate' | 'rotate' | 'scale'>('translate');
+
+export function insertReferencePlane(
+  id: number,
+  position: ReferenceVector = [0, 0, 0],
+  rotation: ReferenceVector = [0, 0, 0],
+): void {
+  if (!referencesSig.peek().some((image) => image.id === id)) return;
+  if (!referencePlanesSig.peek().has(id)) {
+    const planes = new Map(referencePlanesSig.peek());
+    planes.set(id, {
+      position,
+      rotation,
+      width: 10,
+      height: 10 / (referenceAspects.get(id) ?? 1),
+      opacity: 0.65,
+      visible: true,
+    });
+    referencePlanesSig.value = planes;
+  }
+  editingReferencePlaneSig.value = id;
+}
+
+export function updateReferencePlane(id: number, patch: Partial<ReferencePlane>): void {
+  const old = referencePlanesSig.peek().get(id);
+  if (!old) return;
+  const p = { ...old, ...patch };
+  if (
+    ![p.position, p.rotation].every(
+      (v) => v.length === 3 && v.every((n) => Number.isFinite(n) && Math.abs(n) <= 1e6),
+    ) ||
+    ![p.width, p.height].every((n) => Number.isFinite(n) && n >= 0.01 && n <= 1e5) ||
+    !Number.isFinite(p.opacity) ||
+    p.opacity < 0 ||
+    p.opacity > 1 ||
+    typeof p.visible !== 'boolean'
+  )
+    return;
+  const planes = new Map(referencePlanesSig.peek());
+  planes.set(id, p);
+  referencePlanesSig.value = planes;
+}
+
+export function removeReferencePlane(id: number): void {
+  const planes = new Map(referencePlanesSig.peek());
+  planes.delete(id);
+  batch(() => {
+    referencePlanesSig.value = planes;
+    if (editingReferencePlaneSig.peek() === id) editingReferencePlaneSig.value = null;
+  });
+}
+
 let nextId = 1;
 
 function addImage(src: string, name: string, local: boolean): void {
   const image = { id: nextId++, src, name, local };
   batch(() => {
     referencesSig.value = [...referencesSig.value, image];
+    editingReferencePlaneSig.value = null;
     activeReferenceIdSig.value = image.id;
     referenceErrorSig.value = null;
   });
@@ -66,6 +132,8 @@ export function removeReference(id: number): void {
   const removed = referencesSig.value.find((image) => image.id === id);
   if (!removed) return;
   if (removed.local) URL.revokeObjectURL(removed.src);
+  removeReferencePlane(id);
+  referenceAspects.delete(id);
   referenceViews.delete(id);
   batch(() => {
     referencesSig.value = referencesSig.value.filter((image) => image.id !== id);
@@ -78,7 +146,10 @@ export function removeReference(id: number): void {
 export function clearReferences(): void {
   for (const image of referencesSig.value) if (image.local) URL.revokeObjectURL(image.src);
   referenceViews.clear();
+  referenceAspects.clear();
   batch(() => {
+    referencePlanesSig.value = new Map();
+    editingReferencePlaneSig.value = null;
     referenceControlsCollapsedSig.value = false;
     referencesSig.value = [];
     activeReferenceIdSig.value = null;

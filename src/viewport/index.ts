@@ -17,6 +17,15 @@ import { CollaboratorsLayer } from './collaborators';
 import { SymmetryGuide } from './symmetry-guide';
 import { symmetrySig, symmetryFrameSig, symmetryPreviewSig } from '../state/symmetry';
 import { shiftSocketSig, socketFocusSig, socketCursorSig } from '../state/socket-focus';
+import { orthographicSig } from '../state/camera';
+import { resolveKey } from '../state/keymap';
+import { ReferencePlanesLayer } from './reference-planes';
+import {
+  referencesSig,
+  referencePlanesSig,
+  editingReferencePlaneSig,
+  referencePlaneModeSig,
+} from '../state/references';
 import { servoPreviewSig, servoSustainEnabled, withServoPreview } from '../state/servo-preview';
 import { finishServoSimulation } from '../state/servo-simulation';
 import {
@@ -75,7 +84,7 @@ import {
   refreshTransformPreview,
 } from '../tools/transform';
 import { createWorkbenchTool } from '../tools/workbench';
-import { toolSig } from '../tools/manager';
+import { setTool, toolSig } from '../tools/manager';
 import {
   candidateSpots,
   captureSocket,
@@ -190,6 +199,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const grid = createGrid();
   scene.add(grid.mesh);
   const rig = new CameraRig();
+  rig.isOrtho = orthographicSig.peek();
   const collaborators = new CollaboratorsLayer();
   scene.add(collaborators.group);
   const symmetryGuide = new SymmetryGuide();
@@ -221,6 +231,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     }
   };
   const transformGizmo = new TransformGizmo(rig.camera, canvas, scene, () => request());
+  const referencePlanes = new ReferencePlanesLayer(rig.camera, canvas, request);
+  scene.add(referencePlanes.group);
   transformGizmo.handlers = gizmoHandlers;
   /** True while the Sockets tool shows a part: the workbench replaces the build in the view. */
   const inWorkbench = () => toolSig.peek() === 'sockets' && wbTypeSig.peek() !== null;
@@ -318,6 +330,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     workbench.setEnabled(wb);
     workbench.setCamera(rig.camera);
     transformGizmo.setCamera(rig.camera);
+    referencePlanes.setCamera(rig.camera, !wb);
     if (!wb) updateMarkers();
     collaborators.group.visible = !wb;
     symmetryGuide.group.visible =
@@ -383,8 +396,31 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       );
       return new Promise((resolve) => out.toBlob((b) => resolve(b), 'image/png'));
     },
-    onKey: (e) =>
-      (e.key === 'Escape' && transformGizmo.cancel()) || toolKey(e) || controls().onKeyDown(e),
+    onKey: (e) => {
+      if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) {
+        if (e.key === 'Escape') {
+          editingReferencePlaneSig.value = null;
+          return true;
+        }
+        const mode =
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey &&
+          ({ g: 'translate', r: 'rotate', s: 'scale' } as const)[
+            e.key.toLowerCase() as 'g' | 'r' | 's'
+          ];
+        if (mode) {
+          referencePlaneModeSig.value = mode;
+          return true;
+        }
+        const command = resolveKey(e, settingsSig.peek().cameraScheme);
+        if (command && /^(edit|transform|tool|select)\./.test(command)) return true;
+        return controls().onKeyDown(e);
+      }
+      return (
+        (e.key === 'Escape' && transformGizmo.cancel()) || toolKey(e) || controls().onKeyDown(e)
+      );
+    },
     pointer: null,
     request,
     ndc,
@@ -462,6 +498,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     canvas.focus({ preventScroll: true });
     if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
     if (controls().onPointerDown(e) || e.button !== 0) return;
+    if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) return;
     const simulation = servoPreviewSig.peek();
     if (
       toolSig.peek() !== 'select' ||
@@ -487,6 +524,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   const onHover = (e: PointerEvent) => {
     ctx.pointer = { x: e.clientX, y: e.clientY };
     socketCursorSig.value = ndc(e);
+    if (editingReferencePlaneSig.peek() !== null && !inWorkbench()) return;
     // Runs before a gizmo drag's own move handler, so Ctrl decides this move's snapping.
     transformGizmo.setSnapping(e.ctrlKey || e.metaKey);
     if (e.buttons === 0) toolPointer(toTool(e, 'move', -1));
@@ -538,6 +576,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     }
     e.preventDefault();
     rightDown = null;
+    if (editingReferencePlaneSig.peek() !== null) return;
     if (!at || Math.hypot(e.clientX - at.x, e.clientY - at.y) > 4 || inWorkbench()) return;
     if (settingsSig.value.cameraScheme === 'studio' && studio.rightDragged) return;
     if (toolSig.value === 'place') {
@@ -608,6 +647,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       request();
     } else {
       rig.isOrtho = !rig.isOrtho;
+      orthographicSig.value = rig.isOrtho;
       request();
     }
   });
@@ -757,6 +797,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
       (tool === 'move' || tool === 'rotate' || forPoint || forCorner) &&
       assetsSig.value !== null &&
       !modalActiveSig.value &&
+      editingReferencePlaneSig.value === null &&
       transformStateSig.value !== 'reattach';
     transformGizmo.handlers = forCorner
       ? surfaceGizmoHandlers
@@ -794,6 +835,21 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
               catalogSig.value,
             );
     transformGizmo.place(at);
+    request();
+  });
+
+  const stopReferencePlanes = effect(() => {
+    const editing = editingReferencePlaneSig.value;
+    if (editing !== null && toolSig.peek() !== 'sockets') {
+      cancelModal();
+      setTool('select');
+    }
+    referencePlanes.sync(
+      referencesSig.value,
+      referencePlanesSig.value,
+      editing,
+      referencePlaneModeSig.value,
+    );
     request();
   });
 
@@ -868,6 +924,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     stopSymmetry();
     symmetryGuide.dispose();
     stopGizmo();
+    stopReferencePlanes();
+    referencePlanes.dispose();
     stopPreview();
     stopHandles();
     cancelModal();

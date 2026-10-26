@@ -7,6 +7,11 @@ import {
   activeReferenceSig,
   removeReference,
   pasteReference,
+  insertReferencePlane,
+  updateReferencePlane,
+  removeReferencePlane,
+  referencePlanesSig,
+  editingReferencePlaneSig,
 } from '../../src/state/references';
 import { docSig, historySig, resetStoreForTests } from '../../src/state/store';
 import { toShareCode } from '../../src/core/share';
@@ -33,6 +38,41 @@ test('references are separate from the blueprint and history', () => {
   expect(docSig.value).toBe(doc);
   expect(historySig.value).toBe(history);
   expect(toShareCode(docSig.value)).toBe(code);
+});
+
+test('workspace planes transform locally and never alter blueprint exports or history', () => {
+  const doc = docSig.peek(),
+    code = toShareCode(doc),
+    history = historySig.peek();
+  addReferenceFile(new File(['image'], 'truck.png', { type: 'image/png' }));
+  const id = activeReferenceSig.value!.id;
+  insertReferencePlane(id);
+  updateReferencePlane(id, {
+    position: [2, 3, 4],
+    rotation: [10, 20, 30],
+    width: 12,
+    height: 6,
+    opacity: 0.4,
+  });
+  expect(referencePlanesSig.value.get(id)).toMatchObject({
+    position: [2, 3, 4],
+    rotation: [10, 20, 30],
+    width: 12,
+    height: 6,
+  });
+  expect(docSig.peek()).toBe(doc);
+  expect(historySig.peek()).toBe(history);
+  expect(toShareCode(docSig.peek())).toBe(code);
+  const plane = referencePlanesSig.peek().get(id);
+  updateReferencePlane(id, { width: 0 });
+  updateReferencePlane(id, { position: [Infinity, 0, 0] });
+  expect(referencePlanesSig.peek().get(id)).toBe(plane);
+  removeReferencePlane(id);
+  expect(editingReferencePlaneSig.peek()).toBeNull();
+  expect(referencesSig.peek()).toHaveLength(1);
+  insertReferencePlane(id);
+  removeReference(id);
+  expect(referencePlanesSig.peek().size).toBe(0);
 });
 
 test.each([

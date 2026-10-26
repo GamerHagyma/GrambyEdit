@@ -202,6 +202,26 @@ const USAGE: readonly Section[] = [
     title: 'References and building helpers',
     rows: [
       {
+        keys: ['Selection'],
+        action:
+          'Right-click in the viewport or Outliner for Invert selection. Outliner Show all / Hide all affects every part, even with search filters or collapsed rows.',
+      },
+      {
+        keys: ['Projection'],
+        action:
+          'Use the Perspective / Orthographic toolbar button, View → Toggle orthographic, or Numpad 5. Camera framing stays in place.',
+      },
+      {
+        keys: ['Socket defaults'],
+        action:
+          'Sockets → Reset all to defaults asks for confirmation and removes all custom socket captures and imported overrides from this browser’s IndexedDB. Export the socket file first to keep a backup.',
+      },
+      {
+        keys: ['Image planes'],
+        action:
+          'Reference → Insert image plane adds a local plane at the camera focus. Drag its Move / Rotate / Resize gizmo or use exact position, angle and size fields. G / R / S switch gizmo modes; Esc finishes editing. Opacity and visibility are adjustable. Planes never enter exports or collaboration. Image links need CORS support; choose a local image file if blocked.',
+      },
+      {
         keys: ['Sockets'],
         action:
           'Orange/red markers indicate mechanical mounts (bearings, servos, doors, suspension). Purple highlights the selection’s attachment target; used sockets fade.',
