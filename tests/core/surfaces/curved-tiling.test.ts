@@ -130,30 +130,29 @@ test('long geometry work yields and cancellation never returns partial success',
   if (!r.ok) expect(r.code).toBe('cancelled');
 });
 
-test.each([1, 2, 3.464101615])(
-  'a convex ridge of height %s aligns full-thickness outer corners without a lip',
-  async (height) => {
-    const d = fixture('crease90');
-    const points = Object.fromEntries(
-      Object.entries(d.points).map(([id, p]) => [id, [p[0], (p[1] * height) / 2, p[2]] as Vec3]),
-    );
-    const r = await tileCurved({ ...d, points }, cap, { maxElements: 1000 });
-    if (!r.ok) throw new Error(r.error);
-    const before = Math.max(...r.tiles.filter((t) => t.v < 0.5).map((t) => t.v));
-    const after = Math.min(...r.tiles.filter((t) => t.v > 0.5).map((t) => t.v));
-    for (const tile of r.tiles.filter((t) => t.v === before || t.v === after)) {
-      const toward = tile.v < 0.5 ? -1 : 1;
-      const outerEdge = new Vector3(cap.thickness / 2, (toward * cap.height) / 2, 0).applyMatrix4(
-        tile.frame,
-      );
-      expect(outerEdge.z).toBeCloseTo(-2, 6);
-      expect(outerEdge.y).toBeCloseTo(
-        height + (cap.thickness / 2) * Math.sqrt(1 + (height / 2) ** 2),
-        6,
-      );
-    }
-  },
-);
+test('90-degree end faces sit slightly inside the opposing slab instead of becoming visible coplanar color strips', async () => {
+  const r = await tileCurved(fixture('crease90'), cap, { maxElements: 1000 });
+  if (!r.ok) throw new Error(r.error);
+  const before = Math.max(...r.tiles.filter((t) => t.v < 0.5).map((t) => t.v));
+  const after = Math.min(...r.tiles.filter((t) => t.v > 0.5).map((t) => t.v));
+  const a = r.tiles.filter((t) => t.v === before),
+    b = r.tiles.filter((t) => t.v === after);
+  for (const tile of [...a, ...b]) {
+    for (const x of [-0.5, 0.5])
+      for (const z of [-0.5, 0.5]) {
+        const toward = tile.v < 0.5 ? -1 : 1;
+        const end = new Vector3(
+          x * cap.thickness,
+          (toward * cap.height) / 2,
+          z * cap.width,
+        ).applyMatrix4(tile.frame);
+        const opposite = tile.v < 0.5 ? b[0] : a[0];
+        const q = end.clone().applyMatrix4(opposite.frame.clone().invert());
+        // Check the opposite slab plane; the tiny recessed outer tip is not a trimmed miter.
+        expect(Math.abs(q.x)).toBeLessThan(cap.thickness / 2 - 0.0049);
+      }
+  }
+});
 
 test('concave crease compensation does not open a gap beneath the join', async () => {
   const d = fixture('crease90');

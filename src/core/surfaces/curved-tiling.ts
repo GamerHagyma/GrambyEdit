@@ -177,7 +177,7 @@ function domainAt(
 }
 class Cancelled extends Error {}
 
-/** Extend convex ridge plates until their outer faces meet, including native thickness. */
+/** A small recess avoids exposing differently colored end faces at right-angle ridges. */
 function creaseExtension(
   d: PatchDraft,
   axis: 'u' | 'v',
@@ -201,7 +201,8 @@ function creaseExtension(
   const b = axis === 'u' ? evaluatePatchSpan(d, k, j, 0, t) : evaluatePatchSpan(d, j, k, t, 0);
   const na = vector(a.du).cross(vector(a.dv)).normalize(),
     nb = vector(b.du).cross(vector(b.dv)).normalize();
-  const denominator = 1 + na.dot(nb);
+  const cosine = na.dot(nb),
+    denominator = 1 + cosine;
   if (denominator < 1e-6) return Infinity;
   const offset = na.add(nb).multiplyScalar(thickness / (2 * denominator));
   const sample = before ? a : b;
@@ -210,7 +211,12 @@ function creaseExtension(
     .multiplyScalar(before ? 1 : -1);
   // Concave joins naturally hide the overlap; insetting them would open the guide.
   if (offset.dot(toward) <= 0) return pad;
-  return Math.max(pad, Math.abs(offset.dot(tangent)));
+  const extension = Math.abs(offset.dot(tangent));
+  if (extension > thickness) return Infinity;
+  // Rectangular ends cannot form a general trimmed miter. Retain conservative
+  // overlap outside the right-angle case verified by the native fixtures.
+  if (Math.abs(cosine) > 1e-3) return pad;
+  return Math.max(pad, extension - Math.min(0.005, thickness * 0.05));
 }
 
 export async function tileCurved(

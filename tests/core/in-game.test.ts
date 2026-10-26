@@ -145,8 +145,8 @@ test('Door sockets: a GasCap closes the fuel door and Roof doors stand in their 
 });
 
 test('a GasCap on a point uses its calibrated point mount rather than a physical door joint', async () => {
-  // An ephemeral point at the fuel socket's frame is not a physical door joint. The calibrated
-  // point mount retains the 0.322 hinge distance on the cap's Y, rather than its native edge frame.
+  // An ephemeral point at the fuel socket's frame is not a physical door joint.
+  // Native point calibration retains the captured edge position and its measured point rotation.
   const cat = await realCatalog();
   const frame = cat.parts.Chassis.sockets['20'].frame;
   const car = docOf(
@@ -154,9 +154,8 @@ test('a GasCap on a point uses its calibrated point mount rather than a physical
     part(2, 'GasCap', [mount('1', 1, '{u}')]),
   );
   const poses = computePoses(car, cat, cat.conventions);
-  // This frame points the cap's Y up, so its centre is 0.322 below the point at (-3.066, 0.425, 4.083).
-  expectSpan(span(cat, car, poses, 2), [-3.116, -0.219, 3.761], [-3.016, 0.425, 4.406]);
-  expectNear(new Vector3().setFromMatrixColumn(poses.world.get(2)!, 1), 0, 1, 0);
+  expectSpan(span(cat, car, poses, 2), [-3.166, -0.219, 3.761], [-3.066, 0.425, 4.406]);
+  expectNear(new Vector3().setFromMatrixColumn(poses.world.get(2)!, 0), -1, 0, 0);
 });
 
 test('Kamaz: the cab doors on Connector sockets hang unturned, as in game', async () => {
@@ -187,22 +186,23 @@ test('Kamaz: the cab doors on Connector sockets hang unturned, as in game', asyn
 
 test('the original alignment probe uses the calibrated GasCap point frame', async () => {
   // The initial point-origin hypothesis was disproved by the centred probe. The six-case comparison
-  // then confirmed a further 0.322 along the point plane, without changing this probe's X or height.
+  // then confirmed planar centring. The later native CFrame capture resolves the 0.05 height
+  // discrepancy and the square's in-plane axes which the old screenshots could not distinguish.
   const cat = await realCatalog();
   const doc: Doc = importCode(readFileSync('tests/fixtures/gascap_point_alignment.txt', 'utf8'));
   const poses = computePoses(doc, cat, cat.conventions);
   const centers = [
-    [-0.5335, 0.55, 0.0568],
-    [0.1111, 0.55, 0.0568],
-    [-0.5335, 0.55, -0.5878],
-    [0.1111, 0.55, -0.5878],
+    [-0.5335, 0.5, 0.0568],
+    [0.1111, 0.5, 0.0568],
+    [-0.5335, 0.5, -0.5878],
+    [0.1111, 0.5, -0.5878],
   ];
   for (const [i, expected] of centers.entries()) {
     const world = poses.world.get(i + 2)!;
     expectNear(new Vector3().setFromMatrixPosition(world), expected[0], expected[1], expected[2]);
-    expectNear(new Vector3().setFromMatrixColumn(world, 0), 0, 1, 0);
+    expectNear(new Vector3().setFromMatrixColumn(world, 0), 0, -1, 0);
   }
-  expectSpan(span(cat, doc, poses, 2), [-0.8558, 0.5, -0.2655], [-0.2112, 0.6, 0.3791]);
+  expectSpan(span(cat, doc, poses, 2), [-0.8558, 0.45, -0.2655], [-0.2112, 0.55, 0.3791]);
   expectNear(new Vector3().setFromMatrixPosition(poses.world.get(6)!), 0, 0.5, 0);
 });
 
@@ -211,7 +211,7 @@ test('the GasCap point correction follows a rotated and translated host', async 
   const doc: Doc = importCode(readFileSync('tests/fixtures/gascap_point_alignment.txt', 'utf8'));
   const moved = { ...doc, layout: new Map([[1, [5, 2, 7, 0, 0, 1, 0, 1, 0, -1, 0, 0] as const]]) };
   const poses = computePoses(moved, cat, cat.conventions);
-  expectNear(new Vector3().setFromMatrixPosition(poses.world.get(2)!), 5.0568, 2.55, 7.5335);
+  expectNear(new Vector3().setFromMatrixPosition(poses.world.get(2)!), 5.0568, 2.5, 7.5335);
 });
 
 test('the game-confirmed green comparison plates centre on normal, rotated-host and rotated-point cubes', async () => {
@@ -228,7 +228,7 @@ test('the game-confirmed green comparison plates centre on normal, rotated-host 
       center.add(new Vector3().setFromMatrixPosition(poses.world.get(id)!).applyMatrix4(back));
     }
     center.multiplyScalar(0.25);
-    expectNear(center, 0, 0.55, 0);
+    expectNear(center, 0, 0.5, 0);
   }
 });
 

@@ -137,12 +137,12 @@ test('flat surfaces export the game-calibrated point offset while keeping the pl
   const points = [...r.sub.parts.get(1)!.points!.values()]
     .map((point) => point.cframe.slice(0, 3))
     .sort((a, b) => a[0] - b[0] || a[2] - b[2]);
-  // Centre +/-0.3223, plus 0.322 along the point-plane's +X (world +Z in this flat case).
-  // The 0.322 is the captured native hinge distance, confirmed by all three green game probes.
+  // Native CFrame measurements retain the raw hinge position and measured square rotation.
+  // The inverse places the points on the supporting face while the cap centers sit at 0.55.
   expect(points).toEqual([
-    [-0.3223, 0.55, -0.0003],
-    [-0.3223, 0.55, 0.6443],
-    [0.3223, 0.55, -0.0003],
-    [0.3223, 0.55, 0.6443],
+    [-0.6443, 0.5, -0.3223],
+    [-0.6443, 0.5, 0.3223],
+    [0.0003, 0.5, -0.3223],
+    [0.0003, 0.5, 0.3223],
   ]);
 });

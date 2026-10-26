@@ -172,6 +172,9 @@ export type MountOnto = { readonly type: string; readonly socket: SocketId } | '
 /** Ry(+90°), exact: how the game turns a hinged socket on a door socket or a point (D23). */
 const HINGE_TURN = new Matrix4().set(0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1);
 
+// Native point-mounted GasCap calibration, measured on two rotated hosts (2026-10-26).
+// Preserve the captured hinge position; the native square's axes turn Rx(90) Ry(-90).
+const GASCAP_POINT_TURN = new Matrix4().set(0, 0, -1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 type HingeTurn = 'door' | 'point' | 'gascap-point';
 
 /** How a hinged socket mounting `onto` something turns (D23): on a door socket, on a point, or not. */
@@ -208,14 +211,13 @@ export function ignoresOrientation(cat: Catalog, type: string, socket: SocketId)
 /**
  * Turns the child socket frame `m` (mutated) a quarter about its +Y. On a door socket the part swings
  * about the socket, as the game's hinge does; on a point it turns about its own origin, as
- * Orientation turns parts. A GasCap on a point retains its measured hinge distance along local Y:
- * the user confirmed all three compensated comparison plates centred in game (2026-10-24).
+ * Orientation turns parts. GasCaps use their separately measured native point transform;
+ * the old flat-square comparison could not distinguish their in-plane axes or half-thickness.
  */
 function turnHinge(m: Matrix4, on: HingeTurn): Matrix4 {
   if (on === 'door') return m.multiply(HINGE_TURN);
   if (on === 'gascap-point') {
-    const edge = -m.elements[14];
-    return m.multiply(HINGE_TURN).setPosition(0, edge, 0);
+    return m.multiply(GASCAP_POINT_TURN);
   }
   const r = new Matrix4().extractRotation(m);
   return m.premultiply(r.clone().multiply(HINGE_TURN).multiply(r.invert()));
