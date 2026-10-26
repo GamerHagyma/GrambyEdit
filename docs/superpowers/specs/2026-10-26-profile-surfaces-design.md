@@ -1,6 +1,6 @@
 # Profile surfaces and optional Bézier edges
 
-Status: implementation authorized by the user on 2026-10-26. Core geometry, native feasibility, background preview, curved edges and Profiles controls are implemented; final integration checks follow the linked plan.
+Status: implementation and verification completed on 2026-10-26. See the [final verification report](../research/2026-10-26-profile-surfaces-verification.md) for automated, browser, collaboration and native-game evidence. Publishing is separate.
 
 ## Outcome and scope
 

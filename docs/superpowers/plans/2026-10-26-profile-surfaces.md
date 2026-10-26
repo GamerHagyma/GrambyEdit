@@ -10,6 +10,8 @@
 
 **Spec:** [Profile surfaces design](../specs/2026-10-26-profile-surfaces-design.md).
 
+**Completion:** Tasks 1–6 implemented and verified on 2026-10-26. The checklist below preserves the original execution plan; the [final verification report](../research/2026-10-26-profile-surfaces-verification.md) records the checks actually performed, native calibration correction, review fix and remaining approximation limits. Work remains local on `codex/profile-surfaces`; publishing is separate.
+
 ## Global Constraints
 
 - All geometry is in the parent's part space.
