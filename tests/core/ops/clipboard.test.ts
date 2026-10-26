@@ -91,10 +91,10 @@ test('a prefab attached to a point keeps a placed root where it is', () => {
     }),
   );
   const at = computePoses(doc, MINI, C).world.get(2)!.elements;
-  expect(at[12]).toBeCloseTo(10, 9);
-  expect(at[13]).toBeCloseTo(0.75, 9);
+  expect(at[12]).toBeCloseTo(10.5, 9);
+  expect(at[13]).toBeCloseTo(0.25, 9);
   expect(at[14]).toBeCloseTo(0, 9);
-  expect(doc.layout.get(3)).toEqual([10, 0.75, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1]);
+  expect(doc.layout.get(3)).toEqual([10.5, 0.25, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0]);
 });
 test('a duplicated root keeps its world pose as its own layout', () => {
   const d0: Doc = {

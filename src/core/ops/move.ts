@@ -696,9 +696,14 @@ export function nativeRotate(
 ): void {
   const part = d.get(id)!;
   const key = `Orientation${axis}`;
-  const t = poseConn(part)?.target;
-  // On a Spinner or Servo the game keeps the part at its default turn.
-  if (t?.kind === 'socket' && ignoresOrientation(cat, d.get(t.part)!.type, t.socket)) return;
+  const conn = poseConn(part);
+  const t = conn?.target;
+  // A spinning or hinged mount controls the child's turn in game.
+  if (
+    t?.kind === 'socket' &&
+    ignoresOrientation(cat, d.get(t.part)!.type, t.socket, { type: part.type, socket: conn!.self })
+  )
+    return;
   if (t && (t.kind === 'socket' || conv.orientationOnPoints) && propApplies(cat, part, key)) {
     const now = typeof part.props[key] === 'number' ? (part.props[key] as number) : 0;
     setProp(d, cat, [id], key, now + degrees);

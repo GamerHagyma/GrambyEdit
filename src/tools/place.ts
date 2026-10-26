@@ -81,7 +81,7 @@ function findSpot(cat: Catalog, root: Part, ndc: Vector2): Spot | null {
       bodyWorld(poses, sock.part, bodyOfSocket(cat.parts[host.type], sock.socket))!,
       socketMatrix(cat, host.type, sock.socket, host.props).m,
       childSocketMatrix(cat, type, self, { type: host.type, socket: sock.socket }).m,
-      ignoresOrientation(cat, host.type, sock.socket) ? {} : props,
+      ignoresOrientation(cat, host.type, sock.socket, { type, socket: self }) ? {} : props,
       conv,
       bodyPivot(cat, type, self),
     );

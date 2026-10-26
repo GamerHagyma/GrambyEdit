@@ -133,10 +133,15 @@ test('grid snapping lands the moved point on the world grid on every axis (user,
   close(gridOffset(new Vector3(), from, 0.25), -0.05, -0.1, -0.05);
 });
 
-test('turning a part on a Spinner or a Servo is refused: the game keeps its default turn', async () => {
+test.each([
+  ['Bearing', 'Wheel'],
+  ['Servo_Physics', 'Wheel'],
+  ['Roof', 'DoorA'],
+  ['Roof', 'GasCap'],
+])('turning %s-mounted %s is refused when the mount controls its turn', async (host, child) => {
   const cat = await realCatalog();
   const conv = cat.conventions;
-  const d0 = docOf(part(1, 'Bearing'), part(2, 'Wheel', [sock('1', 1, '2')]));
+  const d0 = docOf(part(1, host), part(2, child, [sock('1', 1, '2')]));
   const poses = computePoses(d0, cat, conv);
   const at = new Vector3().setFromMatrixPosition(poses.world.get(2)!);
   const turn = new Matrix4()
@@ -148,7 +153,7 @@ test('turning a part on a Spinner or a Servo is refused: the game keeps its defa
     refused = applyTransform(d, cat, conv, poses, [2], () => turn);
   });
   expect(refused).toEqual([
-    'Wheel #2 sits on a Spinner or Servo, which keeps it at its default turn in game.',
+    `${child} #2 has a mount that controls its turn in game. Detach it before rotating it freely.`,
   ]);
   expect(doc.parts.get(2)).toEqual(d0.parts.get(2));
 });

@@ -196,11 +196,17 @@ export function deltaMatrix(delta: TransformDelta, origin: Vector3): Matrix4 {
 const turns = (delta: Matrix4) =>
   new Quaternion().setFromRotationMatrix(delta).angleTo(new Quaternion()) > 1e-9;
 
-/** The part's label when it hangs from a Spinner's or Servo's socket, which keeps its default turn. */
+/** The part's label when its mount controls its turn instead of Orientation. */
 function spunBy(d: Draft, cat: Catalog, id: PartId): string | null {
-  const t = poseConn(d.get(id)!)?.target;
+  const part = d.get(id)!;
+  const conn = poseConn(part);
+  const t = conn?.target;
   const parent = t?.kind === 'socket' ? d.get(t.part) : undefined;
-  if (t?.kind !== 'socket' || !parent || !ignoresOrientation(cat, parent.type, t.socket)) {
+  if (
+    t?.kind !== 'socket' ||
+    !parent ||
+    !ignoresOrientation(cat, parent.type, t.socket, { type: part.type, socket: conn!.self })
+  ) {
     return null;
   }
   const doc = draftDoc(d);
@@ -237,7 +243,7 @@ export function applyTransform(
     const spun = spunBy(d, cat, id);
     if (spun && turns(delta)) {
       refused.push(
-        `${spun} sits on a Spinner or Servo, which keeps it at its default turn in game.`,
+        `${spun} has a mount that controls its turn in game. Detach it before rotating it freely.`,
       );
       continue;
     }
@@ -641,7 +647,9 @@ function findTarget(r: Reattach, ndc: Vector2): Reattach['target'] {
       at,
       frame,
       childSocketMatrix(cat, part.type, self, { type: host.type, socket: sock.socket }).m,
-      ignoresOrientation(cat, host.type, sock.socket) ? {} : part.props,
+      ignoresOrientation(cat, host.type, sock.socket, { type: part.type, socket: self })
+        ? {}
+        : part.props,
       conv,
       bodyPivot(cat, part.type, self),
     );

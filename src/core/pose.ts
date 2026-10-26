@@ -169,25 +169,25 @@ export function socketMatrix(
 /** What a child socket mounts onto: another part's socket, or a point. */
 export type MountOnto = { readonly type: string; readonly socket: SocketId } | 'point';
 
-/** Ry(+90°), exact: how the game turns a hinged socket on a door socket or a point (D23). */
+/** Ry(+90°), exact: how the game turns a hinged child on a physical door socket (D23). */
 const HINGE_TURN = new Matrix4().set(0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 1);
 
-// Native point-mounted GasCap calibration, measured on two rotated hosts (2026-10-26).
-// Preserve the captured hinge position; the native square's axes turn Rx(90) Ry(-90).
-const GASCAP_POINT_TURN = new Matrix4().set(0, 0, -1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1);
-type HingeTurn = 'door' | 'point' | 'gascap-point';
+// Native point mounts use this extra child-frame turn, preserving captured translation.
+// Measured on 90 mounts across 10 types, including hinged and shared-ID sockets (2026-10-26).
+const POINT_MOUNT_TURN = new Matrix4().set(0, 0, -1, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+type MountTurn = 'door' | 'point';
 
-/** How a hinged socket mounting `onto` something turns (D23): on a door socket, on a point, or not. */
-function hingeTurn(
+/** Extra child-frame turn for any point mount, or a hinged child on a physical door socket. */
+function mountTurn(
   cat: Catalog,
   type: string,
   socket: SocketId,
   onto: MountOnto,
-): HingeTurn | null {
+): MountTurn | null {
+  if (onto === 'point') return 'point';
   if (!Object.hasOwn(cat.parts, type) || cat.parts[type].sockets[socket]?.hinge !== true) {
     return null;
   }
-  if (onto === 'point') return type === 'GasCap' ? 'gascap-point' : 'point';
   return mountTypeOf(cat, onto.type, onto.socket) === 'Door' ? 'door' : null;
 }
 
@@ -200,33 +200,36 @@ function mountTypeOf(cat: Catalog, type: string, socket: SocketId): string | und
 const SPINNING_MOUNTS: ReadonlySet<string> = new Set(['Bearing', 'Servo']);
 
 /**
- * Whether a child on `type`'s parent `socket` keeps its default turn whatever its Orientation: on a
- * Spinner (Bearing) or a Servo, as in game (user, 2026-10-24).
+ * Whether the mount controls the child's turn instead of Orientation: spinning outputs, or a
+ * hinged child on a physical door socket. Ordinary socket and point mounts still take Orientation.
  */
-export function ignoresOrientation(cat: Catalog, type: string, socket: SocketId): boolean {
+export function ignoresOrientation(
+  cat: Catalog,
+  type: string,
+  socket: SocketId,
+  child?: { readonly type: string; readonly socket: SocketId },
+): boolean {
   const mount = mountTypeOf(cat, type, socket);
-  return mount !== undefined && SPINNING_MOUNTS.has(mount);
+  return (
+    (mount !== undefined && SPINNING_MOUNTS.has(mount)) ||
+    (mount === 'Door' &&
+      child !== undefined &&
+      Object.hasOwn(cat.parts, child.type) &&
+      cat.parts[child.type]?.sockets[child.socket]?.hinge === true)
+  );
 }
 
 /**
- * Turns the child socket frame `m` (mutated) a quarter about its +Y. On a door socket the part swings
- * about the socket, as the game's hinge does; on a point it turns about its own origin, as
- * Orientation turns parts. GasCaps use their separately measured native point transform;
- * the old flat-square comparison could not distinguish their in-plane axes or half-thickness.
+ * Turns only the child frame's axes, keeping its captured position. Physical door joints use
+ * Ry(90); points use the independently measured Rx(90) Ry(-90) correction for all child types.
  */
-function turnHinge(m: Matrix4, on: HingeTurn): Matrix4 {
-  if (on === 'door') return m.multiply(HINGE_TURN);
-  if (on === 'gascap-point') {
-    return m.multiply(GASCAP_POINT_TURN);
-  }
-  const r = new Matrix4().extractRotation(m);
-  return m.premultiply(r.clone().multiply(HINGE_TURN).multiply(r.invert()));
+function turnChildFrame(m: Matrix4, on: MountTurn): Matrix4 {
+  return m.multiply(on === 'door' ? HINGE_TURN : POINT_MOUNT_TURN);
 }
 
 /**
- * The frame `type` mates by when its `socket` mounts `onto` something: the socket's frame, turned a
- * quarter about its +Y for a hinged socket (DoorA–D, GasCap) on a door socket or a point, as the game
- * seats them (D23).
+ * The effective child frame for a physical socket or point. Shared by forward posing, placement
+ * previews and inverse point construction; point mounts must not use the uncorrected socket frame.
  */
 export function childSocketMatrix(
   cat: Catalog,
@@ -236,8 +239,8 @@ export function childSocketMatrix(
 ): { m: Matrix4; approx: boolean } {
   const frame = socketFrame(cat, type, socket, 'child');
   const s = { m: frame.m.clone(), approx: frame.approx };
-  const turn = hingeTurn(cat, type, socket, onto);
-  if (turn) turnHinge(s.m, turn);
+  const turn = mountTurn(cat, type, socket, onto);
+  if (turn) turnChildFrame(s.m, turn);
   return s;
 }
 
@@ -506,12 +509,11 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
       if (child.approx) flag |= POSE_APPROX;
       if (child.unknown) flag |= POSE_UNKNOWN_TYPE;
       const onto = t.kind === 'socket' ? { type: parent.type, socket: t.socket } : 'point';
-      const turn = hingeTurn(cat, part.type, conn.self, onto);
+      const turn = mountTurn(cat, part.type, conn.self, onto);
       const tailKey = `${part.type}\u0000${conn.self}\u0000${turn ?? ''}`;
       let after = tail.get(tailKey);
       if (!after) {
-        const s = child.m.clone();
-        if (turn) turnHinge(s, turn);
+        const s = childSocketMatrix(cat, part.type, conn.self, onto).m;
         tail.set(tailKey, (after = mating.clone().multiply(s.invert())));
       }
       m = parentWorld.clone();
@@ -534,7 +536,7 @@ export function computePoses(doc: Doc, cat: Catalog, conv: Conventions): Poses {
       // `mateWorld` (conventions.ts) inline: R turns the body about its pivot, or (v1 guess) the socket.
       const turns =
         t.kind === 'socket'
-          ? !ignoresOrientation(cat, parent.type, t.socket)
+          ? !ignoresOrientation(cat, parent.type, t.socket, { type: part.type, socket: conn.self })
           : conv.orientationOnPoints;
       const r = turns ? orientationMatrix(part.props, conv) : null;
       if (r && conv.orientationPivot === 'socket') m.multiply(r).multiply(after);

@@ -65,7 +65,10 @@ export function attachToMatchingSocket(
         const normal = new Vector3().setFromMatrixColumn(ball, 1).normalize();
         if (normal.dot(parentNormal) > -1 + 1e-6) continue;
         if (wouldCreatePoseCycle(check, id, hostId)) continue;
-        const ignored = ignoresOrientation(cat, host.type, socket),
+        const ignored = ignoresOrientation(cat, host.type, socket, {
+            type: part.type,
+            socket: self,
+          }),
           pivot = bodyPivot(cat, part.type, self);
         const expected = (props: typeof part.props) =>
           childWorldViaSocket(

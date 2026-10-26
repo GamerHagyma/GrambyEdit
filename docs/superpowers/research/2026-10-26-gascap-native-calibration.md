@@ -1,5 +1,7 @@
 # Measured GasCap point mounting
 
+The later [multi-type rotation probe](2026-10-26-point-mount-rotation.md) established that the same point-frame correction applies beyond GasCaps. It preserves every GasCap measurement below and replaces the older non-GasCap point rule.
+
 This supersedes the screenshot-based GasCap point rule from 2026-10-24. Physical door sockets and other hinged parts are unchanged.
 
 ## Evidence

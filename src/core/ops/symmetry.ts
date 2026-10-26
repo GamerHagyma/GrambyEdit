@@ -287,7 +287,9 @@ export function symmetryCopies(
             planned(parentSource, bodyOfSocket(cat.parts[h.type], t.socket)),
             socketMatrix(cat, h.type, t.socket, h.props).m,
             childSocketMatrix(cat, next.type, c.self, { type: h.type, socket: t.socket }).m,
-            ignoresOrientation(cat, h.type, t.socket) ? {} : next.props,
+            ignoresOrientation(cat, h.type, t.socket, { type: next.type, socket: c.self })
+              ? {}
+              : next.props,
             cat.conventions,
             bodyPivot(cat, next.type, c.self),
           );

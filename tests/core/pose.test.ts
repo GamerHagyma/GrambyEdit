@@ -31,7 +31,8 @@ test('a point mount seats the child socket on the point', () => {
     part(1, 'Base', [], {}, [pt('{u}', [2, 0.25, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1], 'Base')]),
     part(2, 'Part', [mount('1', 1, '{u}')]),
   );
-  expect(pos(computePoses(d, MINI, C).world.get(2)!)).toEqual([2, 0.75, 0]);
+  // Point mounts use the measured child-frame turn; their base differs from physical sockets.
+  expect(pos(computePoses(d, MINI, C).world.get(2)!)).toEqual([2.5, 0.25, 0]);
 });
 test('OrientationY = 90 turns the child clockwise about the parent socket normal, as in game', () => {
   const p = computePoses(

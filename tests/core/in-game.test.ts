@@ -2,8 +2,9 @@
 // numbers in the codes.
 import { readFileSync } from 'node:fs';
 import { Box3, Vector3 } from 'three';
+import pointCapture from '../fixtures/servo-point-native.json';
 import type { Catalog } from '../../src/core/catalog-types';
-import { cfToMatrix4 } from '../../src/core/cframe';
+import { cfToMatrix4, isCFrame12 } from '../../src/core/cframe';
 import { computePoses, socketWorld, SPRING_DROP, type Poses } from '../../src/core/pose';
 import type { Doc } from '../../src/core/types';
 import { docOf, mount, part, pt, sock } from '../helpers/doc';
@@ -26,6 +27,54 @@ const expectNear = (v: Vector3, x: number, y: number, z: number) => {
   expect(v.y).toBeCloseTo(y, 2);
   expect(v.z).toBeCloseTo(z, 2);
 };
+
+function capturedFrame(values: readonly number[]) {
+  if (!isCFrame12(values)) throw new Error('Invalid native capture frame.');
+  return values;
+}
+
+test('Servo_Physics on a point matches the measured native frame, including OrientationX/Y', async () => {
+  const cat = await realCatalog();
+  const observation = pointCapture.servo;
+  const doc = docOf(
+    part(1, 'Connector', [], {}, [pt('probe', capturedFrame(observation.point), 'Connector')]),
+    part(2, 'Servo_Physics', [mount('1', 1, 'probe')], observation.props),
+  );
+  const placed = { ...doc, layout: new Map([[1, capturedFrame(observation.hostWorld)]]) };
+  const actual = computePoses(placed, cat, cat.conventions).world.get(2)!;
+  const native = cfToMatrix4(capturedFrame(observation.nativeWorld));
+  expect(Math.max(...actual.elements.map((n, i) => Math.abs(n - native.elements[i])))).toBeLessThan(
+    0.001,
+  );
+});
+
+test('all five Splitter_4 bodies match native geometry even when its first conn is an output', async () => {
+  const cat = await realCatalog();
+  const observation = pointCapture.splitter;
+  const doc = docOf(
+    ...observation.parents.map((p) => part(p.id, p.type)),
+    part(
+      234,
+      'Splitter_4',
+      observation.conns.map((c) => sock(c.self, c.parent, c.socket)),
+      observation.props,
+    ),
+  );
+  const placed = {
+    ...doc,
+    layout: new Map(observation.parents.map((p) => [p.id, capturedFrame(p.nativeWorld)])),
+  };
+  const poses = computePoses(placed, cat, cat.conventions);
+  for (const piece of observation.pieces) {
+    const local = cfToMatrix4(cat.parts.Splitter_4.subParts[piece.name].cframe);
+    const actual = poses.bodies!.get(234)![piece.body].clone().multiply(local);
+    const native = cfToMatrix4(capturedFrame(piece.nativeWorld));
+    expect(
+      Math.max(...actual.elements.map((n, i) => Math.abs(n - native.elements[i]))),
+      piece.name,
+    ).toBeLessThan(0.001);
+  }
+});
 
 test('Connector test: a row of four with one stacked on its end, as in game', async () => {
   const at = await centres('tests/fixtures/connector_test.txt');
