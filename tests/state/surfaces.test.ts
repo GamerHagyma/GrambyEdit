@@ -18,7 +18,15 @@ import {
   surfacePreviewSig,
   surfaceSig,
 } from '../../src/state/surfaces';
-import { baseCatalogSig, docSig, loadDoc, resetStoreForTests, undo } from '../../src/state/store';
+import {
+  baseCatalogSig,
+  docSig,
+  loadDoc,
+  resetStoreForTests,
+  undo,
+  installSharedDoc,
+  setStoreAdapter,
+} from '../../src/state/store';
 import { pickSig } from '../../src/tools/pick';
 import { cornerWorlds } from '../../src/tools/surface';
 import { docOf, part } from '../helpers/doc';
@@ -29,8 +37,11 @@ import {
   applySurfaceEdit,
   activeSurfacePatchSig,
   surfaceDraftSig,
+  selectSurfaceControl,
 } from '../../src/state/surface-draft';
 import { TestSurfaceWorker } from '../helpers/surface-worker';
+import { chooseSymmetryAnchor, symmetrySig, clearSymmetry } from '../../src/state/symmetry';
+import { select } from '../../src/state/selection';
 
 let cat: Catalog;
 beforeAll(async () => {
@@ -44,6 +55,8 @@ beforeEach(() => {
 });
 afterEach(() => {
   surfaceJobs.dispose();
+  setStoreAdapter(null);
+  clearSymmetry();
   vi.unstubAllGlobals();
 });
 
@@ -209,4 +222,74 @@ test('a replacement workspace with the same parent ID invalidates the picked sur
   expect(surfaceJobs.state.value.status).toBe('idle');
   createSurface();
   expect(docSig.value.order).toHaveLength(1);
+});
+
+test('selecting advanced handles reuses accepted mounted parts instead of remounting the whole preview', async () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  pickTop();
+  setSurfaceCurves(true, surfaceSig.value.corners);
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  const built = surfaceBuildSig.value!;
+  if (!built.ok) throw new Error(built.error);
+  selectSurfaceControl(activeSurfacePatchSig.value!.grid[0][1]);
+  const selected = surfaceBuildSig.value!;
+  if (!selected.ok) throw new Error(selected.error);
+  expect(selected.sub).toBe(built.sub);
+});
+
+test('local drafts and remote changes never echo; only created native parts notify the collaboration adapter', async () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  pickTop();
+  const changed = vi.fn();
+  let leased = 1000,
+    editable = true;
+  setStoreAdapter({
+    canEdit: () => editable,
+    canReplace: () => false,
+    allocate: () => leased++,
+    changed,
+    undo: () => false,
+  });
+  setSurfaceCurves(true, surfaceSig.value.corners);
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  const first = surfaceBuildSig.value!;
+  if (!first.ok) throw new Error(first.error);
+  const doc = docSig.value,
+    remoteParts = new Map(doc.parts);
+  remoteParts.set(1, { ...remoteParts.get(1)!, props: { RGB: [20, 30, 40] } });
+  installSharedDoc({ ...doc, parts: remoteParts });
+  const remote = surfaceBuildSig.value!;
+  if (!remote.ok) throw new Error(remote.error);
+  expect(remote.sub).toBe(first.sub);
+  expect(changed).not.toHaveBeenCalled();
+  createSurface();
+  expect(changed).toHaveBeenCalledTimes(1);
+  expect(docSig.value.order).toHaveLength(first.count + 1);
+  expect(docSig.value.order.slice(1).every((id) => id >= 1000)).toBe(true);
+  editable = false;
+  const d = activeSurfacePatchSig.value!,
+    id = d.grid[0][1],
+    p = d.points[id];
+  applySurfaceEdit({ kind: 'move', positions: { [id]: [p[0], p[1] + 0.01, p[2]] } });
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  createSurface();
+  expect(changed).toHaveBeenCalledTimes(1);
+});
+
+test('automatic mirror copies of a curved surface share the original Create undo transaction', async () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  clearSymmetry();
+  pickTop();
+  select([1], 'replace');
+  chooseSymmetryAnchor();
+  symmetrySig.value = { ...symmetrySig.value, auto: true };
+  setCorners(surfaceSig.value.corners.map((p, i) => [i, [p[0] + 2, p[1], p[2]]] as const));
+  setSurfaceCurves(true, surfaceSig.value.corners);
+  await vi.waitFor(() => expect(surfaceBuildSig.value?.ok).toBe(true));
+  const built = surfaceBuildSig.value!;
+  if (!built.ok) throw new Error(built.error);
+  createSurface();
+  expect(docSig.value.order).toHaveLength(built.count * 2 + 1);
+  undo();
+  expect(docSig.value.order).toEqual([1]);
 });

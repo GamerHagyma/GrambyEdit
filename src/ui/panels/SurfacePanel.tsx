@@ -24,6 +24,8 @@ import {
 import { catalogSig } from '../../state/store';
 import { toolSig } from '../../tools/manager';
 import { ColorFields } from '../widgets/ColorFields';
+import { SurfaceCurveEditor } from './SurfaceCurveEditor';
+import { activeSurfacePatchSig, surfaceDraftSig, surfaceJobs } from '../../state/surface-draft';
 
 /** The corner `at` with its coordinate `k` (0 for X, 1 for Y, 2 for Z) replaced by `v`. */
 function withCoord(at: Vec3, k: number, v: number): Vec3 {
@@ -90,50 +92,55 @@ export function SurfacePanel(): JSX.Element {
       </div>
       {host ? (
         <>
-          <fieldset class="surface-corners">
-            <legend>Corners (parent axes, studs) · Shift+click for several</legend>
-            {corners.map((corner, i) => (
-              <div class={selected.includes(i) ? 'gen-field active' : 'gen-field'} key={i}>
-                <button
-                  class="button small"
-                  aria-pressed={selected.includes(i)}
-                  title="Shift+click to add or take out corners"
-                  onClick={(e) =>
-                    // A plain click on the only chosen corner lets it go.
-                    e.shiftKey || selected.length !== 1 || selected[0] !== i
-                      ? selectCorner(i, e.shiftKey)
-                      : selectCorner(null)
-                  }
-                >
-                  Corner {i + 1}
-                </button>
-                {(['X', 'Y', 'Z'] as const).map((axis, k) => (
-                  <input
-                    key={axis}
-                    type="number"
-                    step="0.05"
-                    aria-label={`Corner ${i + 1} ${axis}`}
-                    // Six decimals: a typed value keeps every digit (a GasCap is 0.6446 wide).
-                    value={Math.round(corner[k] * 1e6) / 1e6}
-                    onInput={(e) => {
-                      // The state's corner, not the one this render drew: a render may still be pending.
-                      const v = parseFloat(e.currentTarget.value);
-                      if (Number.isFinite(v)) {
-                        setCorner(i, withCoord(surfaceSig.value.corners[i], k, v));
+          <SurfaceCurveEditor corners={corners} />
+          {!activeSurfacePatchSig.value && (
+            <>
+              <fieldset class="surface-corners">
+                <legend>Corners (parent axes, studs) · Shift+click for several</legend>
+                {corners.map((corner, i) => (
+                  <div class={selected.includes(i) ? 'gen-field active' : 'gen-field'} key={i}>
+                    <button
+                      class="button small"
+                      aria-pressed={selected.includes(i)}
+                      title="Shift+click to add or take out corners"
+                      onClick={(e) =>
+                        // A plain click on the only chosen corner lets it go.
+                        e.shiftKey || selected.length !== 1 || selected[0] !== i
+                          ? selectCorner(i, e.shiftKey)
+                          : selectCorner(null)
                       }
-                    }}
-                    // Typing into a chosen corner keeps the choice; another corner is chosen alone.
-                    onFocus={() => {
-                      if (!surfaceSig.value.selected.includes(i)) selectCorner(i);
-                    }}
-                  />
+                    >
+                      Corner {i + 1}
+                    </button>
+                    {(['X', 'Y', 'Z'] as const).map((axis, k) => (
+                      <input
+                        key={axis}
+                        type="number"
+                        step="0.05"
+                        aria-label={`Corner ${i + 1} ${axis}`}
+                        // Six decimals: a typed value keeps every digit (a GasCap is 0.6446 wide).
+                        value={Math.round(corner[k] * 1e6) / 1e6}
+                        onInput={(e) => {
+                          // The state's corner, not the one this render drew: a render may still be pending.
+                          const v = parseFloat(e.currentTarget.value);
+                          if (Number.isFinite(v)) {
+                            setCorner(i, withCoord(surfaceSig.value.corners[i], k, v));
+                          }
+                        }}
+                        // Typing into a chosen corner keeps the choice; another corner is chosen alone.
+                        onFocus={() => {
+                          if (!surfaceSig.value.selected.includes(i)) selectCorner(i);
+                        }}
+                      />
+                    ))}
+                  </div>
                 ))}
-              </div>
-            ))}
-          </fieldset>
-          <button class="button small" onClick={resetCorners}>
-            Reset corners
-          </button>
+              </fieldset>
+              <button class="button small" onClick={resetCorners}>
+                Reset corners
+              </button>
+            </>
+          )}
           {created !== null ? (
             <p class="gen-cost" role="status">
               Created {created} GasCaps. Undo to adjust and create again.
@@ -154,6 +161,10 @@ export function SurfacePanel(): JSX.Element {
                 </>
               )}
             </>
+          ) : surfaceJobs.state.value.status === 'pending' && activeSurfacePatchSig.value ? (
+            <p class="gen-cost" role="status">
+              Updating GasCaps…
+            </p>
           ) : (
             built && (
               <p class="gen-error" role="alert">
@@ -162,7 +173,10 @@ export function SurfacePanel(): JSX.Element {
             )
           )}
           <div class="gen-form">
-            <label class="gen-color-toggle" title="Turn off to use default part colors">
+            <label
+              class="gen-color-toggle"
+              title="Turn off to let the game pick native GasCap colors"
+            >
               <input
                 type="checkbox"
                 checked={colorEnabled}
@@ -175,12 +189,23 @@ export function SurfacePanel(): JSX.Element {
                 idPrefix="surf"
                 color={color}
                 axes={[
-                  { id: 'u', label: 'Corner 1 → 2' },
-                  { id: 'v', label: 'Corner 1 → 4' },
+                  {
+                    id: 'u',
+                    label:
+                      surfaceDraftSig.value.mode === 'profiles' ? 'Across profile' : 'Corner 1 → 2',
+                  },
+                  {
+                    id: 'v',
+                    label:
+                      surfaceDraftSig.value.mode === 'profiles' ? 'Along profiles' : 'Corner 1 → 4',
+                  },
                 ]}
                 onChange={setSurfaceColor}
               />
             </fieldset>
+            {!colorEnabled && (
+              <p class="hint">The game assigns random GasCap colors when coloring is off.</p>
+            )}
           </div>
           <button class="button primary" disabled={!built?.ok} onClick={createSurface}>
             Create

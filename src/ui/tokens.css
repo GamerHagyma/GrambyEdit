@@ -1884,7 +1884,9 @@ kbd {
   gap: 8px;
   padding: 6px;
 }
-.surface-corners {
+.surface-corners,
+.surface-curve-editor,
+.surface-control-position {
   /* A fieldset is never narrower than its content unless told so. */
   min-width: 0;
   border: 0;
@@ -1894,7 +1896,9 @@ kbd {
   flex-direction: column;
   gap: 4px;
 }
-.surface-corners legend {
+.surface-corners legend,
+.surface-curve-editor legend,
+.surface-control-position legend {
   padding: 0;
   color: var(--muted);
   font-size: 12px;
@@ -1907,6 +1911,38 @@ kbd {
 }
 .surface-corners .gen-field.active input {
   border-color: var(--select);
+}
+.surface-actions,
+.surface-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.surface-profiles {
+  max-height: 132px;
+  overflow-y: auto;
+}
+.surface-profiles .button[aria-pressed='true'] {
+  border-color: var(--select);
+  color: var(--select);
+}
+.surface-control-position .gen-field > label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  width: 0;
+  min-width: 0;
+}
+.surface-control-position input {
+  width: 100%;
+}
+.surface-corner.surface-curve-badge {
+  width: auto;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 /* The badge the viewport draws beside each corner of the parent's surface. */
 .surface-corner {

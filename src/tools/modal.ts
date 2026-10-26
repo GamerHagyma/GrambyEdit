@@ -10,7 +10,6 @@ import { Euler, MathUtils, Plane, Quaternion, Ray, Vector2, Vector3 } from 'thre
 import { selectionSig } from '../state/selection';
 import { catalogSig, docSig } from '../state/store';
 import { settingsSig } from '../state/settings';
-import { surfaceSig } from '../state/surfaces';
 import {
   editingReferencePlaneSig,
   referencePlanesSig,
@@ -20,7 +19,7 @@ import { inspectorTabSig } from '../state/ui';
 import { getViewport } from '../viewport/context';
 import { toolSig } from './manager';
 import { pointGizmoHandlers, pointGizmoPlacement, selectedPoint } from './point';
-import { surfaceGizmoHandlers, surfaceGizmoPlacement } from './surface';
+import { hasSurfaceControlSelection, surfaceGestureToken, surfaceGizmoHandlers, surfaceGizmoPlacement } from './surface';
 import {
   beginSession,
   cancelSession,
@@ -126,9 +125,11 @@ function cornerTarget(): Target | null {
   const at = surfaceGizmoPlacement();
   if (!at) return null;
   surfaceGizmoHandlers.start();
+  const token = surfaceGestureToken();
   return {
     pivot: at.position,
     local: at.quaternion,
+    alive: () => token !== null && surfaceGestureToken() === token,
     preview: (d) => surfaceGizmoHandlers.change(d),
     finish: (d) => surfaceGizmoHandlers.end(d),
     cancel: () => surfaceGizmoHandlers.cancel(),
@@ -369,7 +370,7 @@ export function startModal(kind: 'move' | 'rotate'): boolean {
   const vp = getViewport();
   if (!vp || transformStateSig.value !== 'idle') return false;
   // In the Surface tool the chosen corners are what G moves; corners do not turn.
-  const corner = toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
+  const corner = toolSig.value === 'surface' && hasSurfaceControlSelection();
   const target =
     referenceTarget() ??
     (corner

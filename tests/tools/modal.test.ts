@@ -5,12 +5,13 @@ import { updateSettings } from '../../src/state/settings';
 import { resetSurfacesForTests, surfaceSig } from '../../src/state/surfaces';
 import { registerTool, setTool } from '../../src/tools/manager';
 import { createSurfaceTool } from '../../src/tools/surface';
-import { baseCatalogSig, loadDoc, resetStoreForTests } from '../../src/state/store';
-import { modalActiveSig, modalGuideSig, startModal } from '../../src/tools/modal';
+import { baseCatalogSig, docSig, installSharedDoc, loadDoc, resetStoreForTests } from '../../src/state/store';
+import { modalActiveSig, modalGuideSig, refreshModal, startModal } from '../../src/tools/modal';
 import { setViewport } from '../../src/viewport/context';
 import { MINI } from '../helpers/catalog';
 import { docOf, part } from '../helpers/doc';
 import { fakeViewport } from '../helpers/viewport';
+import { activeSurfacePatchSig, setSurfaceCurves, selectSurfaceControl } from '../../src/state/surface-draft';
 
 const press = (code: string, key: string) =>
   window.dispatchEvent(new KeyboardEvent('keydown', { code, key, bubbles: true, cancelable: true }));
@@ -45,6 +46,39 @@ test('ending the modal clears the guide and shows the gizmo again', () => {
   press('Escape', 'Escape');
   expect(modalGuideSig.value).toBeNull();
   expect(modalActiveSig.value).toBe(false);
+});
+
+test('G moves an advanced surface handle rather than a selected blueprint part', () => {
+  resetSurfacesForTests();
+  registerTool(createSurfaceTool());
+  const corners: Corners = [[-1, 0.5, 1], [1, 0.5, 1], [1, 0.5, -1], [-1, 0.5, -1]];
+  surfaceSig.value = { ...surfaceSig.value, host: { part: 1, type: 'Part' }, corners, home: corners };
+  setSurfaceCurves(true, corners);
+  const d = activeSurfacePatchSig.value!, id = d.grid[0][1], p = d.points[id];
+  selectSurfaceControl(id); setTool('surface');
+  expect(startModal('move')).toBe(true);
+  press('KeyX', 'x'); press('Digit1', '1'); press('Enter', 'Enter');
+  expect(activeSurfacePatchSig.value!.points[id][0]).toBeCloseTo(p[0] + 1);
+  setTool('select'); resetSurfacesForTests();
+});
+
+test('remote edits preserve a local surface gesture; removing its host cancels without restoring a stale workspace', () => {
+  resetSurfacesForTests(); registerTool(createSurfaceTool());
+  const corners: Corners = [[-1, 0.5, 1], [1, 0.5, 1], [1, 0.5, -1], [-1, 0.5, -1]];
+  surfaceSig.value = { ...surfaceSig.value, host: { part: 1, type: 'Part' }, corners, home: corners };
+  setSurfaceCurves(true, corners);
+  selectSurfaceControl(activeSurfacePatchSig.value!.grid[0][1]); setTool('surface');
+  expect(startModal('move')).toBe(true);
+  press('KeyX', 'x'); press('Digit1', '1');
+  const d = docSig.value, parts = new Map(d.parts); parts.set(2, part(2, 'Part'));
+  installSharedDoc({ ...d, parts, order: [1, 2], nextId: 3 });
+  refreshModal();
+  expect(modalActiveSig.value).toBe(true);
+  installSharedDoc(docOf(part(2, 'Part')));
+  refreshModal();
+  expect(modalActiveSig.value).toBe(false);
+  expect(docSig.value.order).toEqual([2]);
+  setTool('select'); resetSurfacesForTests();
 });
 
 describe('G on a surface corner', () => {

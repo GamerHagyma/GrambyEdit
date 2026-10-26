@@ -261,15 +261,24 @@ export function selectSurfaceControl(id: string | null, add = false): void {
         : [id];
   const row = id && d ? d.grid.findIndex((r) => r.includes(id)) : -1;
   const col = row >= 0 && id ? d!.grid[row].indexOf(id) : -1;
-  surfaceDraftSig.value = { ...s, selected,
+  surfaceDraftSig.value = {
+    ...s,
+    selected,
     profile: s.mode === 'profiles' && row >= 0 && row % 3 === 0 ? row / 3 : s.profile,
-    column: s.mode === 'profiles' && col >= 0 && col % 3 === 0 ? col / 3 : s.column };
+    column: s.mode === 'profiles' && col >= 0 && col % 3 === 0 ? col / 3 : s.column,
+  };
 }
-export function selectSurfaceProfile(profile: number): void {
+export function selectSurfaceProfile(profile: number, add = false): void {
   const s = surfaceDraftSig.peek(),
     d = activeSurfacePatchSig.peek();
   if (!d || !d.grid[profile * 3]) return;
-  surfaceDraftSig.value = { ...s, profile, selected: [...d.grid[profile * 3]] };
+  const row = d.grid[profile * 3];
+  const selected = !add
+    ? [...row]
+    : row.every((id) => s.selected.includes(id))
+      ? s.selected.filter((id) => !row.includes(id))
+      : [...new Set([...s.selected, ...row])];
+  surfaceDraftSig.value = { ...s, profile, selected };
 }
 export function selectSurfaceColumn(column: number): void {
   const s = surfaceDraftSig.peek(),
@@ -333,17 +342,19 @@ export function addSurfaceSection(axis: 'u' | 'v'): void {
 }
 export function undoSurfaceEdit(): void {
   const h = histories[surfaceDraftSig.peek().mode],
-    d = activeSurfacePatchSig.peek(),
-    previous = h.undo.pop();
-  if (!d || !previous) return;
+    d = activeSurfacePatchSig.peek();
+  if (!d) return;
+  const previous = h.undo.pop();
+  if (!previous) return;
   h.redo.push(d);
   replace(previous, false);
 }
 export function redoSurfaceEdit(): void {
   const h = histories[surfaceDraftSig.peek().mode],
-    d = activeSurfacePatchSig.peek(),
-    next = h.redo.pop();
-  if (!d || !next) return;
+    d = activeSurfacePatchSig.peek();
+  if (!d) return;
+  const next = h.redo.pop();
+  if (!next) return;
   h.undo.push(d);
   replace(next, false);
 }
@@ -383,4 +394,24 @@ export function straightenSurfaceSegment(): void {
     kind: 'move',
     positions: { [row[c + 1]]: at(1 / 3), [row[c + 2]]: at(2 / 3) },
   });
+}
+export function resetSurfaceEdgeHandles(): void {
+  const d = activeSurfacePatchSig.peek();
+  if (!d || surfaceDraftSig.peek().mode !== 'quad') return;
+  replace(
+    quadPatch([
+      d.points[d.grid[0][0]],
+      d.points[d.grid[0][3]],
+      d.points[d.grid[3][3]],
+      d.points[d.grid[3][0]],
+    ]),
+  );
+}
+export function removeSurfaceSection(axis: 'u' | 'v'): void {
+  const s = surfaceDraftSig.peek();
+  if (!applySurfaceEdit({ kind: 'remove', axis, index: axis === 'u' ? s.column : s.profile }))
+    return;
+  const d = activeSurfacePatchSig.peek()!;
+  if (axis === 'v') selectSurfaceProfile(Math.min(s.profile, d.vBreaks.length - 1));
+  else selectSurfaceColumn(Math.min(s.column, d.uBreaks.length - 1));
 }

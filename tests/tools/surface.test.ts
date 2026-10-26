@@ -14,6 +14,7 @@ import { getViewport, setViewport } from '../../src/viewport/context';
 import { MINI } from '../helpers/catalog';
 import { docOf, part } from '../helpers/doc';
 import { fakeViewport } from '../helpers/viewport';
+import { activeSurfacePatchSig, selectSurfaceControl, setSurfaceCurves, undoSurfaceEdit } from '../../src/state/surface-draft';
 
 const CORNERS: Corners = [
   [-1, 0.5, 1],
@@ -86,6 +87,23 @@ test('the gizmo moves the chosen corner in world space, stored in the parent par
   surfaceGizmoHandlers.start();
   surfaceGizmoHandlers.end({ kind: 'move', offset: new Vector3(0, 0.25, 0) });
   expect(surfaceSig.value.corners[0]).toEqual([-1, 0.75, 1]);
+});
+
+test('advanced control movement uses parent coordinates, cancels exactly and records one draft undo', () => {
+  setSurfaceCurves(true, CORNERS);
+  const initial = activeSurfacePatchSig.value!, id = initial.grid[0][1];
+  selectSurfaceControl(id);
+  expect(surfaceGizmoPlacement()).not.toBeNull();
+  surfaceGizmoHandlers.start();
+  surfaceGizmoHandlers.change({ kind: 'move', offset: new Vector3(1, 0, 0) });
+  expect(activeSurfacePatchSig.value!.points[id][2]).toBeCloseTo(initial.points[id][2] + 1);
+  surfaceGizmoHandlers.cancel();
+  expect(activeSurfacePatchSig.value).toEqual(initial);
+  surfaceGizmoHandlers.start();
+  surfaceGizmoHandlers.end({ kind: 'move', offset: new Vector3(0, 0.25, 0) });
+  expect(activeSurfacePatchSig.value!.points[id][1]).toBeCloseTo(initial.points[id][1] + 0.25);
+  undoSurfaceEdit();
+  expect(activeSurfacePatchSig.value).toEqual(initial);
 });
 
 test('the gizmo sits between the chosen corners and moves them together', () => {

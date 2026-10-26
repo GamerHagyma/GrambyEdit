@@ -1,6 +1,6 @@
 // The 3D viewport (spec §11): mounts a WebGL2 canvas into the shell and keeps it in sync with the store.
 import { effect } from '@preact/signals';
-import { Box3, Sphere, Vector2, Vector3 } from 'three';
+import { Box3, Matrix4, Sphere, Vector2, Vector3 } from 'three';
 import { PLACEHOLDER_BOX } from '../core/approx';
 import { parseShareText } from '../core/share';
 import { poseTargets, type Poses } from '../core/pose';
@@ -73,6 +73,7 @@ import {
   createSurfaceTool,
   surfaceGizmoHandlers,
   surfaceGizmoPlacement,
+  hasSurfaceControlSelection,
 } from '../tools/surface';
 import {
   createTransformTool,
@@ -98,7 +99,13 @@ import {
 import { toast } from '../state/toasts';
 import { genPreviewSig } from '../state/generators';
 import { arm, dragTypeSig, placeSig } from '../state/place';
-import { surfaceHostSig, surfacePreviewSig, surfaceSig } from '../state/surfaces';
+import {
+  surfaceCreatedSig,
+  surfaceHostSig,
+  surfacePreviewSig,
+  surfaceSig,
+} from '../state/surfaces';
+import { activeSurfacePatchSig, surfaceDraftSig } from '../state/surface-draft';
 import { contextMenuSig, leftTabSig, inspectorTabSig } from '../state/ui';
 import { partMenuItems, viewMenuItems } from '../ui/widgets/ContextMenu';
 import { AxisGuide } from './axis-guide';
@@ -107,6 +114,7 @@ import { TransformGizmo } from './gizmo';
 import './thumbs';
 import { PointsLayer } from './points-layer';
 import { SurfaceHandles } from './surface-handles';
+import { SurfaceCurveHandles } from './surface-curve-handles';
 import { WorkbenchView } from './workbench-view';
 
 export { getViewport };
@@ -212,6 +220,8 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
   scene.add(points.group);
   const handles = new SurfaceHandles();
   scene.add(handles.group);
+  const curveHandles = new SurfaceCurveHandles();
+  scene.add(curveHandles.group);
   /** What Generate or Create would add to a picked part, drawn see-through; made with the assets. */
   let preview: PartsLayer | null = null;
   const outline = new Outline();
@@ -344,6 +354,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     if (ctx.layer && !wb) outline.render(renderer, ctx.layer, rig.camera);
     for (const after of ctx.afterRender) after();
     handles.placeBadges(rig.camera, canvas);
+    curveHandles.placeBadges(rig.camera, canvas);
     // The load budget (spec §19.4) is measured to the first frame drawn with the part library loaded.
     if (ctx.layer && !markedReady) {
       markedReady = true;
@@ -814,7 +825,19 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     request();
   });
   const stopHandles = effect(() => {
-    handles.update(shownTab() === 'surfaces' ? cornerWorlds() : null, surfaceSig.value.selected);
+    const on = shownTab() === 'surfaces',
+      draft = activeSurfacePatchSig.value,
+      s = surfaceDraftSig.value;
+    handles.update(on && !draft ? cornerWorlds() : null, surfaceSig.value.selected);
+    const host = surfaceHostSig.value,
+      world = host && posesSig.value.world.get(host.id);
+    curveHandles.update(
+      on && world && surfaceCreatedSig.value === null ? draft : null,
+      world || new Matrix4(),
+      s.selected,
+      s.mode,
+      s.profile,
+    );
     request();
   });
   const stopGizmo = effect(() => {
@@ -824,8 +847,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     const forPoint =
       tool === 'point' || ((tool === 'move' || tool === 'rotate') && selectedPoint() !== null);
     // The Surface tool moves its chosen corners, in the parent's axes.
-    const forCorner =
-      tool === 'surface' && surfaceSig.value.selected.length > 0 && surfaceHostSig.value !== null;
+    const forCorner = tool === 'surface' && hasSurfaceControlSelection();
     // A modal G or R moves the selection away from the gizmo, so it hides until the modal ends.
     // A drag re-attach moves the part away from the gizmo too.
     const on =
@@ -987,6 +1009,7 @@ function startSession(el: HTMLElement, reload: () => void): () => void {
     sockets.dispose();
     points.dispose();
     handles.dispose();
+    curveHandles.dispose();
     workbench.dispose();
     outline.dispose();
     grid.mesh.geometry.dispose();

@@ -14,13 +14,18 @@ import {
   type SurfaceColor,
 } from '../core/surfaces/build';
 import type { Corners } from '../core/surfaces/tiling';
-import { buildCurvedSubDoc, curvedPoseValidator } from '../core/surfaces/build-curved';
+import {
+  buildCurvedSubDoc,
+  curvedPoseValidator,
+  type AcceptedCurvedTiles,
+} from '../core/surfaces/build-curved';
 import {
   activeSurfacePatchSig,
   resetSurfaceDraft,
   surfaceDraftSig,
   surfaceJobs,
   syncSurfaceQuadCorners,
+  setSurfaceCurves,
 } from './surface-draft';
 import type { SurfaceJobContext } from './surface-worker';
 import type { Part, PartId } from '../core/types';
@@ -164,6 +169,21 @@ export function resetCorners(): void {
     change({ corners: surfaceSig.value.home });
   });
 }
+export function toggleSurfaceCurves(enabled: boolean): void {
+  const d = surfaceDraftSig.peek().quad;
+  batch(() => {
+    if (!enabled && d)
+      change({
+        corners: [
+          d.points[d.grid[0][0]],
+          d.points[d.grid[0][3]],
+          d.points[d.grid[3][3]],
+          d.points[d.grid[3][0]],
+        ],
+      });
+    setSurfaceCurves(enabled, surfaceSig.peek().corners);
+  });
+}
 
 export function clearSurface(): void {
   batch(() => {
@@ -203,6 +223,12 @@ export const surfaceJobContextSig = computed<SurfaceJobContext | null>(() => {
   };
 });
 
+let curvedBuildCache: {
+  result: AcceptedCurvedTiles;
+  cat: Catalog;
+  key: string;
+  built: ReturnType<typeof buildCurvedSubDoc>;
+} | null = null;
 /** The caps as a sub-doc, or why they cannot be made; null without a parent or right after Create. */
 export const surfaceBuildSig = computed(() => {
   const cat = catalogSig.value;
@@ -217,13 +243,28 @@ export const surfaceBuildSig = computed(() => {
     if (job.status === 'error')
       return { ok: false as const, error: job.error ?? 'Surface generation failed.' };
     if (job.status !== 'ready' || !job.result) return null;
-    return buildCurvedSubDoc(
+    const key = JSON.stringify([
+      host.type,
+      color,
+      colorEnabled,
+      s.genPosDecimals,
+      s.genRotDecimals,
+    ]);
+    if (
+      curvedBuildCache?.result === job.result &&
+      curvedBuildCache.cat === cat &&
+      curvedBuildCache.key === key
+    )
+      return curvedBuildCache.built;
+    const built = buildCurvedSubDoc(
       job.result,
       { hostType: host.type, color, colorEnabled },
       cat,
       cat.conventions,
       { posDecimals: s.genPosDecimals, rotDecimals: s.genRotDecimals },
     );
+    curvedBuildCache = { result: job.result, cat, key, built };
+    return built;
   }
   return buildSurfaceSubDoc(
     { hostType: host.type, corners, color, colorEnabled },
@@ -265,6 +306,7 @@ effect(() => {
   const draft = activeSurfacePatchSig.value,
     cat = catalogSig.value;
   if (!context || !draft || !cat) {
+    curvedBuildCache = null;
     if (surfaceJobs.state.peek().status !== 'idle') surfaceJobs.cancel();
     return;
   }
@@ -332,6 +374,7 @@ export function leaveSurfaceTab(): void {
 
 /** Test helper: no parent, corners at the origin, the active colour. */
 export function resetSurfacesForTests(): void {
+  curvedBuildCache = null;
   batch(() => {
     resetSurfaceDraft();
     hostWorkspaceSig.value = null;

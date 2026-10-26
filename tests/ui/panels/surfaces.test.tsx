@@ -15,6 +15,12 @@ import { SurfacePanel } from '../../../src/ui/panels/SurfacePanel';
 import { MINI } from '../../helpers/catalog';
 import { docOf, part } from '../../helpers/doc';
 import { realCatalog } from '../../helpers/real-catalog';
+import {
+  activeSurfacePatchSig,
+  surfaceDraftSig,
+  surfaceJobs,
+} from '../../../src/state/surface-draft';
+import { TestSurfaceWorker } from '../../helpers/surface-worker';
 
 let cat: Catalog;
 beforeAll(async () => {
@@ -25,6 +31,10 @@ beforeEach(() => {
   localStorage.clear();
   resetSurfacesForTests();
   pickSig.value = null;
+});
+afterEach(() => {
+  surfaceJobs.dispose();
+  vi.unstubAllGlobals();
 });
 
 /** Picks the top face of Part 1 at its centre, as a click in the build does. */
@@ -59,6 +69,71 @@ test('Apply coloring disables all surface color controls and creates caps withou
   const caps = [...docSig.value.parts.values()].filter((part) => part.type === 'GasCap');
   expect(caps.length).toBeGreaterThan(0);
   expect(caps.every((part) => !Object.hasOwn(part.props, 'RGB'))).toBe(true);
+});
+
+test('curved edges opt in, preserve endpoints when toggled off, and disable stale Create', async () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  renderPicked();
+  expect((screen.getByLabelText('Curve edges') as HTMLInputElement).checked).toBe(false);
+  fireEvent.click(screen.getByLabelText('Curve edges'));
+  expect(screen.getByText('Updating GasCaps…')).toBeTruthy();
+  expect((screen.getByText('Create') as HTMLButtonElement).disabled).toBe(true);
+  await vi.waitFor(() =>
+    expect((screen.getByText('Create') as HTMLButtonElement).disabled).toBe(false),
+  );
+  const d = activeSurfacePatchSig.value!,
+    id = d.grid[0][0];
+  fireEvent.change(screen.getByLabelText('Surface control'), { target: { value: id } });
+  fireEvent.change(screen.getByLabelText('Control Y'), { target: { value: '0.6' } });
+  expect(activeSurfacePatchSig.value!.points[id][1]).toBe(0.6);
+  fireEvent.click(screen.getByLabelText('Curve edges'));
+  expect((screen.getByLabelText('Corner 1 Y') as HTMLInputElement).value).toBe('0.6');
+  fireEvent.click(screen.getByLabelText('Curve edges'));
+  expect(activeSurfacePatchSig.value!.points[id][1]).toBe(0.6);
+});
+
+test('Profiles inserts an unchanged section, edits its center, and offers draft undo and crease controls', () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  renderPicked();
+  fireEvent.change(screen.getByLabelText('Surface mode'), { target: { value: 'profiles' } });
+  expect(screen.getByText('Profile 1')).toBeTruthy();
+  expect(screen.getByText('Profile 2')).toBeTruthy();
+  fireEvent.click(screen.getByText('Add profile'));
+  expect(screen.getByText('Profile 3')).toBeTruthy();
+  expect(activeSurfacePatchSig.value!.vBreaks).toEqual([0, 0.5, 1]);
+  const center = Number((screen.getByLabelText('Control Y') as HTMLInputElement).value);
+  fireEvent.change(screen.getByLabelText('Control Y'), {
+    target: { value: String(center + 0.01) },
+  });
+  const id = activeSurfacePatchSig.value!.grid[3][0];
+  expect(activeSurfacePatchSig.value!.points[id][1]).toBeCloseTo(center + 0.01);
+  fireEvent.click(screen.getByText('Undo draft edit'));
+  expect(activeSurfacePatchSig.value!.points[id][1]).toBeCloseTo(center);
+  fireEvent.change(screen.getByLabelText('Profile join'), { target: { value: 'crease' } });
+  expect(activeSurfacePatchSig.value!.vJoins).toEqual(['crease']);
+  fireEvent.click(screen.getByText('Add anchor column'));
+  expect(activeSurfacePatchSig.value!.uBreaks).toEqual([0, 0.5, 1]);
+  expect(surfaceDraftSig.value.mode).toBe('profiles');
+  expect(docSig.value.order).toHaveLength(1);
+});
+
+test('switching modes retains profiles and replacing edited profiles requires confirmation', () => {
+  vi.stubGlobal('Worker', TestSurfaceWorker);
+  renderPicked();
+  fireEvent.change(screen.getByLabelText('Surface mode'), { target: { value: 'profiles' } });
+  fireEvent.click(screen.getByText('Add profile'));
+  const edited = activeSurfacePatchSig.value;
+  fireEvent.change(screen.getByLabelText('Surface mode'), { target: { value: 'quad' } });
+  fireEvent.change(screen.getByLabelText('Surface mode'), { target: { value: 'profiles' } });
+  expect(activeSurfacePatchSig.value).toBe(edited);
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  fireEvent.click(screen.getByText('Start profiles from quad'));
+  expect(confirm).toHaveBeenCalledOnce();
+  expect(activeSurfacePatchSig.value).toBe(edited);
+  confirm.mockReturnValue(true);
+  fireEvent.click(screen.getByText('Start profiles from quad'));
+  expect(activeSurfacePatchSig.value!.vBreaks).toEqual([0, 1]);
+  confirm.mockRestore();
 });
 
 test('without GasCaps it says so', () => {

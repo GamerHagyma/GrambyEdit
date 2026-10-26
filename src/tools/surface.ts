@@ -3,6 +3,9 @@
 // parent's axes (Ctrl snaps), and the preview follows live. Esc lets them go.
 import { Matrix4, Quaternion, Vector3, type Vector2 } from 'three';
 import type { Vec3 } from '../core/catalog-types';
+import type { PatchDraft } from '../core/surfaces/patches';
+import { activeSurfacePatchSig, finishSurfaceDrag, previewSurfacePositions, selectSurfaceControl, surfaceDraftSig } from '../state/surface-draft';
+import { workspaceVersionSig } from '../state/store';
 import { posesSig } from '../state/derived';
 import {
   selectCorner,
@@ -12,6 +15,7 @@ import {
   surfaceSig,
 } from '../state/surfaces';
 import { getViewport } from '../viewport/context';
+import { curveControlLayout } from '../viewport/surface-curve-handles';
 import type { GizmoHandlers } from '../viewport/gizmo';
 import type { Tool, ToolPointer } from './manager';
 import { snapValue, type TransformDelta } from './transform';
@@ -25,6 +29,26 @@ const DRAG_PX = 4;
 function hostWorld(): Matrix4 | null {
   const host = surfaceHostSig.value;
   return (host && posesSig.value.world.get(host.id)) ?? null;
+}
+export function hasSurfaceControlSelection(): boolean {
+  return !!surfaceHostSig.value && surfaceCreatedSig.value === null &&
+    (activeSurfacePatchSig.value ? surfaceDraftSig.value.selected.length > 0 : surfaceSig.value.selected.length > 0);
+}
+export function surfaceGestureToken(): string | null {
+  const host = surfaceHostSig.value, s = surfaceDraftSig.value;
+  return host ? JSON.stringify([workspaceVersionSig.value, host.id, host.type, s.mode, s.curved]) : null;
+}
+function advancedAt(ndc: Vector2): string | null {
+  const d = activeSurfacePatchSig.value, world = hostWorld(), vp = getViewport(), s = surfaceDraftSig.value;
+  if (!d || !world || !vp || surfaceCreatedSig.value !== null) return null;
+  const rect = vp.canvas.getBoundingClientRect(); let best: string | null = null, distance = PICK_PX;
+  for (const c of curveControlLayout(d, s.mode, s.profile)) {
+    const p = new Vector3(...c.position).applyMatrix4(world).project(vp.rig.camera);
+    if (p.z < -1 || p.z > 1) continue;
+    const px = Math.hypot((p.x - ndc.x) / 2 * rect.width, (p.y - ndc.y) / 2 * rect.height);
+    if (px < distance) { distance = px; best = c.id; }
+  }
+  return best;
 }
 
 /** The corners in world space, while the surface has a parent. */
@@ -56,6 +80,13 @@ export function cornerAt(ndc: Vector2): number | null {
 export function surfaceGizmoPlacement(): { position: Vector3; quaternion: Quaternion } | null {
   const { selected } = surfaceSig.value;
   const world = hostWorld();
+  const advanced = activeSurfacePatchSig.value, controls = surfaceDraftSig.value.selected;
+  if (advanced) {
+    if (!world || !controls.length || surfaceCreatedSig.value !== null) return null;
+    const position = controls.reduce((sum, id) => sum.add(new Vector3(...advanced.points[id]).applyMatrix4(world)), new Vector3()).divideScalar(controls.length);
+    const quaternion = new Quaternion(); world.decompose(new Vector3(), quaternion, new Vector3());
+    return { position, quaternion };
+  }
   const corners = cornerWorlds();
   if (selected.length === 0 || !world || !corners) return null;
   const quaternion = new Quaternion();
@@ -73,6 +104,22 @@ interface CornerDrag {
 }
 
 let drag: CornerDrag | null = null;
+let curveDrag: { from: PatchDraft; ids: readonly string[]; world: Matrix4; token: string } | null = null;
+function moveCurve(delta: TransformDelta): void {
+  const d = curveDrag; if (!d || delta.kind !== 'move' || surfaceGestureToken() !== d.token) return;
+  const pivot = d.ids.reduce((sum, id) => sum.add(new Vector3(...d.from.points[id]).applyMatrix4(d.world)), new Vector3()).divideScalar(d.ids.length);
+  const offset = delta.offset.clone();
+  if (delta.grid) {
+    const at = pivot.clone().add(offset);
+    at.set(snapValue(at.x, delta.grid), snapValue(at.y, delta.grid), snapValue(at.z, delta.grid));
+    offset.copy(at.sub(pivot));
+  }
+  const inverse = d.world.clone().invert();
+  previewSurfacePositions(d.from, Object.fromEntries(d.ids.map((id) => {
+    const p = new Vector3(...d.from.points[id]).applyMatrix4(d.world).add(offset).applyMatrix4(inverse);
+    return [id, p.toArray() as Vec3];
+  })));
+}
 
 /**
  * The corners moved by a world-space gizmo offset, back in the parent's part space. With a grid step,
@@ -94,6 +141,13 @@ function movedBy(d: CornerDrag, delta: TransformDelta): [number, Vec3][] {
 /** What the viewport gizmo (and G) call while they move the chosen corners. */
 export const surfaceGizmoHandlers: GizmoHandlers = {
   start() {
+    curveDrag = null;
+    if (activeSurfacePatchSig.value) {
+      drag = null;
+      const from = activeSurfacePatchSig.value, world = hostWorld(), token = surfaceGestureToken(), ids = surfaceDraftSig.value.selected;
+      if (world && token && ids.length) curveDrag = { from, ids, world, token };
+      return;
+    }
     const { selected, corners } = surfaceSig.value;
     const world = hostWorld();
     drag =
@@ -102,14 +156,19 @@ export const surfaceGizmoHandlers: GizmoHandlers = {
         : { corners: selected, from: selected.map((i) => corners[i]), world };
   },
   change(delta) {
+    if (curveDrag) { moveCurve(delta); return; }
     if (drag) setCorners(movedBy(drag, delta));
   },
   end(delta) {
+    if (curveDrag) { moveCurve(delta); const c = curveDrag; curveDrag = null;
+      if (surfaceGestureToken() === c.token) finishSurfaceDrag(c.from, false); return; }
     const d = drag;
     drag = null;
     if (d) setCorners(movedBy(d, delta));
   },
   cancel() {
+    if (curveDrag) { const c = curveDrag; curveDrag = null;
+      if (surfaceGestureToken() === c.token) finishSurfaceDrag(c.from, true); return; }
     const d = drag;
     drag = null;
     if (d) setCorners(d.corners.map((i, k) => [i, d.from[k]]));
@@ -123,6 +182,7 @@ export function createSurfaceTool(): Tool {
     id: 'surface',
     activate() {},
     deactivate() {
+      surfaceGizmoHandlers.cancel();
       press = null;
       gizmoPress = false;
     },
@@ -140,11 +200,14 @@ export function createSurfaceTool(): Tool {
       if (e.kind !== 'up' || !press) return;
       const moved = Math.hypot(e.x - press.x, e.y - press.y) > DRAG_PX;
       press = null;
-      if (!moved) selectCorner(cornerAt(e.ndc), e.shift);
+      if (!moved) {
+        if (activeSurfacePatchSig.value) selectSurfaceControl(advancedAt(e.ndc), e.shift);
+        else selectCorner(cornerAt(e.ndc), e.shift);
+      }
     },
     onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape' || surfaceSig.value.selected.length === 0) return false;
-      selectCorner(null);
+      if (e.key !== 'Escape' || !hasSurfaceControlSelection()) return false;
+      if (activeSurfacePatchSig.value) selectSurfaceControl(null); else selectCorner(null);
       return true;
     },
   };

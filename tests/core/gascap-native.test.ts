@@ -7,7 +7,11 @@ import { realCatalog } from '../helpers/real-catalog';
 test('GasCaps on points match measured native world frames for both slopes on two rotated hosts', async () => {
   const cat = await realCatalog();
   for (const observation of observations.observations) {
-    if (!isCFrame12(observation.point) || !isCFrame12(observation.parentWorld) || !isCFrame12(observation.nativeWorld))
+    if (
+      !isCFrame12(observation.point) ||
+      !isCFrame12(observation.parentWorld) ||
+      !isCFrame12(observation.nativeWorld)
+    )
       throw new Error('Invalid native capture fixture.');
     const host = part(1, 'Part');
     const doc = docOf(

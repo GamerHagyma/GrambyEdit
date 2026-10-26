@@ -24,7 +24,7 @@ import {
   selectModeSig,
 } from './selection';
 import { settingsSig, updateSettings } from './settings';
-import { surfaceSig } from './surfaces';
+import { hasSurfaceControlSelection } from '../tools/surface';
 import { catalogSig, commit, docSig, redo, undo, viewBus } from './store';
 import { toast } from './toasts';
 import { openDialog, inspectorTabSig } from './ui';
@@ -69,7 +69,7 @@ const anySelected = () => selectionSig.value.parts.size > 0;
 /** One ephemeral point and no part: G and R move or turn the point. */
 const onePoint = () => selectionSig.value.parts.size === 0 && selectionSig.value.points.size === 1;
 /** The Surface tool's chosen corners, which G moves. */
-const cornersChosen = () => toolSig.value === 'surface' && surfaceSig.value.selected.length > 0;
+const cornersChosen = () => toolSig.value === 'surface' && hasSurfaceControlSelection();
 const anyParts = () => docSig.value.order.length > 0;
 const referenceChosen = () => {
   const id = editingReferencePlaneSig.value;
